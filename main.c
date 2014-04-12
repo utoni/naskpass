@@ -57,9 +57,9 @@ static size_t print_pw_status(WINDOW *wnd, char *text)
   print_rel_to_wnd(wnd, (int)(-strlen(text)/2)-1, SRELPOSY, ">");
   print_rel_to_wnd(wnd, (int)(strlen(text)/2)+2, SRELPOSY, "<");
   attroff(A_BLINK);
-  attron(A_BOLD);
+  attron(A_BOLD | COLOR_PAIR(1));
   print_rel_to_wnd(wnd, 0, SRELPOSY, text);
-  attroff(A_BOLD);
+  attroff(A_BOLD | COLOR_PAIR(1));
   return (strlen(text));
 }
 
@@ -94,6 +94,8 @@ int main(int argc, char **argv)
   }
 
   initscr();
+  start_color();
+  init_pair(1, COLOR_RED, COLOR_BLACK);
   raw();
   keypad(DEFWIN, TRUE);
   noecho();
