@@ -1,0 +1,39 @@
+#!/bin/sh
+
+set -e
+
+PREREQ="cryptroot"
+
+prereqs () {
+	echo "$PREREQ"
+}
+
+case "$1" in
+	prereqs)
+		prereqs
+		exit 0
+	;;
+esac
+
+export RDSUM="5924c70e5c9fabf0398050349c3f4f283ab80091b23ea8c677249ee7bdd41f6e4910ce5e1bc32577e67763dc30d9b96cc3528256e1cc63dba959a5e3866ec21f"
+export DIVFILE="/usr/share/naskpass/cryptroot.orig"
+export ORGFILE="/usr/share/initramfs-tools/scripts/local-top/cryptroot"
+
+. /usr/share/initramfs-tools/hook-functions
+
+if [ -f ${DIVFILE} ]; then
+  if [ ${RDSUM} != "$(/usr/bin/sha512sum ${DIVFILE} | grep -Eo '^[0-9a-zA-Z]*')" ]; then
+    echo "********************************" >&2
+    echo "* NASKPASS: sha512sum mismatch *" >&2
+    echo "********************************" >&2
+    echo "  WARNING: Using ORIG-File!" >&2
+    cp /usr/share/naskpass/cryptroot.orig ${DESTDIR}/scripts/local-top/cryptroot
+    exit $?
+  fi
+fi
+
+copy_exec /lib/cryptsetup/naskpass /lib/cryptsetup
+mkdir -p ${DESTDIR}/lib/terminfo/l
+cp /lib/terminfo/l/linux ${DESTDIR}/lib/terminfo/l/
+
+exit 0

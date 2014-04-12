@@ -1,0 +1,13 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+%:
+	dh $@ 
+
+override_dh_auto_install:
+	echo "*** REDIRECT INITRAMFS SCRIPT" >&2
+	$(MAKE) DESTDIR=$(CURDIR)/debian/naskpass install
+	mkdir -p $(CURDIR)/debian/naskpass/usr/share/initramfs-tools/scripts/local-top
+	mv $(CURDIR)/debian/naskpass/usr/share/naskpass/naskpass.script.initramfs $(CURDIR)/debian/naskpass/usr/share/initramfs-tools/scripts/local-top/cryptroot

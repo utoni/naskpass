@@ -1,0 +1,15 @@
+Source: naskpass
+Section: unknown
+Priority: extra
+Maintainer: Toni Uhlig <matzeton@googlemail.com>
+Build-Depends: debhelper (>= 8.0.0), libncurses5-dev, libtinfo-dev
+Standards-Version: 3.9.3
+Homepage: https://github.com/freecoding/naskpass.git
+#Vcs-Git: git://git.debian.org/collab-maint/naskpass.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/naskpass.git;a=summary
+
+Package: naskpass
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libncurses5, libtinfo5
+Description: Ncurses based cryptsetup askpass replacement
+ NULL.
