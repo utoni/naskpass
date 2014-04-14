@@ -1,4 +1,4 @@
-naskpass (1.0-1) UNRELEASED; urgency=low
+naskpass (1.0-1) unstable; urgency=low
 
   * replaced getch with ncurses wgetch
 

@@ -16,7 +16,7 @@ case "$1" in
         if [ ! -f ${ORGFILE} ]; then
           whiptail --title "Missing file" --msgbox "/usr/share/initramfs-tools/scripts/local-top/cryptroot is missing!\nabort .." 9 70
         else
-          if [ ${RDSUM} = "$(/usr/bin/sha512sum ${ORGFILE} | grep -Eo '^[0-9a-zA-Z]*')" ]; then
+          if [ ${RDSUM} = "$(sha512sum ${ORGFILE} | grep -Eo '^[0-9a-zA-Z]*')" ]; then
             dpkg-divert --package naskpass --divert ${DIVFILE} --rename --add ${ORGFILE}
             update-initramfs -u
           else
