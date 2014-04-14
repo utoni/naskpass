@@ -83,6 +83,7 @@ static void usage()
 
 int main(int argc, char **argv)
 {
+  WINDOW *win;
   int ret, ch, curx, cury, pidx, iidx, tries = MAXTRIES;
   size_t slen = 0;
   char pass[MAXPASS+1];
@@ -93,7 +94,7 @@ int main(int argc, char **argv)
     exit(-1);
   }
 
-  initscr();
+  win = initscr();
   start_color();
   init_pair(1, COLOR_RED, COLOR_BLACK);
   raw();
@@ -107,7 +108,7 @@ again:
   pidx = 0;
   iidx = 0;
   print_rel_to_wnd(DEFWIN, 20, 0, "PASSWORD: ");
-  while ( (ch = getch()) != '\n') {
+  while ( (ch = wgetch(win)) != '\n') {
     getyx(DEFWIN, cury, curx);
     clear_pw_status(DEFWIN, slen);
     if (ch == KEY_BACKSPACE) {
@@ -156,7 +157,7 @@ again:
       clear_pw_status(DEFWIN, slen);
       slen = print_pw_status(DEFWIN, "ACCESS DENIED");
       tries--;
-      getch();
+      wgetch(win);
       if (tries == 0) {
         set_logmsg("ACCESS DENIED: HDD is encrypted, can not boot");
         endwin_and_print_debug();
