@@ -28,7 +28,8 @@ if [ -f ${DIVFILE} ]; then
     echo "********************************" >&2
     echo "  WARNING: Using ORIG-File!" >&2
     cp /usr/share/naskpass/cryptroot.orig ${DESTDIR}/scripts/local-top/cryptroot
-    exit $?
+    echo "* Please re-run update-initramfs!" >&2
+    exit 1
   fi
 fi
 

@@ -12,7 +12,7 @@
 #define MAXINPUT 40
 #define MAXPASS 64
 #define MAXTRIES 3
-#define SRELPOSY -2
+#define SRELPOSY -4
 
 #define RET_OK 0
 #define RET_FORK -1
@@ -40,39 +40,62 @@ static void endwin_and_print_debug(void)
     fprintf(stderr, "%s: %s\n", PKGNAME, debug_msg);
 }
 
-static void print_rel_to_wnd(WINDOW *wnd, int x, int y, char *text)
+static void getwmaxyx(WINDOW *wnd, int x, int y, size_t len, int *startyp, int *startxp)
 {
-  int startx, starty, maxx, maxy;
+  int maxy, maxx;
 
   getmaxyx(wnd, maxy, maxx);
-  startx = ( ((int)(maxx/2)) - x - ((int)(strlen(text)/2)));
-  starty = ( ((int)(maxy/2)) - y);
+  *startxp = ( ((int)(maxx/2)) - x - ((int)(len/2)));
+  *startyp = ( ((int)(maxy/2)) - y);
+}
 
+static void print_rel_to_wnd(WINDOW *wnd, int x, int y, char *text, size_t addwidth)
+{
+  int startx, starty;
+  size_t len = strlen(text);
+
+  getwmaxyx(wnd, x, y, len+addwidth, &starty, &startx);
+
+  mvhline(starty-2, startx-2, 0, len+addwidth+3);
+  mvhline(starty+2, startx-2, 0, len+addwidth+3);
+  mvvline(starty-1, startx-3, 0, 3);
+  mvvline(starty-1, startx+len+addwidth+1, 0, 3);
+  mvaddch(starty-2, startx-3, ACS_ULCORNER);
+  mvaddch(starty+2, startx-3, ACS_LLCORNER);
+  mvaddch(starty-2, startx+len+addwidth+1, ACS_URCORNER);
+  mvaddch(starty+2, startx+len+addwidth+1, ACS_LRCORNER);
   mvwprintw(wnd, starty, startx, text);
 }
 
 static size_t print_pw_status(WINDOW *wnd, char *text)
 {
+  int startx, starty;
+  size_t len = strlen(text);
+
+  getwmaxyx(wnd, 0, SRELPOSY, len+4, &starty, &startx);
   attron(A_BLINK);
-  print_rel_to_wnd(wnd, (int)(-strlen(text)/2)-1, SRELPOSY, ">");
-  print_rel_to_wnd(wnd, (int)(strlen(text)/2)+2, SRELPOSY, "<");
+  mvwprintw(wnd, starty, startx-2, "< ");
+  mvwprintw(wnd, starty, startx+len, " >");
   attroff(A_BLINK);
   attron(A_BOLD | COLOR_PAIR(1));
-  print_rel_to_wnd(wnd, 0, SRELPOSY, text);
+  mvwprintw(wnd, starty, startx, "%s", text);
   attroff(A_BOLD | COLOR_PAIR(1));
   return (strlen(text));
 }
 
 static void clear_pw_status(WINDOW *wnd, size_t len)
 {
-  int curx, cury;
+  int startx, starty, curx, cury;
   char buf[len+5];
   if (len <= 0) return;
 
+  attroff(A_BLINK | A_BOLD | COLOR_PAIR(1));
   memset(buf, ' ', len+4);
   buf[len+4] = '\0';
+
   getyx(wnd, cury, curx);
-  print_rel_to_wnd(wnd, 0, SRELPOSY, buf);
+  getwmaxyx(wnd, 0, SRELPOSY, len+4, &starty, &startx);
+  mvwprintw(wnd, starty, startx-2, "%s", buf);
   wmove(wnd, cury, curx);
 }
 
@@ -107,7 +130,7 @@ again:
   memset(pass, 0, MAXPASS+1);
   pidx = 0;
   iidx = 0;
-  print_rel_to_wnd(DEFWIN, 20, 0, "PASSWORD: ");
+  print_rel_to_wnd(DEFWIN, 0, 0, "PASSWORD: ", MAXINPUT+5);
   while ( (ch = wgetch(win)) != '\n') {
     getyx(DEFWIN, cury, curx);
     clear_pw_status(DEFWIN, slen);
