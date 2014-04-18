@@ -1,10 +1,13 @@
 #include <stdio.h>
+#include <stdio_ext.h>
 #include <stdlib.h>
-#include <stdbool.h>
+#include <unistd.h>
+#include <pthread.h>
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
 #include <ncurses.h>
+#include <sys/sysinfo.h>
 
 #define PKGNAME "nask"
 #define LOGLEN 128
@@ -21,6 +24,7 @@
 #define RET_BUSY 1280
 
 static char debug_msg[LOGLEN+1];
+static pthread_t thrd;
 
 static void set_logmsg(char *fmt, ...)
 {
@@ -72,6 +76,7 @@ static size_t print_pw_status(WINDOW *wnd, char *text)
   int startx, starty;
   size_t len = strlen(text);
 
+  curs_set(0);
   getwmaxyx(wnd, 0, SRELPOSY, len+4, &starty, &startx);
   attron(A_BLINK);
   mvwprintw(wnd, starty, startx-2, "< ");
@@ -97,11 +102,62 @@ static void clear_pw_status(WINDOW *wnd, size_t len)
   getwmaxyx(wnd, 0, SRELPOSY, len+4, &starty, &startx);
   mvwprintw(wnd, starty, startx-2, "%s", buf);
   wmove(wnd, cury, curx);
+  curs_set(1);
 }
 
-static void usage()
+static void usage(void)
 {
   fprintf(stderr, PKGNAME ": [cryptcreate]\n");
+}
+
+static char *get_system_stat(void)
+{
+  char *retstr = NULL;
+  int ncpu;
+  struct sysinfo inf;
+
+  if (sysinfo(&inf) != 0) {
+  }
+  ncpu = get_nprocs();
+
+  if (asprintf(&retstr, "upt:%ld - load:%lu,%lu,%lu - %d core%s - free:%lu/%lumb - procs:%d", inf.uptime, inf.loads[0], inf.loads[1], inf.loads[2], ncpu, (ncpu > 1 ? "s" : ""), (unsigned long)((inf.freeram/1024)/1024), (unsigned long)((inf.totalram/1024)/1024), inf.procs) == -1) {
+  }
+  return (retstr);
+}
+
+static void print_status_line(void) {
+  char *statln;
+  int maxx, maxy, curx, cury, i;
+
+  statln = get_system_stat();
+  getmaxyx(stdscr, maxy, maxx);
+  getyx(stdscr, cury, curx);
+  attron(A_BOLD | COLOR_PAIR(2));
+  for (i = 0; i < maxx; i++) {
+    mvaddch(maxy-1, i, ' ');
+  }
+  attroff(A_BOLD | COLOR_PAIR(2));
+  attron(COLOR_PAIR(3));
+  mvprintw(maxy-1, 1, "[F1] clearpw | %s", statln);
+  attroff(COLOR_PAIR(3));
+
+  wmove(stdscr, cury, curx);
+  refresh();
+  free(statln);
+}
+
+static void *status_thrd(void *arg) {
+  while (1) {
+    print_status_line();
+    sleep(1);
+  }
+  return (NULL);
+}
+
+static int run_status_thrd(void) {
+  init_pair(2, COLOR_WHITE, COLOR_WHITE);
+  init_pair(3, COLOR_BLACK, COLOR_WHITE);
+  return (pthread_create(&thrd, NULL, &status_thrd, NULL));
 }
 
 int main(int argc, char **argv)
@@ -124,17 +180,23 @@ int main(int argc, char **argv)
   keypad(DEFWIN, TRUE);
   noecho();
   cbreak();
+  run_status_thrd();
 again:
+  curs_set(0);
   clear();
   memset(debug_msg, 0, LOGLEN+1);
   memset(pass, 0, MAXPASS+1);
   pidx = 0;
   iidx = 0;
   print_rel_to_wnd(DEFWIN, 0, 0, "PASSWORD: ", MAXINPUT+5);
+  curs_set(1);
   while ( (ch = wgetch(win)) != '\n') {
     getyx(DEFWIN, cury, curx);
     clear_pw_status(DEFWIN, slen);
-    if (ch == KEY_BACKSPACE) {
+    if (ch == KEY_F(1)) {
+      __fpurge(stdin);
+      goto again;
+    } else if (ch == KEY_BACKSPACE) {
       pass[pidx] = '\0';
       if (pidx <= 0) continue;
       if (iidx == pidx) {

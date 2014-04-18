@@ -1,5 +1,5 @@
 CFLAGS ?= $(shell ncurses5-config --cflags) -Wall -D_GNU_SOURCE
-LDFLAGS ?= $(shell ncurses5-config --libs)
+LDFLAGS ?= $(shell ncurses5-config --libs) -pthread
 CC ?= gcc
 INSTALL ?= install
 VERSION = 1.0
