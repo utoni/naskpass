@@ -148,8 +148,8 @@ static void print_status_line(void) {
 
 static void *status_thrd(void *arg) {
   while (1) {
+    sleep(1); // TODO: wait (if gobal variable is set to 1) until main thread sends signal
     print_status_line();
-    sleep(1);
   }
   return (NULL);
 }
