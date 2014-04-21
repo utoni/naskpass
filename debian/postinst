@@ -43,11 +43,15 @@ case "$1" in
             if [ ${active} -eq 0 ]; then
               echo "Activating naskpass .." >&2
               dpkg-divert --package naskpass --divert ${DIVFILE} --rename --add ${ORGFILE} || true
-              mv ${BCKFILE} ${ORGFILE} 2>/dev/null || true
+              if [ ! -r ${ORGFILE} ]; then
+                mv ${BCKFILE} ${ORGFILE} 2>/dev/null || true
+              fi
+              update-initramfs -u
             elif [ ${active} -eq 1 ]; then
               echo "Deactivating naskpass .." >&2
               mv ${ORGFILE} ${BCKFILE} 2>/dev/null || true
               dpkg-divert --package naskpass --remove --rename ${ORGFILE} || true
+              update-initramfs -u
             else
               echo "Doin' nothing .." >&2
             fi
@@ -59,7 +63,6 @@ case "$1" in
             echo "Unknown whiptail error occured .." >&2
           ;;
         esac
-        update-initramfs -u
     ;;
 
     upgrade|abort-upgrade)
