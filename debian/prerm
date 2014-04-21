@@ -7,6 +7,7 @@ set -e
 
 
 export ORGFILE="/usr/share/initramfs-tools/scripts/local-top/cryptroot"
+export DIVFILE="/usr/share/naskpass/cryptroot.orig"
 export BCKFILE="/var/backup/cryptroot.naskpass"
 
 case "$1" in

@@ -59,6 +59,7 @@ case "$1" in
             echo "Unknown whiptail error occured .." >&2
           ;;
         esac
+        update-initramfs -u
     ;;
 
     upgrade)
