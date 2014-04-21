@@ -34,8 +34,10 @@ case "$1" in
           active=1
           text="active. Deactivate?"
         fi
-        whiptail --yesno "naskpass is $text" --yes-button "Yes" --no-button "No"  10 70
+        set +e
+        whiptail --yesno "naskpass is $text" --defaultno 10 70
         choice=$?
+        set -e
         case ${choice} in
           0)
             if [ ${active} -eq 0 ]; then
@@ -53,11 +55,10 @@ case "$1" in
           1)
             echo "Keeping naskpass' status .." >&2
           ;;
-         -1|*)
+          *)
             echo "Unknown whiptail error occured .." >&2
           ;;
         esac
-        update-initramfs -u
     ;;
 
     upgrade)
