@@ -1,3 +1,9 @@
+naskpass (1.0-2) unstable; urgency=low
+
+  * fixed some minor issues
+
+ -- Toni Uhlig <matzeton@googlemail.com>  Mon, 21 Apr 2014 11:50:15 +0200
+
 naskpass (1.0-1) unstable; urgency=low
 
   * replaced getch with ncurses wgetch

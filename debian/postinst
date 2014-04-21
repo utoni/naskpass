@@ -9,9 +9,11 @@ set -e
 export RDSUM="5924c70e5c9fabf0398050349c3f4f283ab80091b23ea8c677249ee7bdd41f6e4910ce5e1bc32577e67763dc30d9b96cc3528256e1cc63dba959a5e3866ec21f"
 export ORGFILE="/usr/share/initramfs-tools/scripts/local-top/cryptroot"
 export DIVFILE="/usr/share/naskpass/cryptroot.orig"
+export BCKFILE="/var/backup/cryptroot.naskpass"
 
 case "$1" in
     install)
+        rm -f ${BCKFILE}
         mkdir -p /usr/share/naskpass
         if [ ! -f ${ORGFILE} ]; then
           whiptail --title "Missing file" --msgbox "/usr/share/initramfs-tools/scripts/local-top/cryptroot is missing!\nabort .." 9 70
@@ -24,7 +26,40 @@ case "$1" in
         fi
     ;;
 
-    upgrade|configure)
+    configure)
+        if [ ${RDSUM} = "$(sha512sum ${ORGFILE} | grep -Eo '^[0-9a-zA-Z]*')" ]; then
+          active=0
+          text="NOT active. Activate?"
+        else
+          active=1
+          text="active. Deactivate?"
+        fi
+        whiptail --yesno "naskpass is $text" --yes-button "Yes" --no-button "No"  10 70
+        choice=$?
+        case ${choice} in
+          0)
+            if [ ${active} -eq 0 ]; then
+              echo "Activating naskpass .." >&2
+              dpkg-divert --package naskpass --divert ${DIVFILE} --rename --add ${ORGFILE}
+              mv ${BCKFILE} ${ORGFILE}
+            elif [ ${active} -eq 1 ]; then
+              echo "Deactivating naskpass .." >&2
+              mv ${ORGFILE} ${BCKFILE}
+              dpkg-divert --package naskpass --remove --rename ${ORGFILE} || true
+            else
+              echo "Doin' nothing .." >&2
+            fi
+          ;;
+          1)
+            echo "Keeping naskpass' status .." >&2
+          ;;
+         -1|*)
+            echo "Unknown whiptail error occured .." >&2
+          ;;
+        esac
+    ;;
+
+    upgrade)
       update-initramfs -u
     ;;
 
