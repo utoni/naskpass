@@ -62,7 +62,7 @@ case "$1" in
         update-initramfs -u
     ;;
 
-    upgrade)
+    upgrade|abort-upgrade)
       update-initramfs -u
     ;;
 

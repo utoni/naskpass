@@ -11,7 +11,7 @@ export ORGFILE="/usr/share/initramfs-tools/scripts/local-top/cryptroot"
 export DIVFILE="/usr/share/naskpass/cryptroot.orig"
 
 case "$1" in
-    install)
+    install|upgrade)
         mkdir -p /usr/share/naskpass
         if [ ! -f ${ORGFILE} ]; then
           whiptail --title "Missing file" --msgbox "/usr/share/initramfs-tools/scripts/local-top/cryptroot is missing!\nabort .." 9 70
@@ -19,13 +19,11 @@ case "$1" in
           if [ ${RDSUM} = "$(sha512sum ${ORGFILE} | grep -Eo '^[0-9a-zA-Z]*')" ]; then
             dpkg-divert --package naskpass --divert ${DIVFILE} --rename --add ${ORGFILE}
             update-initramfs -u
-          else
-            whiptail --title "Wrong SHA checksum" --msgbox "in /usr/share/initramfs-tools/scripts/local-top/cryptroot\n\nabort .." 9 70
           fi
         fi
     ;;
 
-    upgrade)
+    abort-upgrade)
     ;;
 
     *)
