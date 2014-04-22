@@ -14,19 +14,9 @@ export BCKFILE="/var/backups/cryptroot.naskpass"
 
 case "$1" in
     install)
-        mkdir -p /usr/share/naskpass
-        if [ ! -f ${ORGFILE} ]; then
-          whiptail --title "Missing file" --msgbox "/usr/share/initramfs-tools/scripts/local-top/cryptroot is missing!\nabort .." 9 70
-        else
-          if [ ${RDSUM} = "$(sha512sum ${ORGFILE} | grep -Eo '^[0-9a-zA-Z]*')" ]; then
-            dpkg-divert --package naskpass --divert ${DIVFILE} --rename --add ${ORGFILE}
-          else
-            whiptail --title "Wrong SHA checksum" --msgbox "in /usr/share/initramfs-tools/scripts/local-top/cryptroot\n\nabort .." 9 70
-          fi
-        fi
     ;;
 
-    configure)
+    configure|upgrade)
         if [ ${RDSUM} = "$(sha512sum ${ORGFILE} | grep -Eo '^[0-9a-zA-Z]*')" ]; then
           active=0
           text="NOT active. Activate?"
@@ -42,15 +32,13 @@ case "$1" in
           0)
             if [ ${active} -eq 0 ]; then
               echo "Activating naskpass .." >&2
-              dpkg-divert --package naskpass --divert ${DIVFILE} --rename --add ${ORGFILE} || true
-              if [ ! -r ${ORGFILE} ]; then
-                mv ${BCKFILE} ${ORGFILE} 2>/dev/null || true
-              fi
+              mv ${ORGFILE} ${DIVFILE} || true
+              mv ${BCKFILE} ${ORGFILE} || true
               update-initramfs -u
             elif [ ${active} -eq 1 ]; then
               echo "Deactivating naskpass .." >&2
-              mv ${ORGFILE} ${BCKFILE} 2>/dev/null || true
-              dpkg-divert --package naskpass --remove --rename ${ORGFILE} || true
+              mv ${ORGFILE} ${BCKFILE} || true
+              cp ${DIVFILE} ${ORGFILE} || true
               update-initramfs -u
             else
               echo "Doin' nothing .." >&2
@@ -65,8 +53,7 @@ case "$1" in
         esac
     ;;
 
-    upgrade|abort-upgrade)
-      update-initramfs -u
+    abort-upgrade)
     ;;
 
     *)

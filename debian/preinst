@@ -9,9 +9,15 @@ set -e
 export RDSUM="5924c70e5c9fabf0398050349c3f4f283ab80091b23ea8c677249ee7bdd41f6e4910ce5e1bc32577e67763dc30d9b96cc3528256e1cc63dba959a5e3866ec21f"
 export ORGFILE="/usr/share/initramfs-tools/scripts/local-top/cryptroot"
 export DIVFILE="/usr/share/naskpass/cryptroot.orig"
+export BCKFILE="/var/backups/cryptroot.naskpass"
 
 case "$1" in
-    install|upgrade)
+    upgrade)
+      if [ -f ${BCKFILE} ]; then
+        mv ${BCKFILE} ${ORGFILE} || true
+      fi
+    ;;
+    install)
         mkdir -p /usr/share/naskpass
         if [ ! -f ${ORGFILE} ]; then
           whiptail --title "Missing file" --msgbox "/usr/share/initramfs-tools/scripts/local-top/cryptroot is missing!\nabort .." 9 70
