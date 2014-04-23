@@ -12,10 +12,14 @@
 #define PKGNAME "nask"
 #define LOGLEN 128
 #define DEFWIN stdscr
+#define PWSTR "PASSWORD: "
 #define MAXINPUT 40
 #define MAXPASS 64
 #define MAXTRIES 3
 #define SRELPOSY -4
+#define PWTIMEOUT 10
+#define APPTIMEOUT 600
+#define SHTDWN_CMD "/sbin/poweroff"
 
 #define RET_OK 0
 #define RET_FORK -1
@@ -23,8 +27,11 @@
 #define RET_DENIED 512
 #define RET_BUSY 1280
 
-static char debug_msg[LOGLEN+1];
+static char debug_msg[LOGLEN+1], pass[MAXPASS+1];
 static pthread_t thrd;
+static char anic = '\0';
+static int ptime, atime, pidx, iidx;
+pthread_mutex_t tmretmtx = PTHREAD_MUTEX_INITIALIZER;
 
 static void set_logmsg(char *fmt, ...)
 {
@@ -105,9 +112,31 @@ static void clear_pw_status(WINDOW *wnd, size_t len)
   curs_set(1);
 }
 
+static void clear_pw_input(WINDOW *wnd)
+{
+  clear();
+  memset(debug_msg, 0, LOGLEN+1);
+  memset(pass, 0, MAXPASS+1);
+  pidx = 0;
+  iidx = 0;
+  curs_set(1);
+  print_rel_to_wnd(DEFWIN, 0, 0, PWSTR, MAXINPUT+5);
+}
+
 static void usage(void)
 {
   fprintf(stderr, PKGNAME ": [cryptcreate]\n");
+}
+
+static char animate_heartbeat(char c)
+{
+  switch (c) {
+    default:
+    case '|': return ('/');
+    case '/': return ('-');
+    case '-': return ('\\');
+    case '\\': return ('|');
+  }
 }
 
 static char *get_system_stat(void)
@@ -116,13 +145,38 @@ static char *get_system_stat(void)
   int ncpu;
   struct sysinfo inf;
 
-  if (sysinfo(&inf) != 0) {
+  if (sysinfo(&inf) == EFAULT) {
+    return ("[SYSINFO ERROR]");
   }
   ncpu = get_nprocs();
 
-  if (asprintf(&retstr, "upt:%ld - load:%lu,%lu,%lu - %d core%s - free:%lu/%lumb - procs:%d", inf.uptime, inf.loads[0], inf.loads[1], inf.loads[2], ncpu, (ncpu > 1 ? "s" : ""), (unsigned long)((inf.freeram/1024)/1024), (unsigned long)((inf.totalram/1024)/1024), inf.procs) == -1) {
+  if (asprintf(&retstr, "u:%04ld - l:%3.2f,%3.2f,%3.2f - %dcore%s - mem:%lu/%lumb - procs:%02d", 
+    inf.uptime, ((float)inf.loads[0]/10000), ((float)inf.loads[1]/10000), ((float)inf.loads[2]/10000),
+    ncpu, (ncpu > 1 ? "s" : ""),
+    (unsigned long)((inf.freeram/1024)/1024), (unsigned long)((inf.totalram/1024)/1024), inf.procs) == -1) {
+    return ("[ASPRINTF ERROR]");
   }
   return (retstr);
+}
+
+static void timer_func(void) {
+  pthread_mutex_lock(&tmretmtx);
+  if ( (ptime -= 1) <= 0) {
+    clear_pw_input(DEFWIN);
+  }
+  if ( (atime -= 1) <= 0 ) {
+    set_logmsg("APP TIMEOUT - exec %s", SHTDWN_CMD);
+    endwin_and_print_debug();
+    execl(SHTDWN_CMD, "", NULL);
+  }
+  pthread_mutex_unlock(&tmretmtx);
+}
+
+static void timer_reset(void) {
+  pthread_mutex_lock(&tmretmtx);
+  ptime = PWTIMEOUT;
+  atime = APPTIMEOUT;
+  pthread_mutex_unlock(&tmretmtx);
 }
 
 static void print_status_line(void) {
@@ -138,7 +192,7 @@ static void print_status_line(void) {
   }
   attroff(A_BOLD | COLOR_PAIR(2));
   attron(COLOR_PAIR(3));
-  mvprintw(maxy-1, 1, "[F1] clearpw | %s", statln);
+  mvprintw(maxy-1, 1, "[F1] clearpw %c %s", (anic = animate_heartbeat(anic)), statln);
   attroff(COLOR_PAIR(3));
 
   wmove(stdscr, cury, curx);
@@ -148,7 +202,8 @@ static void print_status_line(void) {
 
 static void *status_thrd(void *arg) {
   while (1) {
-    sleep(1); // TODO: wait (if gobal variable is set to 1) until main thread sends signal
+    sleep(1); // TODO: wait (if gobal variable is set to 1) until main thread sends signal or 1 second is over
+    timer_func(); // should be run every second
     print_status_line();
   }
   return (NULL);
@@ -163,9 +218,8 @@ static int run_status_thrd(void) {
 int main(int argc, char **argv)
 {
   WINDOW *win;
-  int ret, ch, curx, cury, pidx, iidx, tries = MAXTRIES;
+  int ret, ch, curx, cury, tries = MAXTRIES;
   size_t slen = 0;
-  char pass[MAXPASS+1];
   char *cmd = NULL;
 
   if (argc != 2) {
@@ -180,17 +234,13 @@ int main(int argc, char **argv)
   keypad(DEFWIN, TRUE);
   noecho();
   cbreak();
+  timer_reset();
   run_status_thrd();
 again:
-  curs_set(0);
-  clear();
-  memset(debug_msg, 0, LOGLEN+1);
-  memset(pass, 0, MAXPASS+1);
-  pidx = 0;
-  iidx = 0;
-  print_rel_to_wnd(DEFWIN, 0, 0, "PASSWORD: ", MAXINPUT+5);
-  curs_set(1);
+  timer_reset();
+  clear_pw_input(DEFWIN);
   while ( (ch = wgetch(win)) != '\n') {
+    timer_reset();
     getyx(DEFWIN, cury, curx);
     clear_pw_status(DEFWIN, slen);
     if (ch == KEY_F(1)) {
