@@ -19,7 +19,7 @@
 #define SRELPOSY -4
 #define PWTIMEOUT 10
 #define APPTIMEOUT 600
-#define SHTDWN_CMD "/sbin/poweroff"
+#define SHTDWN_CMD "/bin/poweroff"
 
 #define RET_OK 0
 #define RET_FORK -1

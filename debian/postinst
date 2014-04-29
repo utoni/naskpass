@@ -46,6 +46,7 @@ case "$1" in
           ;;
           1)
             echo "Keeping naskpass' status .." >&2
+            update-initramfs -u
           ;;
           *)
             echo "Unknown whiptail error occured .." >&2
