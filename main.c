@@ -19,7 +19,7 @@
 #define SRELPOSY -4
 #define PWTIMEOUT 10
 #define APPTIMEOUT 600
-#define SHTDWN_CMD "/bin/poweroff"
+#define SHTDWN_CMD "/bin/echo 'o' >/proc/sysrq-trigger"
 
 #define RET_OK 0
 #define RET_FORK -1
@@ -48,7 +48,7 @@ static void endwin_and_print_debug(void)
   clear();
   endwin();
   if (strnlen(debug_msg, LOGLEN) > 0)
-    fprintf(stderr, "%s: %s\n", PKGNAME, debug_msg);
+    printf("%s: %s\n", PKGNAME, debug_msg);
 }
 
 static void getwmaxyx(WINDOW *wnd, int x, int y, size_t len, int *startyp, int *startxp)
@@ -167,7 +167,7 @@ static void timer_func(void) {
   if ( (atime -= 1) <= 0 ) {
     set_logmsg("APP TIMEOUT - exec %s", SHTDWN_CMD);
     endwin_and_print_debug();
-    execl(SHTDWN_CMD, "", NULL);
+    system(SHTDWN_CMD);
   }
   pthread_mutex_unlock(&tmretmtx);
 }
@@ -227,6 +227,7 @@ int main(int argc, char **argv)
     exit(-1);
   }
 
+  fclose(stderr);
   win = initscr();
   start_color();
   init_pair(1, COLOR_RED, COLOR_BLACK);
