@@ -262,6 +262,7 @@ setup_mapping()
 				cryptkeyscript="plymouth ask-for-password --prompt"
 				cryptkey=$(printf "$cryptkey")
 			else
+				dmesg -n 1
 				cryptkeyscript="/lib/cryptsetup/naskpass"
 			fi
 		fi

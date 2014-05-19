@@ -2,6 +2,7 @@ naskpass (1.0-3) UNRELEASED; urgency=low
 
   * added activate/deactivate feature
   * fixed shutdown cmd
+  * fixed dmesg output
 
  -- Toni Uhlig <matzeton@googlemail.com>  Tue, 22 Apr 2014 08:26:15 +0200
 

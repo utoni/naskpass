@@ -48,7 +48,7 @@ static void endwin_and_print_debug(void)
   clear();
   endwin();
   if (strnlen(debug_msg, LOGLEN) > 0)
-    printf("%s: %s\n", PKGNAME, debug_msg);
+    fprintf(stderr, "%s: %s\n", PKGNAME, debug_msg);
 }
 
 static void getwmaxyx(WINDOW *wnd, int x, int y, size_t len, int *startyp, int *startxp)
@@ -227,7 +227,6 @@ int main(int argc, char **argv)
     exit(-1);
   }
 
-  fclose(stderr);
   win = initscr();
   start_color();
   init_pair(1, COLOR_RED, COLOR_BLACK);
