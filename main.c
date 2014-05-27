@@ -2,6 +2,7 @@
 #include <stdio_ext.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 #include <pthread.h>
 #include <errno.h>
 #include <string.h>
@@ -32,6 +33,7 @@ static pthread_t thrd;
 static char anic = '\0';
 static int ptime, atime, pidx, iidx;
 pthread_mutex_t tmretmtx = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t ncbsy = PTHREAD_MUTEX_INITIALIZER;
 
 static void set_logmsg(char *fmt, ...)
 {
@@ -67,6 +69,7 @@ static void print_rel_to_wnd(WINDOW *wnd, int x, int y, char *text, size_t addwi
 
   getwmaxyx(wnd, x, y, len+addwidth, &starty, &startx);
 
+  pthread_mutex_lock(&ncbsy);
   mvhline(starty-2, startx-2, 0, len+addwidth+3);
   mvhline(starty+2, startx-2, 0, len+addwidth+3);
   mvvline(starty-1, startx-3, 0, 3);
@@ -76,6 +79,7 @@ static void print_rel_to_wnd(WINDOW *wnd, int x, int y, char *text, size_t addwi
   mvaddch(starty-2, startx+len+addwidth+1, ACS_URCORNER);
   mvaddch(starty+2, startx+len+addwidth+1, ACS_LRCORNER);
   mvwprintw(wnd, starty, startx, text);
+  pthread_mutex_unlock(&ncbsy);
 }
 
 static size_t print_pw_status(WINDOW *wnd, char *text)
@@ -85,6 +89,7 @@ static size_t print_pw_status(WINDOW *wnd, char *text)
 
   curs_set(0);
   getwmaxyx(wnd, 0, SRELPOSY, len+4, &starty, &startx);
+  pthread_mutex_lock(&ncbsy);
   attron(A_BLINK);
   mvwprintw(wnd, starty, startx-2, "< ");
   mvwprintw(wnd, starty, startx+len, " >");
@@ -92,6 +97,7 @@ static size_t print_pw_status(WINDOW *wnd, char *text)
   attron(A_BOLD | COLOR_PAIR(1));
   mvwprintw(wnd, starty, startx, "%s", text);
   attroff(A_BOLD | COLOR_PAIR(1));
+  pthread_mutex_unlock(&ncbsy);
   return (strlen(text));
 }
 
@@ -105,11 +111,13 @@ static void clear_pw_status(WINDOW *wnd, size_t len)
   memset(buf, ' ', len+4);
   buf[len+4] = '\0';
 
+  pthread_mutex_lock(&ncbsy);
   getyx(wnd, cury, curx);
   getwmaxyx(wnd, 0, SRELPOSY, len+4, &starty, &startx);
   mvwprintw(wnd, starty, startx-2, "%s", buf);
   wmove(wnd, cury, curx);
   curs_set(1);
+  pthread_mutex_lock(&ncbsy);
 }
 
 static void clear_pw_input(WINDOW *wnd)
@@ -183,6 +191,7 @@ static void print_status_line(void) {
   char *statln;
   int maxx, maxy, curx, cury, i;
 
+  pthread_mutex_lock(&ncbsy);
   statln = get_system_stat();
   getmaxyx(stdscr, maxy, maxx);
   getyx(stdscr, cury, curx);
@@ -198,9 +207,11 @@ static void print_status_line(void) {
   wmove(stdscr, cury, curx);
   refresh();
   free(statln);
+  pthread_mutex_unlock(&ncbsy);
 }
 
 static void *status_thrd(void *arg) {
+  timer_reset();
   while (1) {
     sleep(1); // TODO: wait (if gobal variable is set to 1) until main thread sends signal or 1 second is over
     timer_func(); // should be run every second
@@ -234,11 +245,16 @@ int main(int argc, char **argv)
   keypad(DEFWIN, TRUE);
   noecho();
   cbreak();
-  timer_reset();
-  run_status_thrd();
+  if (run_status_thrd() != 0) {
+    endwin_and_print_debug();
+    set_logmsg("Error while running status thread(%d): %s\n", errno, strerror(errno));
+    exit(EXIT_FAILURE);
+  }
 again:
   timer_reset();
   clear_pw_input(DEFWIN);
+  print_rel_to_wnd(DEFWIN, 0, 0, PWSTR, MAXINPUT+5);
+  print_status_line();
   while ( (ch = wgetch(win)) != '\n') {
     timer_reset();
     getyx(DEFWIN, cury, curx);
@@ -250,16 +266,20 @@ again:
       pass[pidx] = '\0';
       if (pidx <= 0) continue;
       if (iidx == pidx) {
+        pthread_mutex_lock(&ncbsy);
         mvwprintw(DEFWIN, cury, curx - 1, " ");
         mvwprintw(DEFWIN, cury, curx + 2, " ");
         wmove(DEFWIN, cury, curx - 1);
         iidx--;
+        pthread_mutex_unlock(&ncbsy);
       }
       pidx--;
     } else if (pidx <= MAXPASS) {
       if (iidx <= MAXINPUT) {
+        pthread_mutex_lock(&ncbsy);
         wprintw(DEFWIN, "*");
         iidx++;
+        pthread_mutex_unlock(&ncbsy);
       } else {
         mvwprintw(DEFWIN, cury, curx + 2, ">");
         wmove(DEFWIN, cury, curx);
@@ -303,6 +323,8 @@ again:
       set_logmsg("unknown error(%d)", ret);
       break;
   }
+  pthread_cancel(thrd);
+  pthread_join(thrd, NULL);
   endwin_and_print_debug();
   return (EXIT_SUCCESS);
 }
