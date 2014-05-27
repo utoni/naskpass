@@ -117,7 +117,7 @@ static void clear_pw_status(WINDOW *wnd, size_t len)
   mvwprintw(wnd, starty, startx-2, "%s", buf);
   wmove(wnd, cury, curx);
   curs_set(1);
-  pthread_mutex_lock(&ncbsy);
+  pthread_mutex_unlock(&ncbsy);
 }
 
 static void clear_pw_input(WINDOW *wnd)
