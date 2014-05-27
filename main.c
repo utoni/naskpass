@@ -281,8 +281,10 @@ again:
         iidx++;
         pthread_mutex_unlock(&ncbsy);
       } else {
+        pthread_mutex_lock(&ncbsy);
         mvwprintw(DEFWIN, cury, curx + 2, ">");
         wmove(DEFWIN, cury, curx);
+        pthread_mutex_unlock(&ncbsy);
       }
       pass[pidx] = ch;
       pidx++;
@@ -323,7 +325,8 @@ again:
       set_logmsg("unknown error(%d)", ret);
       break;
   }
-  pthread_cancel(thrd);
+  free(cmd);
+  pthread_kill(thrd, SIGKILL);
   pthread_join(thrd, NULL);
   endwin_and_print_debug();
   return (EXIT_SUCCESS);
