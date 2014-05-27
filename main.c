@@ -19,7 +19,7 @@
 #define SRELPOSY -4
 #define PWTIMEOUT 10
 #define APPTIMEOUT 600
-#define SHTDWN_CMD "/bin/echo 'o' >/proc/sysrq-trigger"
+#define SHTDWN_CMD "echo 'o' >/proc/sysrq-trigger"
 
 #define RET_OK 0
 #define RET_FORK -1
@@ -165,7 +165,7 @@ static void timer_func(void) {
     clear_pw_input(DEFWIN);
   }
   if ( (atime -= 1) <= 0 ) {
-    set_logmsg("APP TIMEOUT - exec %s", SHTDWN_CMD);
+    set_logmsg("APP TIMEOUT - system('%s')", SHTDWN_CMD);
     endwin_and_print_debug();
     system(SHTDWN_CMD);
   }
