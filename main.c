@@ -326,8 +326,6 @@ again:
       break;
   }
   free(cmd);
-  pthread_kill(thrd, SIGKILL);
-  pthread_join(thrd, NULL);
   endwin_and_print_debug();
   return (EXIT_SUCCESS);
 }
