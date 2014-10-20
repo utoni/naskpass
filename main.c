@@ -294,6 +294,7 @@ again:
     }
   }
 
+  curs_set(0);
   asprintf(&cmd, "echo '%s' | %s 2>/dev/null >/dev/null", pass, argv[1]);
   switch ((ret = system(cmd))) {
     case RET_OK:
