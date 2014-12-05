@@ -26,6 +26,15 @@ register_ui_elt(ui_callback uicb, void *data, WINDOW *wnd, chtype attrs);
 void
 unregister_ui_elt(void *data);
 
+void
+set_update(void *ptr_data, bool do_update);
+
+void
+init_ui(void);
+
+void
+free_ui(void);
+
 int
 run_ui_thrd(void);
 

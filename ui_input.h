@@ -21,6 +21,6 @@ int
 input_cb(WINDOW *win, void *data, bool needs_update);
 
 void
-register_input(struct input *a, unsigned int x, unsigned int y, unsigned int width, unsigned int height, chtype attr);
+register_input(unsigned int x, unsigned int y, unsigned int width, unsigned int height, struct input *a, chtype attr);
 
 #endif

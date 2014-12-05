@@ -69,6 +69,20 @@ unregister_ui_elt(void *data)
   }
 }
 
+void
+set_update(void *ptr_data, bool do_update)
+{
+  struct nask_ui *cur = nui;
+
+  while (cur != NULL) {
+    if (ptr_data == cur->data) {
+      cur->do_update = do_update;
+      break;
+    }
+    cur = cur->next;
+  }
+}
+
 static int
 do_ui_update(void)
 {
@@ -110,7 +124,7 @@ ui_thrd(void *arg)
   return (NULL);
 }
 
-static void
+void
 init_ui(void)
 {
   wnd_main = initscr();
@@ -124,7 +138,7 @@ init_ui(void)
   cbreak();
 }
 
-static void
+void
 free_ui(void)
 {
   delwin(wnd_main);
@@ -134,7 +148,6 @@ free_ui(void)
 
 int
 run_ui_thrd(void) {
-  init_ui();
   active = true;
   return (pthread_create(&thrd, NULL, &ui_thrd, NULL));
 }
@@ -142,7 +155,6 @@ run_ui_thrd(void) {
 int
 stop_ui_thrd(void) {
   active = false;
-  free_ui();
   return (pthread_join(thrd, NULL));
 }
 
@@ -156,9 +168,10 @@ main(int argc, char **argv)
   a->state = '-';
   b->state = '\\';
 
+  init_ui();
   register_anic(heartbeat, A_BOLD | COLOR_PAIR(3));
   register_anic(a,0); register_anic(b,COLOR_PAIR(1));
-  register_input(pw_input, COLOR_PAIR(2), 5, 5, 10, 5);
+  register_input(1, 1, 10, 5, pw_input, COLOR_PAIR(2));
   if (run_ui_thrd() != 0) {
     exit(EXIT_FAILURE);
   }
@@ -171,5 +184,6 @@ sleep(5);
   free_input(pw_input);
   free_anic(heartbeat);
   free_anic(a); free_anic(b);
+  free_ui();
   return (0);
 }
