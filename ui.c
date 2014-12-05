@@ -1,38 +1,14 @@
 #include <stdio.h>
-#include <stdio_ext.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <signal.h>
 #include <pthread.h>
-#include <errno.h>
 #include <string.h>
-#include <fcntl.h>
 #include <ncurses.h>
-#include <time.h>
 #include <sys/time.h>
-#include <sys/sysinfo.h>
 
 #include "ui.h"
 #include "ui_ani.h"
-
-#define PKGNAME "nask"
-#define LOGLEN 128
-#define DEFWIN stdscr
-#define PWSTR "PASSWORD: "
-#define MAXINPUT 40
-#define MAXPASS 64
-#define MAXTRIES 3
-#define SRELPOSY -4
-#define PWTIMEOUT 10
-#define APPTIMEOUT 600
-#define SHTDWN_CMD "echo 'o' >/proc/sysrq-trigger"
-
-#define RET_OK 0
-#define RET_FORK -1
-#define RET_SHELL 127
-#define RET_DENIED 512
-#define RET_BUSY 1280
 
 
 static WINDOW *wnd_main;
@@ -142,7 +118,7 @@ init_ui(void)
   init_pair(2, COLOR_WHITE, COLOR_WHITE);
   init_pair(3, COLOR_BLACK, COLOR_WHITE);
   raw();
-  keypad(DEFWIN, TRUE);
+  keypad(stdscr, TRUE);
   noecho();
   cbreak();
 }
