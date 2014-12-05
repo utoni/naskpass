@@ -9,6 +9,7 @@
 
 #include "ui.h"
 #include "ui_ani.h"
+#include "ui_input.h"
 
 
 static WINDOW *wnd_main;
@@ -148,6 +149,7 @@ stop_ui_thrd(void) {
 int
 main(int argc, char **argv)
 {
+  struct input *pw_input = init_input(true, true, "PASSWORD", 128);
   struct anic *heartbeat = init_anic(2,2);
   struct anic *a = init_anic(4,4);
   struct anic *b = init_anic(6,6);
@@ -156,6 +158,7 @@ main(int argc, char **argv)
 
   register_anic(heartbeat, A_BOLD | COLOR_PAIR(3));
   register_anic(a,0); register_anic(b,COLOR_PAIR(1));
+  register_input(pw_input, COLOR_PAIR(2), 5, 5, 10, 5);
   if (run_ui_thrd() != 0) {
     exit(EXIT_FAILURE);
   }
@@ -164,6 +167,8 @@ sleep(5);
   unregister_ui_elt(a);
   unregister_ui_elt(heartbeat);
   unregister_ui_elt(b);
+  unregister_ui_elt(pw_input);
+  free_input(pw_input);
   free_anic(heartbeat);
   free_anic(a); free_anic(b);
   return (0);

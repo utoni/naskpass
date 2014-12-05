@@ -1,5 +1,5 @@
-#ifndef UI_ANIC_H
-#define UI_ANIC_H 1
+#ifndef UI_INPUT_H
+#define UI_INPUT_H 1
 
 #include <ncurses.h>
 
@@ -21,6 +21,6 @@ int
 input_cb(WINDOW *win, void *data, bool needs_update);
 
 void
-register_input(struct input *a, chtype attr);
+register_input(struct input *a, unsigned int x, unsigned int y, unsigned int width, unsigned int height, chtype attr);
 
 #endif

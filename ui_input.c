@@ -36,6 +36,8 @@ input_cb(WINDOW *win, void *data, bool needs_update)
 }
 
 void
-register_input(struct input *a, chtype attr)
+register_input(struct input *a, unsigned int x, unsigned int y, unsigned int width, unsigned int height, chtype attr)
 {
+  WINDOW *wnd = newwin(y, x, width, height);
+  register_ui_elt(input_cb, (void *) a, wnd, attr);
 }
