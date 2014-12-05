@@ -1,5 +1,5 @@
-#ifndef UI_H
-#define UI_H 1
+#ifndef UI_ANIC_H
+#define UI_ANIC_H 1
 
 #include <ncurses.h>
 
@@ -16,6 +16,9 @@ void
 free_anic(struct anic *a);
 
 int
-anic_cb(WINDOW *win, void *data);
+anic_cb(WINDOW *win, void *data, bool needs_update);
+
+void
+register_anic(struct anic *a, chtype attr);
 
 #endif

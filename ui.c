@@ -14,6 +14,7 @@
 #include <sys/sysinfo.h>
 
 #include "ui.h"
+#include "ui_ani.h"
 
 #define PKGNAME "nask"
 #define LOGLEN 128
@@ -45,123 +46,95 @@ pthread_mutex_t tmretmtx = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ncbsy = PTHREAD_MUTEX_INITIALIZER;
 
 
-static void getwmaxyx(WINDOW *wnd, int x, int y, size_t len, int *startyp, int *startxp)
+void
+register_ui_elt(ui_callback uicb, void *data, WINDOW *wnd, chtype attrs)
 {
-  int maxy, maxx;
+  struct nask_ui *tmp, *new;
 
-  getmaxyx(wnd, maxy, maxx);
-  *startxp = ( ((int)(maxx/2)) - x - ((int)(len/2)));
-  *startyp = ( ((int)(maxy/2)) - y);
-}
-
-static void print_rel_to_wnd(WINDOW *wnd, int x, int y, char *text, size_t addwidth)
-{
-  int startx, starty;
-  size_t len = strlen(text);
-
-  getwmaxyx(wnd, x, y, len+addwidth, &starty, &startx);
-
-  pthread_mutex_lock(&ncbsy);
-  mvhline(starty-2, startx-2, 0, len+addwidth+3);
-  mvhline(starty+2, startx-2, 0, len+addwidth+3);
-  mvvline(starty-1, startx-3, 0, 3);
-  mvvline(starty-1, startx+len+addwidth+1, 0, 3);
-  mvaddch(starty-2, startx-3, ACS_ULCORNER);
-  mvaddch(starty+2, startx-3, ACS_LLCORNER);
-  mvaddch(starty-2, startx+len+addwidth+1, ACS_URCORNER);
-  mvaddch(starty+2, startx+len+addwidth+1, ACS_LRCORNER);
-  mvwprintw(wnd, starty, startx, text);
-  pthread_mutex_unlock(&ncbsy);
-}
-
-static size_t print_pw_status(WINDOW *wnd, char *text)
-{
-  int startx, starty;
-  size_t len = strlen(text);
-
-  curs_set(0);
-  getwmaxyx(wnd, 0, SRELPOSY, len+4, &starty, &startx);
-  pthread_mutex_lock(&ncbsy);
-  attron(A_BLINK);
-  mvwprintw(wnd, starty, startx-2, "< ");
-  mvwprintw(wnd, starty, startx+len, " >");
-  attroff(A_BLINK);
-  attron(A_BOLD | COLOR_PAIR(1));
-  mvwprintw(wnd, starty, startx, "%s", text);
-  attroff(A_BOLD | COLOR_PAIR(1));
-  pthread_mutex_unlock(&ncbsy);
-  return (strlen(text));
-}
-
-static void clear_pw_status(WINDOW *wnd, size_t len)
-{
-  int startx, starty, curx, cury;
-  char buf[len+5];
-  if (len <= 0) return;
-
-  attroff(A_BLINK | A_BOLD | COLOR_PAIR(1));
-  memset(buf, ' ', len+4);
-  buf[len+4] = '\0';
-
-  pthread_mutex_lock(&ncbsy);
-  getyx(wnd, cury, curx);
-  getwmaxyx(wnd, 0, SRELPOSY, len+4, &starty, &startx);
-  mvwprintw(wnd, starty, startx-2, "%s", buf);
-  wmove(wnd, cury, curx);
-  curs_set(1);
-  pthread_mutex_unlock(&ncbsy);
-}
-
-void register_ui_elt(ui_callback uicb, void *data)
-{
-  struct nask_ui *tmp;
-
+  if (nui != NULL) {
+    tmp = nui;
+    while (tmp->next != NULL) {
+     tmp = tmp->next;
+    }
+  }
+  new = calloc(1, sizeof(struct nask_ui));
+  new->ui_elt_cb = uicb;
+  new->do_update = true;
+  new->wnd = wnd;
+  new->attrs = attrs;
+  new->data = data;
+  new->next = NULL;
   if (nui == NULL) {
-    nui = calloc(1, sizeof(struct nask_ui));
+    nui = new;
     nui->next = NULL;
+  } else {
+    tmp->next = new;
   }
-  tmp = nui;
-  while (tmp->next != NULL) {
-   tmp = tmp->next;
-  }
-  tmp->next = calloc(1, sizeof(struct nask_ui));
-  tmp->next->ui_elt_cb = uicb;
-  tmp->next->do_update = true;
-  tmp->next->data = data;
-  tmp->next->next = NULL;
 }
 
-static void *ui_thrd(void *arg) {
+void
+unregister_ui_elt(void *data)
+{
+  struct nask_ui *cur = nui, *next, *before = NULL;
+
+  while (cur != NULL) {
+    next = cur->next;
+    if (cur->data != NULL && cur->data == data) {
+      free(cur);
+      if (before != NULL) {
+        before->next = next;
+      } else {
+        nui = next;
+      }
+    }
+    before = cur;
+    cur = next;
+  }
+}
+
+static int
+do_ui_update(void)
+{
+  int retval = UICB_OK;
+  struct nask_ui *cur = nui;
+
+  while (cur != NULL) {
+    if (cur->ui_elt_cb != NULL) {
+      attron(cur->attrs);
+      cur->ui_elt_cb(cur->wnd, cur->data, cur->do_update);
+      attroff(cur->attrs);
+    } else {
+      retval = UICB_ERR_CB;
+    }
+    cur = cur->next;
+  }
+  refresh();
+  return (retval);
+}
+
+static void *
+ui_thrd(void *arg)
+{
   struct timeval now;
   struct timespec wait;
 
   pthread_mutex_lock(&mtx_update);
   gettimeofday(&now, NULL);
   wait.tv_sec = now.tv_sec + 1;
-  wait.tv_nsec = now.tv_usec;
+  wait.tv_nsec = now.tv_usec * 1000;
+  do_ui_update();
   while (active == true) {
     pthread_cond_timedwait(&cnd_update, &mtx_update, &wait);
+    wait.tv_sec += 1;
     if (active == false) break;
+    do_ui_update();
   }
   pthread_mutex_unlock(&mtx_update);
   return (NULL);
 }
 
-int do_update(void) {
-  
-}
-
-int run_ui_thrd(void) {
-  active = true;
-  return (pthread_create(&thrd, NULL, &ui_thrd, NULL));
-}
-
-int stop_ui_thrd(void) {
-  active = false;
-  return (pthread_join(thrd, NULL));
-}
-
-void init_ui(void)
+static void
+init_ui(void)
 {
   wnd_main = initscr();
   start_color();
@@ -174,21 +147,48 @@ void init_ui(void)
   cbreak();
 }
 
-void free_ui(void)
+static void
+free_ui(void)
 {
+  delwin(wnd_main);
   endwin();
   clear();
 }
 
-int main(int argc, char **argv)
-{
+int
+run_ui_thrd(void) {
   init_ui();
+  active = true;
+  return (pthread_create(&thrd, NULL, &ui_thrd, NULL));
+}
 
+int
+stop_ui_thrd(void) {
+  active = false;
+  free_ui();
+  return (pthread_join(thrd, NULL));
+}
+
+int
+main(int argc, char **argv)
+{
+  struct anic *heartbeat = init_anic(2,2);
+  struct anic *a = init_anic(4,4);
+  struct anic *b = init_anic(6,6);
+  a->state = '-';
+  b->state = '\\';
+
+  register_anic(heartbeat, A_BOLD | COLOR_PAIR(3));
+  register_anic(a,0); register_anic(b,COLOR_PAIR(1));
   if (run_ui_thrd() != 0) {
     exit(EXIT_FAILURE);
   }
+sleep(5);
   stop_ui_thrd();
-
-  free_ui();
+  unregister_ui_elt(a);
+  unregister_ui_elt(heartbeat);
+  unregister_ui_elt(b);
+  free_anic(heartbeat);
+  free_anic(a); free_anic(b);
   return (0);
 }
