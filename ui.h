@@ -2,34 +2,40 @@
 #define UI_H 1
 
 #include <ncurses.h>
+#include <stdint.h>
 
 #define UICB_OK		0
 #define UICB_ERR_UNDEF	1
 #define UICB_ERR_NOP	2
 #define UICB_ERR_CB	3
-#define UICB_CURSOR	4
+#define UICB_ERR_BUF	4
+
+#define UILOOP_TIMEOUT	1
+
+#define UIKEY_ENTER	10
+#define UIKEY_BACKSPACE	7
+#define UIKEY_ESC	27
+#define UIKEY_DOWN	2
+#define UIKEY_UP	3
+#define UIKEY_LEFT	4
+#define UIKEY_RIGHT	5
 
 
-typedef int (*ui_callback)(WINDOW *, void *, bool);
+typedef int (*ui_callback)(WINDOW *, void *, bool, bool);
 
 struct nask_ui {
   ui_callback ui_elt_cb;
-  ui_callback postui_elt_cb;
   bool do_update;
   WINDOW *wnd;
-  chtype attrs;
   void *data;
   struct nask_ui *next;
 };
 
 void
-register_ui_elt(ui_callback uicb, ui_callback post_uicb, void *data, WINDOW *wnd, chtype attrs);
+register_ui_elt(ui_callback uicb, void *data, WINDOW *wnd);
 
 void
 unregister_ui_elt(void *data);
-
-void
-set_update(void *ptr_data, bool do_update);
 
 void
 ui_thrd_force_update(void);

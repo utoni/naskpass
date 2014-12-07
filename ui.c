@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include <string.h>
 #include <ncurses.h>
 #include <sys/time.h>
@@ -18,13 +19,13 @@ static pthread_t thrd;
 static bool active;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
-
-pthread_mutex_t tmretmtx = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t ncbsy = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mtx_cb = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mtx_busy = PTHREAD_MUTEX_INITIALIZER;
+static sem_t sem_rdy;
 
 
 void
-register_ui_elt(ui_callback uicb, ui_callback post_uicb, void *data, WINDOW *wnd, chtype attrs)
+register_ui_elt(ui_callback uicb, void *data, WINDOW *wnd)
 {
   struct nask_ui *tmp, *new;
 
@@ -36,10 +37,8 @@ register_ui_elt(ui_callback uicb, ui_callback post_uicb, void *data, WINDOW *wnd
   }
   new = calloc(1, sizeof(struct nask_ui));
   new->ui_elt_cb = uicb;
-  new->postui_elt_cb = post_uicb;
   new->do_update = true;
   new->wnd = wnd;
-  new->attrs = attrs;
   new->data = data;
   new->next = NULL;
   if (nui == NULL) {
@@ -70,47 +69,29 @@ unregister_ui_elt(void *data)
   }
 }
 
-void
-set_update(void *ptr_data, bool do_update)
-{
-  struct nask_ui *cur = nui;
-
-  while (cur != NULL) {
-    if (ptr_data == cur->data) {
-      cur->do_update = do_update;
-      break;
-    }
-    cur = cur->next;
-  }
-}
-
 static int
-do_ui_update(void)
+do_ui_update(bool timed_out)
 {
   int retval = UICB_OK;
+  int curx = getcurx(wnd_main);
+  int cury = getcury(wnd_main);
   struct nask_ui *cur = nui;
 
   /* call all draw callback's */
+  erase();
   while (cur != NULL) {
     if (cur->ui_elt_cb != NULL) {
-      attron(cur->attrs);
-      cur->ui_elt_cb(cur->wnd, cur->data, cur->do_update);
-      attroff(cur->attrs);
+      pthread_mutex_lock(&mtx_cb);
+      cur->ui_elt_cb(cur->wnd, cur->data, cur->do_update, timed_out);
+      doupdate();
+      pthread_mutex_unlock(&mtx_cb);
     } else {
       retval = UICB_ERR_CB;
     }
     cur = cur->next;
   }
+  wmove(wnd_main, cury, curx);
   refresh();
-  /* call all post draw callback's */
-  while (cur != NULL) {
-    if (cur->postui_elt_cb != NULL) {
-      if (cur->postui_elt_cb(cur->wnd, cur->data, cur->do_update) == UICB_CURSOR) {
-        break;
-      }
-    }
-    cur = cur->next;
-  }
   return (retval);
 }
 
@@ -121,17 +102,20 @@ ui_thrd(void *arg)
   struct timespec wait;
 
   pthread_mutex_lock(&mtx_update);
-  do_ui_update();
   gettimeofday(&now, NULL);
-  wait.tv_sec = now.tv_sec + 1;
+  wait.tv_sec = now.tv_sec + UILOOP_TIMEOUT;
   wait.tv_nsec = now.tv_usec * 1000;
-  do_ui_update();
+  do_ui_update(false);
+  sem_post(&sem_rdy);
   while (active == true) {
+    pthread_mutex_unlock(&mtx_busy);
     pthread_cond_timedwait(&cnd_update, &mtx_update, &wait);
-    wait.tv_sec += 1;
+    wait.tv_sec += UILOOP_TIMEOUT;
+    pthread_mutex_lock(&mtx_busy);
     if (active == false) break;
-    do_ui_update();
+    do_ui_update(true);
   }
+  pthread_mutex_unlock(&mtx_busy);
   pthread_mutex_unlock(&mtx_update);
   return (NULL);
 }
@@ -167,46 +151,85 @@ free_ui(void)
 
 int
 run_ui_thrd(void) {
+  pthread_mutex_lock(&mtx_busy);
   active = true;
+  pthread_mutex_unlock(&mtx_busy);
   return (pthread_create(&thrd, NULL, &ui_thrd, NULL));
 }
 
 int
 stop_ui_thrd(void) {
+  pthread_mutex_lock(&mtx_busy);
   active = false;
+  pthread_mutex_unlock(&mtx_busy);
   return (pthread_join(thrd, NULL));
+}
+
+static bool
+process_key(int key, struct input *a, WINDOW *win)
+{
+  bool retval = true;
+
+  pthread_mutex_lock(&mtx_busy);
+  switch (key) {
+    case UIKEY_ENTER:
+    case UIKEY_BACKSPACE:
+      del_input(win, a);
+      break;
+    case UIKEY_ESC:
+      retval = active = false;
+      ui_thrd_force_update();
+      break;
+    case UIKEY_DOWN:
+    case UIKEY_UP:
+    case UIKEY_LEFT:
+    case UIKEY_RIGHT:
+      break;
+    default:
+      add_input(win, a, key);
+  }
+  //mvprintw(0,0,"*%d*", key);
+  pthread_mutex_unlock(&mtx_busy);
+  return (retval);
 }
 
 int
 main(int argc, char **argv)
 {
-  struct input *pw_input = init_input(1,7,20,"PASSWORD", 128);
-  struct input *c = init_input(3,8,25,"BLABLUBB", 128);
-  struct anic *heartbeat = init_anic(2,2);
-  struct anic *a = init_anic(4,4);
-  struct anic *b = init_anic(6,6);
+  struct input *pw_input = init_input(1,7,20,"PASSWORD",128,COLOR_PAIR(3));
+  struct anic *heartbeat = init_anic(2,2,A_BOLD | COLOR_PAIR(3));
+  struct anic *a = init_anic(4,4,0);
+  struct anic *b = init_anic(6,6,COLOR_PAIR(1));
   a->state = '-';
   b->state = '\\';
+  char key = '\0';
 
+  if (sem_init(&sem_rdy, 0, 0) == -1) {
+    perror("init semaphore");
+    exit(1);
+  }
   init_ui();
-  register_anic(heartbeat, A_BOLD | COLOR_PAIR(3));
-  register_anic(a,0); register_anic(b,COLOR_PAIR(1));
-  register_input(NULL, pw_input, COLOR_PAIR(3));
-  register_input(NULL, c, COLOR_PAIR(3));
+  register_anic(heartbeat);
+  register_anic(a); register_anic(b);
+  register_input(NULL, pw_input);
+  activate_input(wnd_main, pw_input);
   if (run_ui_thrd() != 0) {
     exit(EXIT_FAILURE);
   }
-  wgetch(wnd_main);
-  ui_thrd_force_update();
+  sem_wait(&sem_rdy);
+  while ((key = wgetch(wnd_main)) != '\0' && process_key(key, pw_input, wnd_main) == true) {
+    pthread_mutex_lock(&mtx_busy);
+    activate_input(wnd_main, pw_input);
+    pthread_mutex_unlock(&mtx_busy);
+  }
   stop_ui_thrd();
   unregister_ui_elt(a);
   unregister_ui_elt(heartbeat);
   unregister_ui_elt(b);
   unregister_ui_elt(pw_input);
-  unregister_ui_elt(c);
   free_input(pw_input);
   free_anic(heartbeat);
-  free_anic(a); free_anic(b); free_input(c);
+  free_anic(a); free_anic(b);
   free_ui();
   return (0);
 }
