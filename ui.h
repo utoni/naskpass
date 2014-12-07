@@ -21,11 +21,10 @@
 #define UIKEY_RIGHT	5
 
 
-typedef int (*ui_callback)(WINDOW *, void *, bool, bool);
+typedef int (*ui_callback)(WINDOW *, void *, bool);
 
 struct nask_ui {
   ui_callback ui_elt_cb;
-  bool do_update;
   WINDOW *wnd;
   void *data;
   struct nask_ui *next;

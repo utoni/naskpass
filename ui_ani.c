@@ -25,7 +25,7 @@ free_anic(struct anic *a)
 }
 
 int
-anic_cb(WINDOW *win, void *data, bool needs_update, bool timed_out)
+anic_cb(WINDOW *win, void *data, bool timed_out)
 {
   struct anic *a = (struct anic *) data;
 
@@ -39,15 +39,13 @@ anic_cb(WINDOW *win, void *data, bool needs_update, bool timed_out)
       case '\\': a->state = '|'; break;
     }
   }
-  if (needs_update == true) {
-    attron(a->attrs);
-    if (win != NULL) {
-      mvwaddch(win, a->y, a->x, a->state);
-    } else {
-      mvaddch(a->y, a->x, a->state);
-    }
-    attroff(a->attrs);
-  } else return (UICB_ERR_NOP);
+  attron(a->attrs);
+  if (win != NULL) {
+    mvwaddch(win, a->y, a->x, a->state);
+  } else {
+    mvaddch(a->y, a->x, a->state);
+  }
+  attroff(a->attrs);
   return (UICB_OK);
 }
 

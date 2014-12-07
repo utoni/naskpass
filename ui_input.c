@@ -108,12 +108,12 @@ del_input(WINDOW *win, struct input *a)
 }
 
 int
-input_cb(WINDOW *win, void *data, bool needs_update, bool timed_out)
+input_cb(WINDOW *win, void *data, bool timed_out)
 {
   struct input *a = (struct input *) data;
 
   if (a == NULL) return (UICB_ERR_UNDEF);
-  if (needs_update || timed_out) {
+  if (timed_out == true) {
     print_input(win, a);
   }
   return (UICB_OK);

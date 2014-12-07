@@ -18,7 +18,7 @@ void
 free_anic(struct anic *a);
 
 int
-anic_cb(WINDOW *win, void *data, bool needs_update, bool timed_out);
+anic_cb(WINDOW *win, void *data, bool timed_out);
 
 void
 register_anic(struct anic *a);

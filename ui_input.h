@@ -33,7 +33,7 @@ int
 del_input(WINDOW *win, struct input *a);
 
 int
-input_cb(WINDOW *win, void *data, bool needs_update, bool timed_out);
+input_cb(WINDOW *win, void *data, bool timed_out);
 
 void
 register_input(WINDOW *win, struct input *a);

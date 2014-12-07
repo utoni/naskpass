@@ -37,7 +37,6 @@ register_ui_elt(ui_callback uicb, void *data, WINDOW *wnd)
   }
   new = calloc(1, sizeof(struct nask_ui));
   new->ui_elt_cb = uicb;
-  new->do_update = true;
   new->wnd = wnd;
   new->data = data;
   new->next = NULL;
@@ -82,7 +81,7 @@ do_ui_update(bool timed_out)
   while (cur != NULL) {
     if (cur->ui_elt_cb != NULL) {
       pthread_mutex_lock(&mtx_cb);
-      cur->ui_elt_cb(cur->wnd, cur->data, cur->do_update, timed_out);
+      cur->ui_elt_cb(cur->wnd, cur->data, timed_out);
       doupdate();
       pthread_mutex_unlock(&mtx_cb);
     } else {
@@ -105,7 +104,7 @@ ui_thrd(void *arg)
   gettimeofday(&now, NULL);
   wait.tv_sec = now.tv_sec + UILOOP_TIMEOUT;
   wait.tv_nsec = now.tv_usec * 1000;
-  do_ui_update(false);
+  do_ui_update(true);
   sem_post(&sem_rdy);
   while (active == true) {
     pthread_mutex_unlock(&mtx_busy);
