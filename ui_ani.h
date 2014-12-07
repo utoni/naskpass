@@ -3,6 +3,7 @@
 
 #include <ncurses.h>
 
+
 struct anic {
   unsigned int x;
   unsigned int y;
