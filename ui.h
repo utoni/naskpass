@@ -3,16 +3,18 @@
 
 #include <ncurses.h>
 
-
 #define UICB_OK		0
 #define UICB_ERR_UNDEF	1
 #define UICB_ERR_NOP	2
 #define UICB_ERR_CB	3
+#define UICB_CURSOR	4
+
 
 typedef int (*ui_callback)(WINDOW *, void *, bool);
 
 struct nask_ui {
   ui_callback ui_elt_cb;
+  ui_callback postui_elt_cb;
   bool do_update;
   WINDOW *wnd;
   chtype attrs;
@@ -21,13 +23,16 @@ struct nask_ui {
 };
 
 void
-register_ui_elt(ui_callback uicb, void *data, WINDOW *wnd, chtype attrs);
+register_ui_elt(ui_callback uicb, ui_callback post_uicb, void *data, WINDOW *wnd, chtype attrs);
 
 void
 unregister_ui_elt(void *data);
 
 void
 set_update(void *ptr_data, bool do_update);
+
+void
+ui_thrd_force_update(void);
 
 void
 init_ui(void);

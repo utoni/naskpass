@@ -49,5 +49,5 @@ anic_cb(WINDOW *win, void *data, bool needs_update)
 void
 register_anic(struct anic *a, chtype attr)
 {
-  register_ui_elt(anic_cb, (void *) a, NULL, attr);
+  register_ui_elt(anic_cb, NULL, (void *) a, NULL, attr);
 }

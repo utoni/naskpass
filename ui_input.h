@@ -3,16 +3,21 @@
 
 #include <ncurses.h>
 
+
 struct input {
-  bool box;
-  bool shadow;
+  unsigned int x;
+  unsigned int y;
+  unsigned int width;
   char *input;
+  size_t input_max;
   size_t input_len;
+  size_t input_pos;
   char *prompt;
+  bool active;
 };
 
 struct input *
-init_input(bool box, bool shadow, char *prompt, size_t input_len);
+init_input(unsigned int x, unsigned int y, unsigned int width, char *prompt, size_t input_len);
 
 void
 free_input(struct input *a);
@@ -21,6 +26,6 @@ int
 input_cb(WINDOW *win, void *data, bool needs_update);
 
 void
-register_input(unsigned int x, unsigned int y, unsigned int width, unsigned int height, struct input *a, chtype attr);
+register_input(WINDOW *win, struct input *a, chtype attr);
 
 #endif

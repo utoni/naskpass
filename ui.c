@@ -24,7 +24,7 @@ pthread_mutex_t ncbsy = PTHREAD_MUTEX_INITIALIZER;
 
 
 void
-register_ui_elt(ui_callback uicb, void *data, WINDOW *wnd, chtype attrs)
+register_ui_elt(ui_callback uicb, ui_callback post_uicb, void *data, WINDOW *wnd, chtype attrs)
 {
   struct nask_ui *tmp, *new;
 
@@ -36,6 +36,7 @@ register_ui_elt(ui_callback uicb, void *data, WINDOW *wnd, chtype attrs)
   }
   new = calloc(1, sizeof(struct nask_ui));
   new->ui_elt_cb = uicb;
+  new->postui_elt_cb = post_uicb;
   new->do_update = true;
   new->wnd = wnd;
   new->attrs = attrs;
@@ -89,6 +90,7 @@ do_ui_update(void)
   int retval = UICB_OK;
   struct nask_ui *cur = nui;
 
+  /* call all draw callback's */
   while (cur != NULL) {
     if (cur->ui_elt_cb != NULL) {
       attron(cur->attrs);
@@ -100,6 +102,15 @@ do_ui_update(void)
     cur = cur->next;
   }
   refresh();
+  /* call all post draw callback's */
+  while (cur != NULL) {
+    if (cur->postui_elt_cb != NULL) {
+      if (cur->postui_elt_cb(cur->wnd, cur->data, cur->do_update) == UICB_CURSOR) {
+        break;
+      }
+    }
+    cur = cur->next;
+  }
   return (retval);
 }
 
@@ -110,6 +121,7 @@ ui_thrd(void *arg)
   struct timespec wait;
 
   pthread_mutex_lock(&mtx_update);
+  do_ui_update();
   gettimeofday(&now, NULL);
   wait.tv_sec = now.tv_sec + 1;
   wait.tv_nsec = now.tv_usec * 1000;
@@ -122,6 +134,12 @@ ui_thrd(void *arg)
   }
   pthread_mutex_unlock(&mtx_update);
   return (NULL);
+}
+
+void
+ui_thrd_force_update(void)
+{
+  pthread_cond_signal(&cnd_update);
 }
 
 void
@@ -144,6 +162,7 @@ free_ui(void)
   delwin(wnd_main);
   endwin();
   clear();
+  printf(" \033[2J");
 }
 
 int
@@ -161,7 +180,8 @@ stop_ui_thrd(void) {
 int
 main(int argc, char **argv)
 {
-  struct input *pw_input = init_input(true, true, "PASSWORD", 128);
+  struct input *pw_input = init_input(1,7,20,"PASSWORD", 128);
+  struct input *c = init_input(3,8,25,"BLABLUBB", 128);
   struct anic *heartbeat = init_anic(2,2);
   struct anic *a = init_anic(4,4);
   struct anic *b = init_anic(6,6);
@@ -171,19 +191,22 @@ main(int argc, char **argv)
   init_ui();
   register_anic(heartbeat, A_BOLD | COLOR_PAIR(3));
   register_anic(a,0); register_anic(b,COLOR_PAIR(1));
-  register_input(1, 1, 10, 5, pw_input, COLOR_PAIR(2));
+  register_input(NULL, pw_input, COLOR_PAIR(3));
+  register_input(NULL, c, COLOR_PAIR(3));
   if (run_ui_thrd() != 0) {
     exit(EXIT_FAILURE);
   }
-sleep(5);
+  wgetch(wnd_main);
+  ui_thrd_force_update();
   stop_ui_thrd();
   unregister_ui_elt(a);
   unregister_ui_elt(heartbeat);
   unregister_ui_elt(b);
   unregister_ui_elt(pw_input);
+  unregister_ui_elt(c);
   free_input(pw_input);
   free_anic(heartbeat);
-  free_anic(a); free_anic(b);
+  free_anic(a); free_anic(b); free_input(c);
   free_ui();
   return (0);
 }
