@@ -34,6 +34,20 @@ free_input(struct input *a)
 }
 
 static void
+print_wnd(int x, int y, size_t len, size_t addwidth)
+{
+  mvhline(y-2, x-2, 0, len+addwidth+3);
+  mvhline(y+2, x-2, 0, len+addwidth+3);
+  mvvline(y-1, x-3, 0, 3);
+  mvvline(y-1, x+len+addwidth+1, 0, 3);
+  mvaddch(y-2, x-3, ACS_ULCORNER);
+  mvaddch(y+2, x-3, ACS_LLCORNER);
+  mvaddch(y-2, x+len+addwidth+1, ACS_URCORNER);
+  mvaddch(y+2, x+len+addwidth+1, ACS_LRCORNER);
+  mvprintw(12, 1, "(%d,%d),len:%lu,addw:%lu", x, y, len, addwidth);
+}
+
+static void
 print_input_text(WINDOW *win, struct input *a)
 {
   size_t start = 0;
@@ -60,6 +74,7 @@ print_input(WINDOW *win, struct input *a)
   size_t p_len = strlen(a->prompt);
 
   attron(a->attrs);
+  print_wnd(a->x, a->y, 10, 2);
   if (win == NULL) {
     mvprintw(a->y, a->x, a->prompt);
     tmp = calloc(a->width+1, sizeof(char));
@@ -97,8 +112,7 @@ add_input(WINDOW *win, struct input *a, int key)
   ++a->input_len;
   a->cur_pos = (a->cur_pos+1 < a->width ? a->cur_pos+1 : a->cur_pos);
   print_input(win, a);
-
-  mvwprintw(win, 10, 1, "w:%d,cp:%d,im:%lu,il:%lu,ip:%lu,s:%s", a->width, a->cur_pos, a->input_max, a->input_len, a->input_pos, a->input);
+  //mvwprintw(win, 10, 1, "w:%d,cp:%d,im:%lu,il:%lu,ip:%lu,s:%s", a->width, a->cur_pos, a->input_max, a->input_len, a->input_pos, a->input);
   return (UICB_OK);
 }
 
@@ -112,11 +126,13 @@ del_input(WINDOW *win, struct input *a)
   if (a->input_pos-1 == a->input_len) {
     --a->input_pos;
   }
-  a->cur_pos = (a->cur_pos+1 < a->width && a->cur_pos > 0 ? a->cur_pos-1 : a->cur_pos);
+  if (a->cur_pos+1 < a->width && a->cur_pos > 0) {
+    --a->cur_pos;
+  } else if (a->cur_pos-1 == a->input_pos) {
+    --a->cur_pos;
+  }
   mvwprintw(win, a->y, a->x + a->cur_pos + strlen(a->prompt), "_");
   print_input(win, a);
-
-  mvwprintw(win, 10, 1, "w:%d,cp:%d,im:%lu,il:%lu,ip:%lu,s:%s", a->width, a->cur_pos, a->input_max, a->input_len, a->input_pos, a->input);
   return (UICB_OK);
 }
 

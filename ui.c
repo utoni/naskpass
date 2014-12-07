@@ -196,7 +196,7 @@ process_key(int key, struct input *a, WINDOW *win)
 int
 main(int argc, char **argv)
 {
-  struct input *pw_input = init_input(1,7,20,"PASSWORD",128,COLOR_PAIR(3));
+  struct input *pw_input = init_input(3,7,20,"PASSWORD",128,COLOR_PAIR(3));
   struct anic *heartbeat = init_anic(2,2,A_BOLD | COLOR_PAIR(3));
   struct anic *a = init_anic(4,4,0);
   struct anic *b = init_anic(6,6,COLOR_PAIR(1));
