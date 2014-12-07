@@ -104,6 +104,15 @@ add_input(WINDOW *win, struct input *a, int key)
 int
 del_input(WINDOW *win, struct input *a)
 {
+  if (a == NULL) return (UICB_ERR_UNDEF);
+  memmove((a->input + a->input_pos - 1), (a->input + a->input_pos), a->input_max - a->input_pos);
+  --a->input_len;
+  if (a->input_pos == a->input_len) {
+    --a->input_pos;
+  }
+  print_input(win, a);
+  mvwprintw(win, 10, 1, "w:%d,cp:%d,im:%lu,il:%lu,ip:%lu,s:%s", a->width, a->cur_pos, a->input_max, a->input_len, a->input_pos, a->input);
+  
   return (UICB_OK);
 }
 

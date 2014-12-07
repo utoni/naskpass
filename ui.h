@@ -6,9 +6,8 @@
 
 #define UICB_OK		0
 #define UICB_ERR_UNDEF	1
-#define UICB_ERR_NOP	2
-#define UICB_ERR_CB	3
-#define UICB_ERR_BUF	4
+#define UICB_ERR_CB	2
+#define UICB_ERR_BUF	3
 
 #define UILOOP_TIMEOUT	1
 
