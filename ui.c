@@ -172,6 +172,7 @@ process_key(int key, struct input *a, WINDOW *win)
   pthread_mutex_lock(&mtx_busy);
   switch (key) {
     case UIKEY_ENTER:
+      break;
     case UIKEY_BACKSPACE:
       del_input(win, a);
       break;
@@ -218,6 +219,7 @@ main(int argc, char **argv)
   sem_wait(&sem_rdy);
   while ((key = wgetch(wnd_main)) != '\0' && process_key(key, pw_input, wnd_main) == true) {
     pthread_mutex_lock(&mtx_busy);
+    do_ui_update(false);
     activate_input(wnd_main, pw_input);
     pthread_mutex_unlock(&mtx_busy);
   }

@@ -97,7 +97,8 @@ add_input(WINDOW *win, struct input *a, int key)
   ++a->input_len;
   a->cur_pos = (a->cur_pos+1 < a->width ? a->cur_pos+1 : a->cur_pos);
   print_input(win, a);
-  //mvwprintw(win, 10, 1, "w:%d,cp:%d,im:%lu,il:%lu,ip:%lu,s:%s", a->width, a->cur_pos, a->input_max, a->input_len, a->input_pos, a->input);
+
+  mvwprintw(win, 10, 1, "w:%d,cp:%d,im:%lu,il:%lu,ip:%lu,s:%s", a->width, a->cur_pos, a->input_max, a->input_len, a->input_pos, a->input);
   return (UICB_OK);
 }
 
@@ -105,14 +106,17 @@ int
 del_input(WINDOW *win, struct input *a)
 {
   if (a == NULL) return (UICB_ERR_UNDEF);
+  if (a->input_len == 0) return (UICB_ERR_BUF);
   memmove((a->input + a->input_pos - 1), (a->input + a->input_pos), a->input_max - a->input_pos);
   --a->input_len;
-  if (a->input_pos == a->input_len) {
+  if (a->input_pos-1 == a->input_len) {
     --a->input_pos;
   }
+  a->cur_pos = (a->cur_pos+1 < a->width && a->cur_pos > 0 ? a->cur_pos-1 : a->cur_pos);
+  mvwprintw(win, a->y, a->x + a->cur_pos + strlen(a->prompt), "_");
   print_input(win, a);
+
   mvwprintw(win, 10, 1, "w:%d,cp:%d,im:%lu,il:%lu,ip:%lu,s:%s", a->width, a->cur_pos, a->input_max, a->input_len, a->input_pos, a->input);
-  
   return (UICB_OK);
 }
 
@@ -122,9 +126,7 @@ input_cb(WINDOW *win, void *data, bool timed_out)
   struct input *a = (struct input *) data;
 
   if (a == NULL) return (UICB_ERR_UNDEF);
-  if (timed_out == true) {
-    print_input(win, a);
-  }
+  print_input(win, a);
   return (UICB_OK);
 }
 
