@@ -131,7 +131,7 @@ init_ui(void)
   wnd_main = initscr();
   start_color();
   init_pair(1, COLOR_RED, COLOR_BLACK);
-  init_pair(2, COLOR_WHITE, COLOR_WHITE);
+  init_pair(2, COLOR_WHITE, COLOR_BLACK);
   init_pair(3, COLOR_BLACK, COLOR_WHITE);
   raw();
   keypad(stdscr, TRUE);
@@ -165,7 +165,7 @@ stop_ui_thrd(void) {
 }
 
 static bool
-process_key(int key, struct input *a, WINDOW *win)
+process_key(wchar_t key, struct input *a, WINDOW *win)
 {
   bool retval = true;
 
@@ -196,12 +196,8 @@ process_key(int key, struct input *a, WINDOW *win)
 int
 main(int argc, char **argv)
 {
-  struct input *pw_input = init_input(3,7,20,"PASSWORD",128,COLOR_PAIR(3));
-  struct anic *heartbeat = init_anic(2,2,A_BOLD | COLOR_PAIR(3));
-  struct anic *a = init_anic(4,4,0);
-  struct anic *b = init_anic(6,6,COLOR_PAIR(1));
-  a->state = '-';
-  b->state = '\\';
+  struct input *pw_input = init_input(10,10,20,"PASSWORD",128,COLOR_PAIR(3), COLOR_PAIR(2));
+  struct anic *heartbeat = init_anic(2,2,A_BOLD | COLOR_PAIR(1));
   char key = '\0';
 
   if (sem_init(&sem_rdy, 0, 0) == -1) {
@@ -210,7 +206,6 @@ main(int argc, char **argv)
   }
   init_ui();
   register_anic(heartbeat);
-  register_anic(a); register_anic(b);
   register_input(NULL, pw_input);
   activate_input(wnd_main, pw_input);
   if (run_ui_thrd() != 0) {
@@ -224,13 +219,10 @@ main(int argc, char **argv)
     pthread_mutex_unlock(&mtx_busy);
   }
   stop_ui_thrd();
-  unregister_ui_elt(a);
   unregister_ui_elt(heartbeat);
-  unregister_ui_elt(b);
   unregister_ui_elt(pw_input);
   free_input(pw_input);
   free_anic(heartbeat);
-  free_anic(a); free_anic(b);
   free_ui();
   return (0);
 }

@@ -9,16 +9,25 @@ struct input {
   unsigned int y;
   unsigned int width;
   unsigned int cur_pos;
+#ifdef NCURSES_WIDECHAR
+  wchar_t *input;
+#else
   char *input;
+#endif
   size_t input_max;
   size_t input_len;
   size_t input_pos;
+#ifdef NCURSES_WIDECHAR
+  wchar_t *prompt;
+#else
   char *prompt;
+#endif
   chtype attrs;
+  chtype shadow;
 };
 
 struct input *
-init_input(unsigned int x, unsigned int y, unsigned int width, char *prompt, size_t input_len, chtype attrs);
+init_input(unsigned int x, unsigned int y, unsigned int width, char *prompt, size_t input_len, chtype attrs, chtype shadow);
 
 void
 free_input(struct input *a);
