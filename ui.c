@@ -188,7 +188,6 @@ process_key(wchar_t key, struct input *a, WINDOW *win)
     default:
       add_input(win, a, key);
   }
-  //mvprintw(0,0,"*%d*", key);
   pthread_mutex_unlock(&mtx_busy);
   return (retval);
 }
@@ -214,8 +213,17 @@ main(int argc, char **argv)
   sem_wait(&sem_rdy);
   while ((key = wgetch(wnd_main)) != '\0' && process_key(key, pw_input, wnd_main) == true) {
     pthread_mutex_lock(&mtx_busy);
+/*
+    attron(pw_input->attrs);
+    mvprintw(0, 0, "w:%d,cp:%d,im:%lu,il:%lu,ip:%lu,s:%s", pw_input->width, pw_input->cur_pos, pw_input->input_max, pw_input->input_len, pw_input->input_pos, pw_input->input);
+    attroff(pw_input->attrs);
+    refresh();
+    wgetch(wnd_main);
+*/
     do_ui_update(false);
+    pthread_mutex_lock(&mtx_cb);
     activate_input(wnd_main, pw_input);
+    pthread_mutex_unlock(&mtx_cb);
     pthread_mutex_unlock(&mtx_busy);
   }
   stop_ui_thrd();

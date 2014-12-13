@@ -46,6 +46,7 @@ print_wnd(size_t addwidth, struct input *a)
   size_t relwidth = addwidth*2, len = strlen(a->prompt) + a->width;
   char tmp[len+relwidth+1];
 
+  attron(a->attrs);
   memset(tmp, ' ', len+relwidth);
   tmp[len+relwidth] = '\0';
   for (i = -1; i <= 1; i++)
@@ -59,6 +60,7 @@ print_wnd(size_t addwidth, struct input *a)
   mvaddch(y+2, x-addwidth-1, ACS_LLCORNER);
   mvaddch(y-2, x+len+addwidth, ACS_URCORNER);
   mvaddch(y+2, x+len+addwidth, ACS_LRCORNER);
+  attroff(a->attrs);
 
   attron(a->shadow);
   for (i = x-addwidth+1; i < x+len+relwidth; i++)
@@ -81,7 +83,13 @@ print_input_text(WINDOW *win, struct input *a)
   if (a->input_pos >= a->width) {
     start = a->input_pos - a->width;
   }
+
   strncpy(tmp, (char *)(a->input + start), a->width);
+  int i;
+  for (i = 0; i < strlen(tmp); i++) {
+    tmp[i] = '*';
+  }
+
   if (win == NULL) {
     mvprintw(a->y, a->x + p_len, "%s", tmp);
   } else {
@@ -96,7 +104,6 @@ print_input(WINDOW *win, struct input *a)
   int i;
   size_t p_len = strlen(a->prompt);
 
-  attron(a->attrs);
   print_wnd(3, a);
   attron(a->attrs);
   if (win == NULL) {
@@ -136,7 +143,6 @@ add_input(WINDOW *win, struct input *a, wchar_t key)
   ++a->input_len;
   a->cur_pos = (a->cur_pos+1 < a->width ? a->cur_pos+1 : a->cur_pos);
   print_input(win, a);
-  //mvwprintw(win, 10, 1, "w:%d,cp:%d,im:%lu,il:%lu,ip:%lu,s:%s", a->width, a->cur_pos, a->input_max, a->input_len, a->input_pos, a->input);
   return (UICB_OK);
 }
 
