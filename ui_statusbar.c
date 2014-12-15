@@ -30,16 +30,30 @@ int
 statusbar_cb(WINDOW *win, void *data, bool timed_out)
 {
   struct statusbar *a = (struct statusbar *) data;
+  char *tmp;
+  unsigned int diff_pos = 0;
+  size_t width;
 
   if (a == NULL) return (UICB_ERR_UNDEF);
-  if (timed_out == true) {
-  }
   attron(a->attrs);
   if (win != NULL) {
-    mvwprintw(win, a->y, 0, "bla");
+    width = getmaxx(win);
   } else {
-    mvprintw(a->y, 0, "bla");
+    width = getmaxx(stdscr);
   }
+  if (a->width < width) {
+    diff_pos = (unsigned int) (width - a->width)/2;
+  }
+  tmp = (char *) malloc(width + 1);
+  memset(tmp, ' ', width);
+  tmp[width] = '\0';
+  strncpy((tmp + diff_pos), a->text, a->width);
+  if (win != NULL) {
+    mvwprintw(win, a->y, 0, tmp);
+  } else {
+    mvprintw(a->y, 0, tmp);
+  }
+  free(tmp);
   attroff(a->attrs);
   return (UICB_OK);
 }

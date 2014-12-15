@@ -11,9 +11,11 @@
 #include "ui.h"
 #include "ui_ani.h"
 #include "ui_input.h"
+#include "ui_statusbar.h"
 
 
 static WINDOW *wnd_main;
+static int max_x, max_y;
 static struct nask_ui *nui = NULL;
 static pthread_t thrd;
 static bool active;
@@ -129,6 +131,8 @@ void
 init_ui(void)
 {
   wnd_main = initscr();
+  max_x = getmaxx(wnd_main);
+  max_y = getmaxy(wnd_main);
   start_color();
   init_pair(1, COLOR_RED, COLOR_BLACK);
   init_pair(2, COLOR_WHITE, COLOR_BLACK);
@@ -197,6 +201,7 @@ main(int argc, char **argv)
 {
   struct input *pw_input = init_input(10,10,20,"PASSWORD",128,COLOR_PAIR(3), COLOR_PAIR(2));
   struct anic *heartbeat = init_anic(2,2,A_BOLD | COLOR_PAIR(1));
+  struct statusbar *higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3));
   char key = '\0';
 
   if (sem_init(&sem_rdy, 0, 0) == -1) {
@@ -206,6 +211,7 @@ main(int argc, char **argv)
   init_ui();
   register_anic(heartbeat);
   register_input(NULL, pw_input);
+  register_statusbar(higher);
   activate_input(wnd_main, pw_input);
   if (run_ui_thrd() != 0) {
     exit(EXIT_FAILURE);
@@ -227,10 +233,12 @@ main(int argc, char **argv)
     pthread_mutex_unlock(&mtx_busy);
   }
   stop_ui_thrd();
+  unregister_ui_elt(higher);
   unregister_ui_elt(heartbeat);
   unregister_ui_elt(pw_input);
   free_input(pw_input);
   free_anic(heartbeat);
+  free_statusbar(higher);
   free_ui();
   return (0);
 }
