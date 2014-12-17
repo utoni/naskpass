@@ -13,9 +13,11 @@
 #include "ui_input.h"
 #include "ui_statusbar.h"
 
+#include "status.h"
 
+
+static unsigned int max_x, max_y;
 static WINDOW *wnd_main;
-static int max_x, max_y;
 static struct nask_ui *nui = NULL;
 static pthread_t thrd;
 static bool active;
@@ -127,7 +129,7 @@ ui_thrd_force_update(void)
   pthread_cond_signal(&cnd_update);
 }
 
-void
+WINDOW *
 init_ui(void)
 {
   wnd_main = initscr();
@@ -141,6 +143,7 @@ init_ui(void)
   keypad(stdscr, TRUE);
   noecho();
   cbreak();
+  return (wnd_main);
 }
 
 void
@@ -196,36 +199,44 @@ process_key(wchar_t key, struct input *a, WINDOW *win)
   return (retval);
 }
 
-int
-main(int argc, char **argv)
+static int
+lower_statusbar_update(WINDOW *win, struct statusbar *bar)
 {
-  struct input *pw_input = init_input(10,10,20,"PASSWORD",128,COLOR_PAIR(3), COLOR_PAIR(2));
-  struct anic *heartbeat = init_anic(2,2,A_BOLD | COLOR_PAIR(1));
-  struct statusbar *higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3));
+  char *tmp = get_system_stat();
+  set_statusbar_text(bar, tmp);
+  free(tmp);
+  return (0);
+}
+
+int
+do_ui(void)
+{
+  struct input *pw_input;
+  struct anic *heartbeat;
+  struct statusbar *higher, *lower;
   char key = '\0';
 
   if (sem_init(&sem_rdy, 0, 0) == -1) {
     perror("init semaphore");
-    exit(1);
+    return (1);
   }
   init_ui();
+  pw_input = init_input(10,10,20,"PASSWORD",128,COLOR_PAIR(3), COLOR_PAIR(2));
+  heartbeat = init_anic(2,2,A_BOLD | COLOR_PAIR(1));
+  higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3), NULL);
+  lower = init_statusbar(max_y - 1, max_x, A_BOLD | COLOR_PAIR(3), lower_statusbar_update);
   register_anic(heartbeat);
   register_input(NULL, pw_input);
   register_statusbar(higher);
+  register_statusbar(lower);
   activate_input(wnd_main, pw_input);
+  set_statusbar_text(higher, "*__________________ggggggg____________________*");
   if (run_ui_thrd() != 0) {
-    exit(EXIT_FAILURE);
+    return (2);
   }
   sem_wait(&sem_rdy);
   while ((key = wgetch(wnd_main)) != '\0' && process_key(key, pw_input, wnd_main) == true) {
     pthread_mutex_lock(&mtx_busy);
-/*
-    attron(pw_input->attrs);
-    mvprintw(0, 0, "w:%d,cp:%d,im:%lu,il:%lu,ip:%lu,s:%s", pw_input->width, pw_input->cur_pos, pw_input->input_max, pw_input->input_len, pw_input->input_pos, pw_input->input);
-    attroff(pw_input->attrs);
-    refresh();
-    wgetch(wnd_main);
-*/
     do_ui_update(false);
     pthread_mutex_lock(&mtx_cb);
     activate_input(wnd_main, pw_input);
@@ -233,12 +244,14 @@ main(int argc, char **argv)
     pthread_mutex_unlock(&mtx_busy);
   }
   stop_ui_thrd();
+  unregister_ui_elt(lower);
   unregister_ui_elt(higher);
   unregister_ui_elt(heartbeat);
   unregister_ui_elt(pw_input);
   free_input(pw_input);
   free_anic(heartbeat);
   free_statusbar(higher);
+  free_statusbar(lower);
   free_ui();
   return (0);
 }

@@ -38,7 +38,7 @@ unregister_ui_elt(void *data);
 void
 ui_thrd_force_update(void);
 
-void
+WINDOW *
 init_ui(void);
 
 void
@@ -49,5 +49,8 @@ run_ui_thrd(void);
 
 int
 stop_ui_thrd(void);
+
+int
+do_ui(void);
 
 #endif

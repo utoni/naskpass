@@ -6,13 +6,13 @@
 
 
 struct statusbar *
-init_statusbar(unsigned int y, unsigned int width, chtype attrs)
+init_statusbar(unsigned int y, unsigned int width, chtype attrs, update_func cb_update)
 {
   struct statusbar *a = calloc(1, sizeof(struct statusbar));
 
   a->y = y;
   a->width = width;
-  a->text = calloc(width, sizeof(char));
+  a->text = calloc(a->width, sizeof(char));
   a->attrs = attrs;
   return (a);
 }
@@ -32,22 +32,18 @@ statusbar_cb(WINDOW *win, void *data, bool timed_out)
   struct statusbar *a = (struct statusbar *) data;
   char *tmp;
   unsigned int diff_pos = 0;
-  size_t width;
+  size_t len;
 
   if (a == NULL) return (UICB_ERR_UNDEF);
   attron(a->attrs);
-  if (win != NULL) {
-    width = getmaxx(win);
-  } else {
-    width = getmaxx(stdscr);
+  len = strnlen(a->text, a->width);
+  if (len < a->width) {
+    diff_pos = (unsigned int) (a->width - len)/2;
   }
-  if (a->width < width) {
-    diff_pos = (unsigned int) (width - a->width)/2;
-  }
-  tmp = (char *) malloc(width + 1);
-  memset(tmp, ' ', width);
-  tmp[width] = '\0';
-  strncpy((tmp + diff_pos), a->text, a->width);
+  tmp = (char *) malloc(a->width + 1);
+  memset(tmp, ' ', a->width);
+  tmp[a->width] = '\0';
+  strncpy((tmp + diff_pos), a->text, len);
   if (win != NULL) {
     mvwprintw(win, a->y, 0, tmp);
   } else {
@@ -67,5 +63,7 @@ register_statusbar(struct statusbar *a)
 inline void
 set_statusbar_text(struct statusbar *a, const char *text)
 {
-  strncpy(a->text, text, a->width);
+  size_t len = strlen(text);
+
+  strncpy(a->text, text, (len > a->width ? a->width : len));
 }

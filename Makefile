@@ -1,14 +1,15 @@
-CFLAGS ?= $(shell ncurses5-config --cflags) -Wall -D_GNU_SOURCE
+CFLAGS ?= $(shell ncurses5-config --cflags) -Wall -D_GNU_SOURCE=1 -g
 LDFLAGS ?= $(shell ncurses5-config --libs) -pthread
-CC ?= gcc
+CC := gcc
 INSTALL ?= install
 VERSION = 1.0
 BIN = nask
+SOURCES = status.c ui_ani.c ui_input.c ui_statusbar.c ui.c main.c
 
 all: bin
 
 bin:
-	$(CC) main.c $(CFLAGS) $(LDFLAGS) -o $(BIN)
+	$(CC) $(SOURCES) -D_VERSION=\"$(VERSION)\" $(CFLAGS) $(LDFLAGS) -o $(BIN)
 
 install:
 	$(INSTALL) -D -m 0755 $(BIN) $(DESTDIR)/lib/cryptsetup/naskpass

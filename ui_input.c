@@ -19,11 +19,7 @@ init_input(unsigned int x, unsigned int y, unsigned int width, char *prompt, siz
   a->input_max = input_len;
   a->input_len = 0;
   a->input_pos = 0;
-#ifdef NCURSES_WIDECHAR
-  a->prompt = wcsdup(prompt);
-#else
   a->prompt = strdup(prompt);
-#endif
   a->attrs = attrs;
   a->shadow = shadow;
   return (a);
