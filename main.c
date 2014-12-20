@@ -9,7 +9,10 @@
 #include "ui_statusbar.h"
 #include "ui.h"
 
-#define PKGNAME "nask"
+#define AUTHOR "Toni Uhlig"
+#define AUTHOR_EMAIL "matzeton@googlemail.com"
+#define PKGNAME "naskpass"
+#define PKGDESC "A NCurses replacement for cryptsetup's askpass."
 #ifdef _VERSION
 #define VERSION _VERSION
 #else
@@ -21,8 +24,10 @@
 
 static void usage(char *arg0)
 {
-  fprintf(stderr, "%s (%s)\n", PKGNAME, VERSION);
-  fprintf(stderr, "  CMD: %s: [passfifo]\n", arg0);
+  fprintf(stderr, "%s (%s)\n  %s\n", PKGNAME, VERSION, PKGDESC);
+  fprintf(stderr, "  Written by %s (%s).\n", AUTHOR, AUTHOR_EMAIL);
+  fprintf(stderr, "  License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n\n");
+  fprintf(stderr, "  Command: %s: [passfifo]\n", arg0);
 }
 
 int main(int argc, char **argv)
@@ -35,10 +40,11 @@ int main(int argc, char **argv)
     exit(-1);
   }
 
+  
   if ((child = vfork()) == 0) {
     if (setsid() == (pid_t)-1) {
       perror("setsid");
-      return (EXIT_FAILURE);
+      exit (EXIT_FAILURE);
     }
     do_ui();
   } if (child > 0) {

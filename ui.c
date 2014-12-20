@@ -236,7 +236,7 @@ do_ui(void)
   register_statusbar(lower);
   register_anic(heartbeat);
   activate_input(wnd_main, pw_input);
-  set_statusbar_text(higher, "* NASKPASS *");
+  set_statusbar_text(higher, "/* NASKPASS */");
   if (run_ui_thrd() != 0) {
     exit(2);
   }
