@@ -2,13 +2,13 @@ CFLAGS ?= $(shell ncurses5-config --cflags) -Wall -D_GNU_SOURCE=1 -g
 LDFLAGS ?= $(shell ncurses5-config --libs) -pthread
 CC := gcc
 INSTALL ?= install
-VERSION = 1.0
-BIN = nask
+VERSION = $(shell if [ -d ./.git ]; then echo -n "git-"; git rev-parse --short HEAD; else echo "1.1a"; fi)
+BIN = naskpass
 SOURCES = status.c ui_ani.c ui_input.c ui_statusbar.c ui.c main.c
 
-all: bin
+all: $(BIN)
 
-bin:
+$(BIN): $(SOURCES)
 	$(CC) $(SOURCES) -D_VERSION=\"$(VERSION)\" $(CFLAGS) $(LDFLAGS) -o $(BIN)
 
 install:

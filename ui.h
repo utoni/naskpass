@@ -9,6 +9,10 @@
 #define UICB_ERR_CB	2
 #define UICB_ERR_BUF	3
 
+#define DOUI_OK		0
+#define DOUI_ERR	1
+#define DOUI_TMOUT	2
+
 #define UILOOP_TIMEOUT	1
 
 #define UIKEY_ENTER	10
@@ -50,7 +54,7 @@ run_ui_thrd(void);
 int
 stop_ui_thrd(void);
 
-int
+void
 do_ui(void);
 
 #endif

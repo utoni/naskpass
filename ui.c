@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <errno.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <string.h>
@@ -15,6 +16,8 @@
 
 #include "status.h"
 
+#define APP_TIMEOUT 10
+
 #define PASSWD_WIDTH 35
 #define PASSWD_HEIGHT 5
 #define PASSWD_XRELPOS (unsigned int)(PASSWD_WIDTH / 2) - (PASSWD_WIDTH / 6)
@@ -26,6 +29,7 @@ static WINDOW *wnd_main;
 static struct nask_ui *nui = NULL;
 static pthread_t thrd;
 static bool active;
+static unsigned int atmout = APP_TIMEOUT;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mtx_cb = PTHREAD_MUTEX_INITIALIZER;
@@ -106,6 +110,7 @@ do_ui_update(bool timed_out)
 static void *
 ui_thrd(void *arg)
 {
+  int cnd_ret;
   struct timeval now;
   struct timespec wait;
 
@@ -117,11 +122,13 @@ ui_thrd(void *arg)
   sem_post(&sem_rdy);
   while (active == true) {
     pthread_mutex_unlock(&mtx_busy);
-    pthread_cond_timedwait(&cnd_update, &mtx_update, &wait);
-    wait.tv_sec += UILOOP_TIMEOUT;
+    cnd_ret = pthread_cond_timedwait(&cnd_update, &mtx_update, &wait);
+    if (cnd_ret == ETIMEDOUT) {
+      wait.tv_sec += UILOOP_TIMEOUT;
+    }
     pthread_mutex_lock(&mtx_busy);
     if (active == false) break;
-    do_ui_update(true);
+    do_ui_update( (cnd_ret == ETIMEDOUT ? true : false) );
   }
   pthread_mutex_unlock(&mtx_busy);
   pthread_mutex_unlock(&mtx_update);
@@ -214,7 +221,7 @@ lower_statusbar_update(WINDOW *win, struct statusbar *bar)
   return (0);
 }
 
-int
+void
 do_ui(void)
 {
   struct input *pw_input;
@@ -224,7 +231,7 @@ do_ui(void)
 
   if (sem_init(&sem_rdy, 0, 0) == -1) {
     perror("init semaphore");
-    exit(1);
+    exit(DOUI_ERR);
   }
   init_ui();
   pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS, (unsigned int)(max_y / 2)-PASSWD_YRELPOS, PASSWD_WIDTH, "PASSWORD: ", 128, COLOR_PAIR(3), COLOR_PAIR(2));
@@ -236,9 +243,9 @@ do_ui(void)
   register_statusbar(lower);
   register_anic(heartbeat);
   activate_input(wnd_main, pw_input);
-  set_statusbar_text(higher, "* NASKPASS *");
+  set_statusbar_text(higher, "/* NASKPASS */");
   if (run_ui_thrd() != 0) {
-    exit(2);
+    exit(DOUI_ERR);
   }
   sem_wait(&sem_rdy);
   while ((key = wgetch(wnd_main)) != '\0' && process_key(key, pw_input, wnd_main) == true) {
@@ -259,5 +266,5 @@ do_ui(void)
   free_statusbar(higher);
   free_statusbar(lower);
   free_ui();
-  exit(0);
+  exit(DOUI_OK);
 }
