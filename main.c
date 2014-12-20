@@ -36,6 +36,10 @@ int main(int argc, char **argv)
   }
 
   if ((child = vfork()) == 0) {
+    if (setsid() == (pid_t)-1) {
+      perror("setsid");
+      return (EXIT_FAILURE);
+    }
     do_ui();
   } if (child > 0) {
     wait(&status);

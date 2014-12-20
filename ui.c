@@ -15,6 +15,11 @@
 
 #include "status.h"
 
+#define PASSWD_WIDTH 35
+#define PASSWD_HEIGHT 5
+#define PASSWD_XRELPOS (unsigned int)(PASSWD_WIDTH / 2) - (PASSWD_WIDTH / 6)
+#define PASSWD_YRELPOS (unsigned int)(PASSWD_HEIGHT / 2) + 1
+
 
 static unsigned int max_x, max_y;
 static WINDOW *wnd_main;
@@ -136,7 +141,7 @@ init_ui(void)
   max_x = getmaxx(wnd_main);
   max_y = getmaxy(wnd_main);
   start_color();
-  init_pair(1, COLOR_RED, COLOR_BLACK);
+  init_pair(1, COLOR_RED, COLOR_WHITE);
   init_pair(2, COLOR_WHITE, COLOR_BLACK);
   init_pair(3, COLOR_BLACK, COLOR_WHITE);
   raw();
@@ -159,6 +164,7 @@ int
 run_ui_thrd(void) {
   pthread_mutex_lock(&mtx_busy);
   active = true;
+  pthread_cond_signal(&cnd_update);
   pthread_mutex_unlock(&mtx_busy);
   return (pthread_create(&thrd, NULL, &ui_thrd, NULL));
 }
@@ -218,21 +224,21 @@ do_ui(void)
 
   if (sem_init(&sem_rdy, 0, 0) == -1) {
     perror("init semaphore");
-    return (1);
+    exit(1);
   }
   init_ui();
-  pw_input = init_input(10,10,20,"PASSWORD",128,COLOR_PAIR(3), COLOR_PAIR(2));
-  heartbeat = init_anic(2,2,A_BOLD | COLOR_PAIR(1));
+  pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS, (unsigned int)(max_y / 2)-PASSWD_YRELPOS, PASSWD_WIDTH, "PASSWORD: ", 128, COLOR_PAIR(3), COLOR_PAIR(2));
+  heartbeat = init_anic(0, 0, A_BOLD | COLOR_PAIR(1), "[%c]");
   higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3), NULL);
   lower = init_statusbar(max_y - 1, max_x, A_BOLD | COLOR_PAIR(3), lower_statusbar_update);
-  register_anic(heartbeat);
   register_input(NULL, pw_input);
   register_statusbar(higher);
   register_statusbar(lower);
+  register_anic(heartbeat);
   activate_input(wnd_main, pw_input);
-  set_statusbar_text(higher, "*__________________ggggggg____________________*");
+  set_statusbar_text(higher, "* NASKPASS *");
   if (run_ui_thrd() != 0) {
-    return (2);
+    exit(2);
   }
   sem_wait(&sem_rdy);
   while ((key = wgetch(wnd_main)) != '\0' && process_key(key, pw_input, wnd_main) == true) {
@@ -253,5 +259,5 @@ do_ui(void)
   free_statusbar(higher);
   free_statusbar(lower);
   free_ui();
-  return (0);
+  exit(0);
 }

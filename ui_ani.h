@@ -8,11 +8,12 @@ struct anic {
   unsigned int x;
   unsigned int y;
   char state;
+  char *fmt;
   chtype attrs;
 };
 
 struct anic *
-init_anic(unsigned int x, unsigned int y, chtype attrs);
+init_anic(unsigned int x, unsigned int y, chtype attrs, char *fmt);
 
 void
 free_anic(struct anic *a);
