@@ -78,6 +78,7 @@ int main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
+  
   if ((child = vfork()) == 0) {
     if (setsid() == (pid_t)-1) {
       perror("setsid");
