@@ -8,6 +8,8 @@
 #include <string.h>
 #include <ncurses.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <signal.h>
 
 #include "ui.h"
 #include "ui_ani.h"
@@ -16,12 +18,14 @@
 
 #include "status.h"
 
-#define APP_TIMEOUT 10
-
+#define APP_TIMEOUT 60
+#define APP_TIMEOUT_FMT "%02d"
 #define PASSWD_WIDTH 35
 #define PASSWD_HEIGHT 5
 #define PASSWD_XRELPOS (unsigned int)(PASSWD_WIDTH / 2) - (PASSWD_WIDTH / 6)
 #define PASSWD_YRELPOS (unsigned int)(PASSWD_HEIGHT / 2) + 1
+
+#define STRLEN(s) (sizeof(s)/sizeof(s[0]))
 
 
 static unsigned int max_x, max_y;
@@ -32,7 +36,6 @@ static bool active;
 static unsigned int atmout = APP_TIMEOUT;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t mtx_cb = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mtx_busy = PTHREAD_MUTEX_INITIALIZER;
 static sem_t sem_rdy;
 
@@ -93,15 +96,18 @@ do_ui_update(bool timed_out)
   erase();
   while (cur != NULL) {
     if (cur->ui_elt_cb != NULL) {
-      pthread_mutex_lock(&mtx_cb);
       cur->ui_elt_cb(cur->wnd, cur->data, timed_out);
       doupdate();
-      pthread_mutex_unlock(&mtx_cb);
     } else {
       retval = UICB_ERR_CB;
     }
     cur = cur->next;
   }
+  /* TODO: Maybe export to an extra module? */
+  attron(COLOR_PAIR(1));
+  mvprintw(0, max_x - STRLEN(APP_TIMEOUT_FMT), "[" APP_TIMEOUT_FMT "]", atmout);
+  attroff(COLOR_PAIR(1));
+  /* EoT (End of Todo) */
   wmove(wnd_main, cury, curx);
   refresh();
   return (retval);
@@ -127,7 +133,10 @@ ui_thrd(void *arg)
       wait.tv_sec += UILOOP_TIMEOUT;
     }
     pthread_mutex_lock(&mtx_busy);
-    if (active == false) break;
+    if (--atmout == 0) active = false;
+    if (active == false) {
+      break;
+    }
     do_ui_update( (cnd_ret == ETIMEDOUT ? true : false) );
   }
   pthread_mutex_unlock(&mtx_busy);
@@ -189,15 +198,16 @@ process_key(wchar_t key, struct input *a, WINDOW *win)
 {
   bool retval = true;
 
-  pthread_mutex_lock(&mtx_busy);
+  atmout = APP_TIMEOUT;
   switch (key) {
     case UIKEY_ENTER:
+      retval = false;
       break;
     case UIKEY_BACKSPACE:
       del_input(win, a);
       break;
     case UIKEY_ESC:
-      retval = active = false;
+      retval = false;
       ui_thrd_force_update();
       break;
     case UIKEY_DOWN:
@@ -208,7 +218,6 @@ process_key(wchar_t key, struct input *a, WINDOW *win)
     default:
       add_input(win, a, key);
   }
-  pthread_mutex_unlock(&mtx_busy);
   return (retval);
 }
 
@@ -248,12 +257,18 @@ do_ui(void)
     exit(DOUI_ERR);
   }
   sem_wait(&sem_rdy);
-  while ((key = wgetch(wnd_main)) != '\0' && process_key(key, pw_input, wnd_main) == true) {
+  wtimeout(wnd_main, 1000);
+  while (active == true) {
+    if ((key = wgetch(wnd_main)) == '\0') {
+      break;
+    }
+    if (key == -1) {
+      continue;
+    }
     pthread_mutex_lock(&mtx_busy);
-    do_ui_update(false);
-    pthread_mutex_lock(&mtx_cb);
+    active = process_key(key, pw_input, wnd_main);
     activate_input(wnd_main, pw_input);
-    pthread_mutex_unlock(&mtx_cb);
+    do_ui_update(false);
     pthread_mutex_unlock(&mtx_busy);
   }
   stop_ui_thrd();

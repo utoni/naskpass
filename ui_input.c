@@ -149,6 +149,7 @@ del_input(WINDOW *win, struct input *a)
   if (a->input_len == 0) return (UICB_ERR_BUF);
   memmove((a->input + a->input_pos - 1), (a->input + a->input_pos), a->input_max - a->input_pos);
   --a->input_len;
+  *(a->input + a->input_len) = '\0';
   if (a->input_pos-1 == a->input_len) {
     --a->input_pos;
   }
