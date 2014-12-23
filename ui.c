@@ -262,7 +262,7 @@ do_ui(void)
     return (DOUI_ERR);
   }
   sem_wait(&sem_rdy);
-  wtimeout(wnd_main, 500);
+  wtimeout(wnd_main, 1000);
   while (active == true) {
     if ((key = wgetch(wnd_main)) == '\0') {
       break;

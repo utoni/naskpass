@@ -12,6 +12,7 @@
 #define DOUI_OK		0
 #define DOUI_ERR	1
 #define DOUI_TMOUT	2
+#define DOUI_PASSWD	3
 
 #define UILOOP_TIMEOUT	1
 
