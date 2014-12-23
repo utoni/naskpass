@@ -24,6 +24,8 @@
 #define UIKEY_RIGHT	5
 
 
+extern char *passwd;
+
 typedef int (*ui_callback)(WINDOW *, void *, bool);
 
 struct nask_ui {
@@ -54,7 +56,7 @@ run_ui_thrd(void);
 int
 stop_ui_thrd(void);
 
-void
+int
 do_ui(void);
 
 #endif

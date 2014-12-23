@@ -149,6 +149,7 @@ del_input(WINDOW *win, struct input *a)
   if (a->input_len == 0) return (UICB_ERR_BUF);
   memmove((a->input + a->input_pos - 1), (a->input + a->input_pos), a->input_max - a->input_pos);
   --a->input_len;
+  *(a->input + a->input_len) = '\0';
   if (a->input_pos-1 == a->input_len) {
     --a->input_pos;
   }
@@ -168,6 +169,7 @@ input_cb(WINDOW *win, void *data, bool timed_out)
   struct input *a = (struct input *) data;
 
   if (a == NULL) return (UICB_ERR_UNDEF);
+  if (win != NULL && is_wintouched(win) == false) return (UICB_OK);
   print_input(win, a);
   return (UICB_OK);
 }

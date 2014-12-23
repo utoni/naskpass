@@ -1,12 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/wait.h>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <semaphore.h>
 #include <fcntl.h>
 
 #include "ui_ani.h"
@@ -62,8 +60,8 @@ check_fifo(char *fifo_path)
 
 int main(int argc, char **argv)
 {
-  pid_t child;
-  int status, ffd;
+  int ffd;
+  size_t plen;
 
   if (argc != 2) {
     usage(argv[0]);
@@ -73,22 +71,25 @@ int main(int argc, char **argv)
   if (check_fifo(argv[1]) == false) {
     exit(EXIT_FAILURE);
   }
-  if ((ffd = open(argv[1], O_NONBLOCK)) < 0) {
+  if ((ffd = open(argv[1], O_NONBLOCK | O_RDWR)) < 0) {
     perror("open");
     exit(EXIT_FAILURE);
   }
 
-  
-  if ((child = vfork()) == 0) {
-    if (setsid() == (pid_t)-1) {
-      perror("setsid");
-      exit (EXIT_FAILURE);
+  do_ui();
+  if (passwd != NULL) {
+    plen = strlen(passwd);
+    printf("Sending your password to the FIFO ..\n");
+    if (write(ffd, (const void *)passwd, plen) != plen) {
+     perror("write");
+    } else {
+      printf("Ok.\n");
     }
-    do_ui();
-  } if (child > 0) {
-    wait(&status);
-  }else {
-    return (EXIT_FAILURE);
+    memset(passwd, '\0', plen);
+    plen = 0;
+    free(passwd);
   }
+
+  close(ffd);
   return (EXIT_SUCCESS);
 }
