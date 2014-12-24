@@ -175,7 +175,7 @@ free_ui(void)
   delwin(wnd_main);
   endwin();
   clear();
-  printf(" \033[2J");
+  printf(" \033[2J\n");
 }
 
 int
