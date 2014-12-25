@@ -6,16 +6,13 @@
 set -e
 
 
-export ORGFILE="/usr/share/initramfs-tools/scripts/local-top/cryptroot"
-export DIVFILE="/usr/share/naskpass/cryptroot.orig"
-export BCKFILE="/var/backup/cryptroot.naskpass"
+. /usr/share/debconf/confmodule
+. /usr/share/naskpass/naskconf
 
 case "$1" in
-    purge|remove)
-        dpkg-divert --package naskpass --divert ${DIVFILE} --rename --add ${ORGFILE} || true
-        if [ -r ${BCKFILE} ]; then
-          mv ${BCKFILE} ${ORGFILE}
-        fi
+    remove|purge)
+        nask_deactivate
+        db_purge
     ;;
     upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;

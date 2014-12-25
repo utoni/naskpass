@@ -10,6 +10,7 @@ Homepage: https://github.com/freecoding/naskpass.git
 
 Package: naskpass
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libncurses5, libtinfo5
+Depends: ${shlibs:Depends}, ${misc:Depends}, cryptsetup (= 2:1.4.3-4), libncurses5, libtinfo5
+Conflicts: plymouth
 Description: Ncurses based cryptsetup askpass replacement
  NULL.

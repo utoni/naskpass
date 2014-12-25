@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. /usr/share/debconf/confmodule
+
+_nask_cmd () {
+  db_get naskpass/active
+  if [ "x$1" = "xACTV" ] && [ "$RET" = "false" ]; then
+    dpkg-divert --package naskpass --add --rename --divert /var/backups/cryptroot.initramfs.bak \
+      /usr/share/initramfs-tools/scripts/local-top/cryptroot
+    ln -s /usr/share/naskpass/naskpass.script.initramfs \
+      /usr/share/initramfs-tools/scripts/local-top/cryptroot
+    ln -s /usr/share/naskpass/naskpass.hook.initramfs \
+      /usr/share/initramfs-tools/hooks/naskpass
+    db_set naskpass/active true
+  elif [ "x$1" = "xDCTV" ] && [ "$RET" = "true" ]; then
+    rm /usr/share/initramfs-tools/scripts/local-top/cryptroot
+    rm /usr/share/initramfs-tools/hooks/naskpass
+    dpkg-divert --package naskpass --rename --remove /usr/share/initramfs-tools/scripts/local-top/cryptroot
+    db_set naskpass/active false
+  fi
+}
+
+nask_activate ()	{ _nask_cmd "ACTV"; }
+nask_deactivate ()	{ _nask_cmd "DCTV"; }
