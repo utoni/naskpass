@@ -1,4 +1,11 @@
-naskpass (1.0-3) UNRELEASED; urgency=low
+naskpass (1.1-0) UNRELEASED; urgency=low
+
+  * UI rewritten
+  * maintainer scripts/configs renewed
+
+ -- Toni Uhlig <matzeton@googlemail.com>  Thu, 25 Dec 2014 03:32:43 +0100
+
+naskpass (1.0-3) unstable; urgency=low
 
   * added activate/deactivate feature
   * fixed shutdown cmd
