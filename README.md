@@ -3,8 +3,13 @@ naskpass
 
 Ncurses based replacement for askpass (related to cryptsetup).
 
-build
+dependencies
 ========
-binary: make
-*.deb: make deb
-(requires dpkg-dev to be installed)
+post-build: libncurses5, libtinfo5
+pre-build: libncurses5-dev, libtinfo-dev
+
+note
+========
+Conflicts: plymouth
+Plymouth may not like naskpass (never verified).
+
