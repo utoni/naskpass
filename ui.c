@@ -28,13 +28,12 @@
 #define STRLEN(s) (sizeof(s)/sizeof(s[0]))
 
 
-char *passwd = NULL;
-
+static int ffd;
 static unsigned int max_x, max_y;
 static WINDOW *wnd_main;
 static struct nask_ui *nui = NULL;
 static pthread_t thrd;
-static bool active;
+static bool active, passwd_from_ui;
 static unsigned int atmout = APP_TIMEOUT;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
@@ -178,7 +177,7 @@ free_ui(void)
   printf(" \033[2J\n");
 }
 
-int
+static int
 run_ui_thrd(void) {
   pthread_mutex_lock(&mtx_busy);
   active = true;
@@ -187,12 +186,31 @@ run_ui_thrd(void) {
   return (pthread_create(&thrd, NULL, &ui_thrd, NULL));
 }
 
-int
-stop_ui_thrd(void) {
+void
+stop_ui(void)
+{
   pthread_mutex_lock(&mtx_busy);
   active = false;
   pthread_mutex_unlock(&mtx_busy);
+}
+
+static int
+stop_ui_thrd(void)
+{
+  stop_ui();
   return (pthread_join(thrd, NULL));
+}
+
+static int
+send_passwd(int fifo_fd, char *passwd, size_t len)
+{
+  if (write(fifo_fd, passwd, len) != len) {
+    memset(passwd, '\0', len);
+    return (errno);
+  } else {
+    memset(passwd, '\0', len);
+    return (0);
+  }
 }
 
 static bool
@@ -203,9 +221,7 @@ process_key(wchar_t key, struct input *a, WINDOW *win)
   atmout = APP_TIMEOUT;
   switch (key) {
     case UIKEY_ENTER:
-      passwd = malloc((a->input_len + 1)*sizeof(char));
-      strncpy(passwd, a->input, a->input_len);
-      passwd[a->input_len] = '\0';
+      send_passwd(ffd, a->input, a->input_len);
       retval = false;
       break;
     case UIKEY_BACKSPACE:
@@ -236,19 +252,20 @@ lower_statusbar_update(WINDOW *win, struct statusbar *bar)
 }
 
 int
-do_ui(void)
+do_ui(int fifo_fd)
 {
   struct input *pw_input;
   struct anic *heartbeat;
   struct statusbar *higher, *lower;
   char key = '\0';
 
+  ffd = fifo_fd;
   if (sem_init(&sem_rdy, 0, 0) == -1) {
     perror("init semaphore");
     return (DOUI_ERR);
   }
   init_ui();
-  pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS, (unsigned int)(max_y / 2)-PASSWD_YRELPOS, PASSWD_WIDTH, "PASSWORD: ", 128, COLOR_PAIR(3), COLOR_PAIR(2));
+  pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS, (unsigned int)(max_y / 2)-PASSWD_YRELPOS, PASSWD_WIDTH, "PASSWORD: ", MAX_PASSWD_LEN, COLOR_PAIR(3), COLOR_PAIR(2));
   heartbeat = init_anic(0, 0, A_BOLD | COLOR_PAIR(1), "[%c]");
   higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3), NULL);
   lower = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3), lower_statusbar_update);
@@ -288,3 +305,14 @@ do_ui(void)
   free_ui();
   return (DOUI_OK);
 }
+
+bool
+is_passwd_from_ui(void)
+{
+  bool ret;
+  pthread_mutex_lock(&mtx_busy);
+  ret = passwd_from_ui;
+  pthread_mutex_unlock(&mtx_busy);
+  return (ret);
+}
+

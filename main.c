@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 
 #include "ui_ani.h"
@@ -22,6 +24,7 @@
 #define VERSION "unknown"
 #endif
 
+#define DEFAULT_FIFO "/lib/cryptsetup/passfifo"
 #define SHTDWN_CMD "echo 'o' >/proc/sysrq-trigger"
 
 
@@ -32,7 +35,8 @@ usage(char *arg0)
   fprintf(stderr, "%s (%s)\n  %s\n", PKGNAME, VERSION, PKGDESC);
   fprintf(stderr, "  Written by %s (%s).\n", AUTHOR, AUTHOR_EMAIL);
   fprintf(stderr, "  License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n\n");
-  fprintf(stderr, "  Command: %s: [passfifo]\n", arg0);
+  fprintf(stderr, "  Command:\n\t%s [args]\n", arg0);
+  fprintf(stderr, "  Arguments:\n\t-h this\n\t-f [passfifo] default: %s\n\t-c [cryptcreate]\n", DEFAULT_FIFO);
 }
 
 static bool
@@ -58,38 +62,101 @@ check_fifo(char *fifo_path)
   return (false);
 }
 
-int main(int argc, char **argv)
+/* stolen from http://www.gnu.org/software/libc/manual/html_node/Waiting-for-I_002fO.html */
+static int
+input_timeout(int filedes, unsigned int seconds)
 {
-  int ffd;
-  size_t plen;
+  fd_set set;
+  struct timeval timeout;
 
-  if (argc != 2) {
+  /* Initialize the file descriptor set. */
+  FD_ZERO (&set);
+  FD_SET (filedes, &set);
+  /* Initialize the timeout data structure. */
+  timeout.tv_sec = seconds;
+  timeout.tv_usec = 0;
+  /* select returns 0 if timeout, 1 if input available, -1 if error. */
+  return TEMP_FAILURE_RETRY(select(FD_SETSIZE, &set, NULL, NULL, &timeout));
+}
+
+int
+run_cryptcreate(char *pass, char *crypt_cmd)
+{
+  int retval;
+  char *cmd;
+
+  if (crypt_cmd == NULL || pass != NULL) return (-1);
+  asprintf(&cmd, "echo '%s' | %s", pass, crypt_cmd);
+  retval = system(cmd);
+  return (retval);
+}
+
+int
+main(int argc, char **argv)
+{
+  int ffd, c_status, opt;
+  pid_t child;
+  char pbuf[MAX_PASSWD_LEN+1];
+  char *fifo_path = NULL;
+  char *crypt_cmd = NULL;
+
+  memset(pbuf, '\0', MAX_PASSWD_LEN+1);
+
+  while ((opt = getopt(argc, argv, "hf:c:")) != -1) {
+    switch (opt) {
+      case 'h':
+        usage(argv[0]);
+        exit(EXIT_SUCCESS);
+      case 'f':
+        fifo_path = strdup(optarg);
+        break;
+      case 'c':
+        crypt_cmd = strdup(optarg);
+        break;
+      default:
+        usage(argv[0]);
+        exit(EXIT_FAILURE);
+    }
+  }
+  if (optind < argc) {
+    fprintf(stderr, "%s: I dont understand you.\n\n", argv[0]);
     usage(argv[0]);
     exit(EXIT_FAILURE);
   }
+  if (fifo_path == NULL) fifo_path = strdup(DEFAULT_FIFO);
 
-  if (check_fifo(argv[1]) == false) {
+  if (check_fifo(fifo_path) == false) {
     exit(EXIT_FAILURE);
   }
-  if ((ffd = open(argv[1], O_NONBLOCK | O_RDWR)) < 0) {
+  if ((ffd = open(fifo_path, O_NONBLOCK | O_RDWR)) < 0) {
+    fprintf(stderr, "fifo: %s\n", fifo_path);
     perror("open");
     exit(EXIT_FAILURE);
   }
 
-  do_ui();
-  if (passwd != NULL) {
-    plen = strlen(passwd);
-    printf("Sending your password to the FIFO ..\n");
-    if (write(ffd, (const void *)passwd, plen) != plen) {
-     perror("write");
-    } else {
-      printf("Ok.\n");
+  if ((child = fork()) == 0) {
+    /* child */
+    do_ui(ffd);
+  } else if (child > 0) {
+    /* parent */
+    fclose(stdin);
+    while (input_timeout(ffd, 1) == 0) {
+      usleep(100000);
     }
-    memset(passwd, '\0', plen);
-    plen = 0;
-    free(passwd);
+    stop_ui();
+    wait(&c_status);
+    if (read(ffd, pbuf, MAX_PASSWD_LEN) > 0) {
+      run_cryptcreate(pbuf, crypt_cmd);
+    }
+    memset(pbuf, '\0', MAX_PASSWD_LEN+1);
+  } else {
+    /* fork error */
+    perror("fork");
+    exit(EXIT_FAILURE);
   }
 
   close(ffd);
+  if (crypt_cmd != NULL) free(crypt_cmd);
+  free(fifo_path);
   return (EXIT_SUCCESS);
 }

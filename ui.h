@@ -4,6 +4,8 @@
 #include <ncurses.h>
 #include <stdint.h>
 
+#define MAX_PASSWD_LEN	128
+
 #define UICB_OK		0
 #define UICB_ERR_UNDEF	1
 #define UICB_ERR_CB	2
@@ -24,8 +26,6 @@
 #define UIKEY_LEFT	4
 #define UIKEY_RIGHT	5
 
-
-extern char *passwd;
 
 typedef int (*ui_callback)(WINDOW *, void *, bool);
 
@@ -52,12 +52,12 @@ void
 free_ui(void);
 
 int
-run_ui_thrd(void);
+do_ui(int fifo_fd);
 
-int
-stop_ui_thrd(void);
+void
+stop_ui(void);
 
-int
-do_ui(void);
+bool
+is_passwd_from_ui(void);
 
 #endif
