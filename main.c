@@ -13,20 +13,7 @@
 #include "ui_input.h"
 #include "ui_statusbar.h"
 #include "ui.h"
-
-#define AUTHOR "Toni Uhlig"
-#define AUTHOR_EMAIL "matzeton@googlemail.com"
-#define PKGNAME "naskpass"
-#define PKGDESC "A NCurses replacement for cryptsetup's askpass."
-#ifdef _VERSION
-#define VERSION _VERSION
-#else
-#define VERSION "unknown"
-#endif
-
-#define DEFAULT_FIFO "/lib/cryptsetup/passfifo"
-#define SHTDWN_CMD "echo 'o' >/proc/sysrq-trigger"
-
+#include "config.h"
 
 
 static void
@@ -85,7 +72,7 @@ run_cryptcreate(char *pass, char *crypt_cmd)
   int retval;
   char *cmd;
 
-  if (crypt_cmd == NULL || pass != NULL) return (-1);
+  if (crypt_cmd == NULL || pass == NULL) return (-1);
   asprintf(&cmd, "echo '%s' | %s", pass, crypt_cmd);
   retval = system(cmd);
   return (retval);
@@ -146,7 +133,9 @@ main(int argc, char **argv)
     stop_ui();
     wait(&c_status);
     if (read(ffd, pbuf, MAX_PASSWD_LEN) > 0) {
-      run_cryptcreate(pbuf, crypt_cmd);
+      if (run_cryptcreate(pbuf, crypt_cmd) != 0) {
+        fprintf(stderr, "cryptcreate error\n");
+      }
     }
     memset(pbuf, '\0', MAX_PASSWD_LEN+1);
   } else {

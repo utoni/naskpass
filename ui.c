@@ -17,6 +17,7 @@
 #include "ui_statusbar.h"
 
 #include "status.h"
+#include "config.h"
 
 #define APP_TIMEOUT 60
 #define APP_TIMEOUT_FMT "%02d"
@@ -258,11 +259,13 @@ do_ui(int fifo_fd)
   struct anic *heartbeat;
   struct statusbar *higher, *lower;
   char key = '\0';
+  char *title;
 
+  asprintf(&title, "/* %s-%s */", PKGNAME, VERSION);
   ffd = fifo_fd;
   if (sem_init(&sem_rdy, 0, 0) == -1) {
     perror("init semaphore");
-    return (DOUI_ERR);
+    goto error;
   }
   init_ui();
   pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS, (unsigned int)(max_y / 2)-PASSWD_YRELPOS, PASSWD_WIDTH, "PASSWORD: ", MAX_PASSWD_LEN, COLOR_PAIR(3), COLOR_PAIR(2));
@@ -274,9 +277,9 @@ do_ui(int fifo_fd)
   register_statusbar(lower);
   register_anic(heartbeat);
   activate_input(wnd_main, pw_input);
-  set_statusbar_text(higher, "/* NASKPASS */");
+  set_statusbar_text(higher, title);
   if (run_ui_thrd() != 0) {
-    return (DOUI_ERR);
+    goto error;
   }
   sem_wait(&sem_rdy);
   wtimeout(wnd_main, 1000);
@@ -304,6 +307,9 @@ do_ui(int fifo_fd)
   free_statusbar(lower);
   free_ui();
   return (DOUI_OK);
+error:
+  free(title);
+  return (DOUI_ERR);
 }
 
 bool

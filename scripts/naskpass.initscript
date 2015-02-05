@@ -68,7 +68,7 @@ parse_options()
 	cryptlvm=""
 	cryptkeyscript=""
 	cryptkey="" # This is only used as an argument to an eventual keyscript
-	crypttries=1
+	crypttries=3
 	cryptrootdev=""
 	cryptdiscard=""
 	CRYPTTAB_OPTIONS=""
@@ -101,11 +101,22 @@ parse_options()
 		lvm=*)
 			cryptlvm=${x#lvm=}
 			;;
+		keyscript=*)
+			cryptkeyscript=${x#keyscript=}
+			;;
 		key=*)
 			if [ "${x#key=}" != "none" ]; then
 				cryptkey=${x#key=}
 			fi
 			export CRYPTTAB_KEY="$cryptkey"
+			;;
+		tries=*)
+			crypttries="${x#tries=}"
+			case "$crypttries" in
+			  *[![:digit:].]*)
+				crypttries=3
+				;;
+			esac
 			;;
 		rootdev)
 			cryptrootdev="yes"
@@ -262,16 +273,21 @@ setup_mapping()
 				cryptkeyscript="plymouth ask-for-password --prompt"
 				cryptkey=$(printf "$cryptkey")
 			else
-				dmesg -n 1
 				cryptkeyscript="/lib/cryptsetup/naskpass"
 			fi
 		fi
 
 
 		if [ ! -e "$NEWROOT" ]; then
-			if ! crypttarget="$crypttarget" cryptsource="$cryptsource" \
-			     $cryptkeyscript "$cryptcreate" ; then
-				continue;
+			if [ -x /bin/plymouth ] && plymouth --ping; then
+				message "naskpass does not work with playmouth, falling back to default askpass .."
+				if ! crypttarget="$crypttarget" cryptsource="$cryptsource" \
+				     $cryptkeyscript "$cryptkey" | $cryptcreate --key-file=- ; then
+					message "cryptsetup: cryptsetup failed, bad password or options?"
+					continue
+				fi
+			else
+				$cryptkeyscript -c "$cryptcreate"
 			fi
 		fi
 
