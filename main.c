@@ -16,6 +16,8 @@
 #include "config.h"
 
 
+static bool ui_active = true;
+
 static void
 usage(char *arg0)
 {
@@ -113,6 +115,7 @@ main(int argc, char **argv)
   if (fifo_path == NULL) fifo_path = strdup(DEFAULT_FIFO);
 
   if (check_fifo(fifo_path) == false) {
+    usage(argv[0]);
     exit(EXIT_FAILURE);
   }
   if ((ffd = open(fifo_path, O_NONBLOCK | O_RDWR)) < 0) {
@@ -123,12 +126,17 @@ main(int argc, char **argv)
 
   if ((child = fork()) == 0) {
     /* child */
+    ui_active = true;
     do_ui(ffd);
+    ui_active = false;
   } else if (child > 0) {
     /* parent */
     fclose(stdin);
     while (input_timeout(ffd, 1) == 0) {
       usleep(100000);
+      if (ui_active == true) {
+        
+      }
     }
     stop_ui();
     wait(&c_status);
@@ -144,6 +152,7 @@ main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
+printf("BLA\n");
   close(ffd);
   if (crypt_cmd != NULL) free(crypt_cmd);
   free(fifo_path);

@@ -1,15 +1,19 @@
 CFLAGS ?= $(shell ncurses5-config --cflags) -Wall -D_GNU_SOURCE=1
+DBGFLAGS = -g
 LDFLAGS ?= $(shell ncurses5-config --libs) -pthread
 CC := gcc
 INSTALL ?= install
 VERSION ?= $(shell if [ -d ./.git ]; then echo -n "git-"; git rev-parse --short HEAD; else echo "1.1a"; fi)
 BIN = naskpass
-SOURCES = status.c ui_ani.c ui_input.c ui_statusbar.c ui.c main.c
+SOURCES = status.c ui_ani.c ui_input.c ui_statusbar.c ui_nwindow.c ui.c main.c
 
 all: $(BIN)
 
 $(BIN): $(SOURCES)
 	$(CC) $(SOURCES) -D_VERSION=\"$(VERSION)\" $(CFLAGS) $(LDFLAGS) -o $(BIN)
+
+debug:
+	$(MAKE) CFLAGS='$(CFLAGS) $(DBGFLAGS)'
 
 install:
 	$(INSTALL) -D -m 0755 $(BIN) $(DESTDIR)/lib/cryptsetup/naskpass

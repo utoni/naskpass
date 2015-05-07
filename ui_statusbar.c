@@ -6,7 +6,7 @@
 
 
 struct statusbar *
-init_statusbar(unsigned int y, unsigned int width, chtype attrs, update_func cb_update)
+init_statusbar(unsigned int y, unsigned int width, chtype attrs, status_func cb_update)
 {
   struct statusbar *a = calloc(1, sizeof(struct statusbar));
 
@@ -14,7 +14,7 @@ init_statusbar(unsigned int y, unsigned int width, chtype attrs, update_func cb_
   a->width = width;
   a->text = calloc(a->width, sizeof(char));
   a->attrs = attrs;
-  a->update_func = cb_update;
+  a->status_func = cb_update;
   return (a);
 }
 
@@ -37,8 +37,8 @@ statusbar_cb(WINDOW *win, void *data, bool timed_out)
 
   if (a == NULL) return (UICB_ERR_UNDEF);
   if (timed_out == true) {
-    if (a->update_func != NULL) {
-      a->update_func(win, a);
+    if (a->status_func != NULL) {
+      a->status_func(win, a);
     }
   }
   attron(a->attrs);

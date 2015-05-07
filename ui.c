@@ -15,6 +15,7 @@
 #include "ui_ani.h"
 #include "ui_input.h"
 #include "ui_statusbar.h"
+#include "ui_nwindow.h"
 
 #include "status.h"
 #include "config.h"
@@ -182,6 +183,7 @@ static int
 run_ui_thrd(void) {
   pthread_mutex_lock(&mtx_busy);
   active = true;
+  passwd_from_ui = false;
   pthread_cond_signal(&cnd_update);
   pthread_mutex_unlock(&mtx_busy);
   return (pthread_create(&thrd, NULL, &ui_thrd, NULL));
@@ -223,6 +225,7 @@ process_key(wchar_t key, struct input *a, WINDOW *win)
   switch (key) {
     case UIKEY_ENTER:
       send_passwd(ffd, a->input, a->input_len);
+      passwd_from_ui = true;
       retval = false;
       break;
     case UIKEY_BACKSPACE:
@@ -252,12 +255,19 @@ lower_statusbar_update(WINDOW *win, struct statusbar *bar)
   return (0);
 }
 
+static int
+infownd_update(WINDOW *win, struct txtwindow *tw)
+{
+  return (0);
+}
+
 int
 do_ui(int fifo_fd)
 {
   struct input *pw_input;
   struct anic *heartbeat;
   struct statusbar *higher, *lower;
+  struct txtwindow *infownd;
   char key = '\0';
   char *title;
 
@@ -272,6 +282,8 @@ do_ui(int fifo_fd)
   heartbeat = init_anic(0, 0, A_BOLD | COLOR_PAIR(1), "[%c]");
   higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3), NULL);
   lower = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3), lower_statusbar_update);
+  infownd = init_txtwindow(10, 10, 25, 8, COLOR_PAIR(3), infownd_update);
+
   register_input(NULL, pw_input);
   register_statusbar(higher);
   register_statusbar(lower);
@@ -305,6 +317,7 @@ do_ui(int fifo_fd)
   free_anic(heartbeat);
   free_statusbar(higher);
   free_statusbar(lower);
+  free_txtwindow(infownd);
   free_ui();
   return (DOUI_OK);
 error:
