@@ -23,9 +23,13 @@ _nask_cmd () {
     rm /usr/share/initramfs-tools/hooks/naskpass
     dpkg-divert --package naskpass --rename --remove ${ORGFILE}
     db_set naskpass/active false
+  elif [ "x$1" = "xUPDT" ] && [ "$RET" = "true" ]; then
+    cp /usr/share/naskpass/naskpass.script.initramfs ${ORGFILE}
   fi
   return 0
 }
 
 nask_activate ()	{ _nask_cmd "ACTV"; return $?; }
 nask_deactivate ()	{ _nask_cmd "DCTV"; return $?; }
+nask_update ()		{ _nask_cmd "UPDT"; return $?; }
+

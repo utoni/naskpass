@@ -9,10 +9,9 @@ set -e
 . /usr/share/naskpass/naskconf
 
 case "$1" in
-    install)
-    ;;
 
-    configure|upgrade)
+    configure)
+        nask_update
         db_input high naskpass/activate || true
         db_go
         db_get naskpass/activate
