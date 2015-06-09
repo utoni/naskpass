@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <wchar.h>
 
 #include "ui.h"
 #include "ui_input.h"
@@ -130,11 +129,11 @@ activate_input(WINDOW *win, struct input *a)
 }
 
 int
-add_input(WINDOW *win, struct input *a, wchar_t key)
+add_input(WINDOW *win, struct input *a, int key)
 {
   if (a == NULL) return (UICB_ERR_UNDEF);
   if (a->input_len >= a->input_max) return (UICB_ERR_BUF);
-  *(a->input + a->input_pos) = (wchar_t) key;
+  *(a->input + a->input_pos) = (char) key;
   ++a->input_pos;
   ++a->input_len;
   a->cur_pos = (a->cur_pos+1 < a->width ? a->cur_pos+1 : a->cur_pos);

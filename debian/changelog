@@ -1,4 +1,9 @@
-naskpass (1.1-1) UNRELEASED; urgency=low
+naskpass (1.2) unstable; urgency=low
+  * jessie port
+
+ -- Toni Uhlig <matzeton@googlemail.com>  Tue, 09 Jun 2015 11:14:20 +0100
+
+naskpass (1.1-1) unstable; urgency=low
 
   * UI rewritten
   * maintainer scripts/configs renewed

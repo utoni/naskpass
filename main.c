@@ -135,7 +135,7 @@ main(int argc, char **argv)
     while (input_timeout(ffd, 1) == 0) {
       usleep(100000);
       if (ui_active == true) {
-        
+        // TODO: smthng
       }
     }
     stop_ui();
@@ -152,7 +152,6 @@ main(int argc, char **argv)
     exit(EXIT_FAILURE);
   }
 
-printf("BLA\n");
   close(ffd);
   if (crypt_cmd != NULL) free(crypt_cmd);
   free(fifo_path);

@@ -3,7 +3,7 @@ DBGFLAGS = -g
 LDFLAGS ?= $(shell ncurses5-config --libs) -pthread
 CC := gcc
 INSTALL ?= install
-VERSION ?= $(shell if [ -d ./.git ]; then echo -n "git-"; git rev-parse --short HEAD; else echo "1.1a"; fi)
+VERSION ?= $(shell if [ -d ./.git ]; then echo -n "git-"; git rev-parse --short HEAD; else echo "1.2a"; fi)
 BIN = naskpass
 SOURCES = status.c ui_ani.c ui_input.c ui_statusbar.c ui_nwindow.c ui.c main.c
 

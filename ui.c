@@ -217,7 +217,7 @@ send_passwd(int fifo_fd, char *passwd, size_t len)
 }
 
 static bool
-process_key(wchar_t key, struct input *a, WINDOW *win)
+process_key(char key, struct input *a, WINDOW *win)
 {
   bool retval = true;
 
