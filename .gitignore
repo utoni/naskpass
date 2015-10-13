@@ -1,2 +1,5 @@
 /naskpass
+/tests/producer
+/tests/consumer
+/tests/semtest
 *.swp
