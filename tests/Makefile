@@ -1,5 +1,5 @@
 CFLAGS = -Wall
-LDFLAGS = -lpthread
+LDFLAGS = -lpthread -lrt
 CC = gcc
 SOURCES = $(wildcard *.c)
 BINARIES = $(patsubst %.c,%,$(SOURCES))

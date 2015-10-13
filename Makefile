@@ -1,6 +1,6 @@
 CFLAGS ?= $(shell ncurses5-config --cflags) -Wall -D_GNU_SOURCE=1
 DBGFLAGS = -g
-LDFLAGS ?= $(shell ncurses5-config --libs) -pthread
+LDFLAGS ?= $(shell ncurses5-config --libs) -pthread -lrt
 CC ?= gcc
 INSTALL ?= install
 VERSION ?= $(shell if [ -d ./.git ]; then echo -n "git-"; git rev-parse --short HEAD; else echo "1.2a"; fi)

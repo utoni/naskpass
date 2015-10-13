@@ -2,4 +2,5 @@
 /tests/producer
 /tests/consumer
 /tests/semtest
+/tests/mqtest
 *.swp
