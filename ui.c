@@ -9,6 +9,9 @@
 #include <ncurses.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <mqueue.h>
 #include <signal.h>
 
 #include "ui.h"
@@ -30,17 +33,18 @@
 #define STRLEN(s) (sizeof(s)/sizeof(s[0]))
 
 
-static int ffd;
 static unsigned int max_x, max_y;
 static WINDOW *wnd_main;
 static struct nask_ui *nui = NULL;
 static pthread_t thrd;
-static bool active, passwd_from_ui;
+static bool active;
 static unsigned int atmout = APP_TIMEOUT;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mtx_busy = PTHREAD_MUTEX_INITIALIZER;
 static sem_t sem_rdy;
+static sem_t *sp_ui, *sp_input;
+static mqd_t mq_passwd;
 
 
 void
@@ -183,7 +187,6 @@ static int
 run_ui_thrd(void) {
   pthread_mutex_lock(&mtx_busy);
   active = true;
-  passwd_from_ui = false;
   pthread_cond_signal(&cnd_update);
   pthread_mutex_unlock(&mtx_busy);
   return (pthread_create(&thrd, NULL, &ui_thrd, NULL));
@@ -205,15 +208,15 @@ stop_ui_thrd(void)
 }
 
 static int
-send_passwd(int fifo_fd, char *passwd, size_t len)
+mq_passwd_send(char *passwd, size_t len)
 {
-  if (write(fifo_fd, passwd, len) != len) {
-    memset(passwd, '\0', len);
-    return (errno);
-  } else {
-    memset(passwd, '\0', len);
-    return (0);
+  struct mq_attr m_attr;
+
+  if (mq_send(mq_passwd, "hellomq", 7, 0) == 0 && mq_getattr(mq_passwd, &m_attr) == 0) {
+    return m_attr.mq_curmsgs;
   }
+  memset(passwd, '\0', len);
+  return -1;
 }
 
 static bool
@@ -224,9 +227,9 @@ process_key(char key, struct input *a, WINDOW *win)
   atmout = APP_TIMEOUT;
   switch (key) {
     case UIKEY_ENTER:
-      send_passwd(ffd, a->input, a->input_len);
-      passwd_from_ui = true;
-      retval = false;
+      if ( mq_passwd_send(a->input, a->input_len) > 0 ) {
+        retval = false;
+      } else retval = true;
       break;
     case UIKEY_BACKSPACE:
       del_input(win, a);
@@ -262,18 +265,21 @@ infownd_update(WINDOW *win, struct txtwindow *tw)
 }
 
 int
-do_ui(int fifo_fd)
+do_ui(void)
 {
   struct input *pw_input;
   struct anic *heartbeat;
   struct statusbar *higher, *lower;
   struct txtwindow *infownd;
   char key = '\0';
-  char *title;
+  char *title = NULL;
+  int i_sval = -1, ret = DOUI_ERR;
 
   asprintf(&title, "/* %s-%s */", PKGNAME, VERSION);
-  ffd = fifo_fd;
-  if (sem_init(&sem_rdy, 0, 0) == -1) {
+  sp_ui = sem_open(SEM_GUI, 0, 0, 0);
+  sp_input = sem_open(SEM_INP, 0, 0, 0);
+  mq_passwd = mq_open(MSQ_PWD, O_WRONLY, S_IWUSR, NULL);
+  if ( sem_init(&sem_rdy, 0, 0) == -1 || !sp_ui || !sp_input || mq_passwd == (mqd_t)-1 ) {
     perror("init semaphore");
     goto error;
   }
@@ -295,7 +301,7 @@ do_ui(int fifo_fd)
   }
   sem_wait(&sem_rdy);
   wtimeout(wnd_main, 1000);
-  while (active == true) {
+  while ( active && sem_getvalue(sp_ui, &i_sval) == 0 && i_sval > 0 ) {
     if ((key = wgetch(wnd_main)) == '\0') {
       break;
     }
@@ -308,6 +314,7 @@ do_ui(int fifo_fd)
     do_ui_update(false);
     pthread_mutex_unlock(&mtx_busy);
   }
+  ui_thrd_force_update();
   stop_ui_thrd();
   unregister_ui_elt(lower);
   unregister_ui_elt(higher);
@@ -319,19 +326,16 @@ do_ui(int fifo_fd)
   free_statusbar(lower);
   free_txtwindow(infownd);
   free_ui();
-  return (DOUI_OK);
+  ret = DOUI_OK;
+  sem_trywait(sp_ui);
+  mq_close(mq_passwd);
 error:
-  free(title);
-  return (DOUI_ERR);
-}
-
-bool
-is_passwd_from_ui(void)
-{
-  bool ret;
-  pthread_mutex_lock(&mtx_busy);
-  ret = passwd_from_ui;
-  pthread_mutex_unlock(&mtx_busy);
-  return (ret);
+  if (title) free(title);
+  if (sp_ui) sem_close(sp_ui);
+  if (sp_input) sem_close(sp_input);
+  title = NULL;
+  sp_ui = NULL;
+  sp_input = NULL;
+  return ret;
 }
 

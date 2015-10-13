@@ -52,12 +52,9 @@ void
 free_ui(void);
 
 int
-do_ui(int fifo_fd);
+do_ui(void);
 
 void
 stop_ui(void);
-
-bool
-is_passwd_from_ui(void);
 
 #endif

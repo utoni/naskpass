@@ -8,6 +8,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <semaphore.h>
+#include <time.h>
+#include <mqueue.h>
 
 #include "ui_ani.h"
 #include "ui_input.h"
@@ -16,7 +19,9 @@
 #include "config.h"
 
 
-static bool ui_active = true;
+static sem_t *sp_ui, *sp_input;
+static mqd_t mq_passwd;
+
 
 static void
 usage(char *arg0)
@@ -51,23 +56,6 @@ check_fifo(char *fifo_path)
   return (false);
 }
 
-/* stolen from http://www.gnu.org/software/libc/manual/html_node/Waiting-for-I_002fO.html */
-static int
-input_timeout(int filedes, unsigned int seconds)
-{
-  fd_set set;
-  struct timeval timeout;
-
-  /* Initialize the file descriptor set. */
-  FD_ZERO (&set);
-  FD_SET (filedes, &set);
-  /* Initialize the timeout data structure. */
-  timeout.tv_sec = seconds;
-  timeout.tv_usec = 0;
-  /* select returns 0 if timeout, 1 if input available, -1 if error. */
-  return TEMP_FAILURE_RETRY(select(FD_SETSIZE, &set, NULL, NULL, &timeout));
-}
-
 int
 run_cryptcreate(char *pass, char *crypt_cmd)
 {
@@ -80,22 +68,65 @@ run_cryptcreate(char *pass, char *crypt_cmd)
   return (retval);
 }
 
+void sigfunc(int signal)
+{
+  switch (signal) {
+    case SIGTERM:
+    case SIGKILL:
+    case SIGINT:
+      sem_trywait(sp_ui);
+      sem_trywait(sp_input);
+      break;
+  }
+}
+
 int
 main(int argc, char **argv)
 {
-  int ffd, c_status, opt;
+  int ret = EXIT_FAILURE, ffd = -1, c_status, opt, i_sval;
   pid_t child;
   char pbuf[MAX_PASSWD_LEN+1];
   char *fifo_path = NULL;
   char *crypt_cmd = NULL;
+  struct timespec ts_sem_input;
+  struct mq_attr mq_attr;
+
+  signal(SIGINT, sigfunc);
+  signal(SIGTERM, sigfunc);
+  signal(SIGKILL, sigfunc);
+
+  if ( clock_gettime(CLOCK_REALTIME, &ts_sem_input) == -1 ) {
+    fprintf(stderr, "%s: clock get time error: %d (%s)\n", argv[0], errno, strerror(errno));
+    goto error;
+  }
+  if ( (sp_ui = sem_open(SEM_GUI, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED ||
+          (sp_input = sem_open(SEM_INP, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED ||
+(mq_passwd = mq_open(MSQ_PWD, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, NULL)) == (mqd_t) -1 ) {
+    if ( errno == EEXIST ) {
+      fprintf(stderr, "%s: already started?\n", argv[0]);
+    } else {
+      fprintf(stderr, "%s: can not create semaphore: %d (%s)\n", argv[0], errno, strerror(errno));
+    }
+    goto error;
+  }
+  if ( mq_getattr(mq_passwd, &mq_attr) == 0 ) {
+    mq_attr.mq_maxmsg = 2;
+    mq_attr.mq_msgsize = MAX_PASSWD_LEN;
+    if ( mq_setattr(mq_passwd, &mq_attr, NULL) != 0 ) {
+      fprintf(stderr, "%s: can not SET message queue attributes: %d (%s)\n", argv[0], errno, strerror(errno));
+      goto error;
+    }
+  } else {
+    fprintf(stderr, "%s: can not GET message queue attributes: %d (%s)\n", argv[0], errno, strerror(errno));
+    goto error;
+  }
 
   memset(pbuf, '\0', MAX_PASSWD_LEN+1);
-
   while ((opt = getopt(argc, argv, "hf:c:")) != -1) {
     switch (opt) {
       case 'h':
         usage(argv[0]);
-        exit(EXIT_SUCCESS);
+        goto error;
       case 'f':
         fifo_path = strdup(optarg);
         break;
@@ -104,56 +135,66 @@ main(int argc, char **argv)
         break;
       default:
         usage(argv[0]);
-        exit(EXIT_FAILURE);
+        goto error;
     }
   }
   if (optind < argc) {
     fprintf(stderr, "%s: I dont understand you.\n\n", argv[0]);
     usage(argv[0]);
-    exit(EXIT_FAILURE);
+    goto error;
   }
   if (fifo_path == NULL) fifo_path = strdup(DEFAULT_FIFO);
 
   if (check_fifo(fifo_path) == false) {
     usage(argv[0]);
-    exit(EXIT_FAILURE);
+    goto error;
   }
   if ((ffd = open(fifo_path, O_NONBLOCK | O_RDWR)) < 0) {
-    fprintf(stderr, "fifo: %s\n", fifo_path);
-    perror("open");
-    exit(EXIT_FAILURE);
+    fprintf(stderr, "%s: fifo '%s' error: %d (%s)\n", argv[0], fifo_path, errno, strerror(errno));
+    goto error;
   }
 
   if ((child = fork()) == 0) {
     /* child */
-    ui_active = true;
-    do_ui(ffd);
-    ui_active = false;
+    fclose(stderr);
+    /* Slave process: TUI */
+    sem_post(sp_ui);
+    do_ui();
   } else if (child > 0) {
     /* parent */
     fclose(stdin);
-    while (input_timeout(ffd, 1) == 0) {
+    fclose(stdout);
+    /* Master process: mainloop (read passwd from message queue or fifo and exec cryptcreate */
+    while ( sem_getvalue(sp_ui, &i_sval) == 0 && i_sval > 0 ) {
+      if ( sem_getvalue(sp_input, &i_sval) == 0 && i_sval > 0 ) {
+        if (read(ffd, pbuf, MAX_PASSWD_LEN) > 0) {
+          if (run_cryptcreate(pbuf, crypt_cmd) != 0) {
+            fprintf(stderr, "cryptcreate error\n");
+          }
+        }
+      } else if ( mq_receive(mq_passwd, pbuf, MAX_PASSWD_LEN, NULL) > 0 ) {
+exit(77);
+      }
       usleep(100000);
-      if (ui_active == true) {
-        // TODO: smthng
-      }
     }
-    stop_ui();
     wait(&c_status);
-    if (read(ffd, pbuf, MAX_PASSWD_LEN) > 0) {
-      if (run_cryptcreate(pbuf, crypt_cmd) != 0) {
-        fprintf(stderr, "cryptcreate error\n");
-      }
-    }
     memset(pbuf, '\0', MAX_PASSWD_LEN+1);
   } else {
     /* fork error */
     perror("fork");
-    exit(EXIT_FAILURE);
+    goto error;
   }
 
-  close(ffd);
+  ret = EXIT_SUCCESS;
+error:
+  if (ffd >= 0) close(ffd);
   if (crypt_cmd != NULL) free(crypt_cmd);
-  free(fifo_path);
-  return (EXIT_SUCCESS);
+  if (fifo_path != NULL) free(fifo_path);
+  sem_close(sp_ui);
+  sem_close(sp_input);
+  mq_close(mq_passwd);
+  sem_unlink(SEM_GUI);
+  sem_unlink(SEM_INP);
+  mq_unlink(MSQ_PWD);
+  exit(ret);
 }
