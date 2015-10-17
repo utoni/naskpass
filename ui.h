@@ -54,7 +54,4 @@ free_ui(void);
 int
 do_ui(void);
 
-void
-stop_ui(void);
-
 #endif

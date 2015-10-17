@@ -29,6 +29,10 @@
 #define PASSWD_HEIGHT 5
 #define PASSWD_XRELPOS (unsigned int)(PASSWD_WIDTH / 2) - (PASSWD_WIDTH / 6)
 #define PASSWD_YRELPOS (unsigned int)(PASSWD_HEIGHT / 2) + 1
+#define INFOWND_WIDTH 25
+#define INFOWND_HEIGHT 3
+#define INFOWND_XRELPOS (unsigned int)(INFOWND_WIDTH / 2) - (INFOWND_WIDTH / 6)
+#define INFOWND_YRELPOS (unsigned int)(INFOWND_HEIGHT / 2) + 1
 
 #define STRLEN(s) (sizeof(s)/sizeof(s[0]))
 
@@ -37,7 +41,6 @@ static unsigned int max_x, max_y;
 static WINDOW *wnd_main;
 static struct nask_ui *nui = NULL;
 static pthread_t thrd;
-static bool active;
 static unsigned int atmout = APP_TIMEOUT;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
@@ -123,7 +126,7 @@ do_ui_update(bool timed_out)
 static void *
 ui_thrd(void *arg)
 {
-  int cnd_ret;
+  int cnd_ret, i_sval;
   struct timeval now;
   struct timespec wait;
 
@@ -133,17 +136,14 @@ ui_thrd(void *arg)
   wait.tv_nsec = now.tv_usec * 1000;
   do_ui_update(true);
   sem_post(&sem_rdy);
-  while (active == true) {
+  while ( sem_getvalue(sp_ui, &i_sval) == 0 && i_sval > 0 ) {
     pthread_mutex_unlock(&mtx_busy);
     cnd_ret = pthread_cond_timedwait(&cnd_update, &mtx_update, &wait);
     if (cnd_ret == ETIMEDOUT) {
       wait.tv_sec += UILOOP_TIMEOUT;
     }
     pthread_mutex_lock(&mtx_busy);
-    if (--atmout == 0) active = false;
-    if (active == false) {
-      break;
-    }
+    if (--atmout == 0) sem_trywait(sp_ui);
     do_ui_update( (cnd_ret == ETIMEDOUT ? true : false) );
   }
   pthread_mutex_unlock(&mtx_busy);
@@ -167,6 +167,7 @@ init_ui(void)
   init_pair(1, COLOR_RED, COLOR_WHITE);
   init_pair(2, COLOR_WHITE, COLOR_BLACK);
   init_pair(3, COLOR_BLACK, COLOR_WHITE);
+  init_pair(4, COLOR_YELLOW, COLOR_RED);
   raw();
   keypad(stdscr, TRUE);
   noecho();
@@ -185,25 +186,12 @@ free_ui(void)
 
 static int
 run_ui_thrd(void) {
-  pthread_mutex_lock(&mtx_busy);
-  active = true;
-  pthread_cond_signal(&cnd_update);
-  pthread_mutex_unlock(&mtx_busy);
   return (pthread_create(&thrd, NULL, &ui_thrd, NULL));
-}
-
-void
-stop_ui(void)
-{
-  pthread_mutex_lock(&mtx_busy);
-  active = false;
-  pthread_mutex_unlock(&mtx_busy);
 }
 
 static int
 stop_ui_thrd(void)
 {
-  stop_ui();
   return (pthread_join(thrd, NULL));
 }
 
@@ -212,7 +200,8 @@ mq_passwd_send(char *passwd, size_t len)
 {
   struct mq_attr m_attr;
 
-  if (mq_send(mq_passwd, "hellomq", 7, 0) == 0 && mq_getattr(mq_passwd, &m_attr) == 0) {
+  sem_post(sp_input);
+  if (mq_send(mq_passwd, passwd, len, 0) == 0 && mq_getattr(mq_passwd, &m_attr) == 0) {
     return m_attr.mq_curmsgs;
   }
   memset(passwd, '\0', len);
@@ -278,7 +267,7 @@ do_ui(void)
   asprintf(&title, "/* %s-%s */", PKGNAME, VERSION);
   sp_ui = sem_open(SEM_GUI, 0, 0, 0);
   sp_input = sem_open(SEM_INP, 0, 0, 0);
-  mq_passwd = mq_open(MSQ_PWD, O_WRONLY, S_IWUSR, NULL);
+  mq_passwd = mq_open(MSQ_PWD, O_WRONLY, 0, NULL);
   if ( sem_init(&sem_rdy, 0, 0) == -1 || !sp_ui || !sp_input || mq_passwd == (mqd_t)-1 ) {
     perror("init semaphore");
     goto error;
@@ -288,12 +277,15 @@ do_ui(void)
   heartbeat = init_anic(0, 0, A_BOLD | COLOR_PAIR(1), "[%c]");
   higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3), NULL);
   lower = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3), lower_statusbar_update);
-  infownd = init_txtwindow(10, 10, 25, 8, COLOR_PAIR(3), infownd_update);
+  infownd = init_txtwindow((unsigned int)(max_x / 2)-INFOWND_XRELPOS, (unsigned int)(max_y / 2)-INFOWND_YRELPOS, INFOWND_WIDTH, INFOWND_HEIGHT, COLOR_PAIR(4), COLOR_PAIR(4) | A_BOLD, infownd_update);
 
   register_input(NULL, pw_input);
   register_statusbar(higher);
   register_statusbar(lower);
   register_anic(heartbeat);
+  register_txtwindow(infownd);
+  set_txtwindow_title(infownd, "WARNUNG");
+  set_txtwindow_text(infownd, "String0...............\nString1..................\nString2.....");
   activate_input(wnd_main, pw_input);
   set_statusbar_text(higher, title);
   if (run_ui_thrd() != 0) {
@@ -301,7 +293,7 @@ do_ui(void)
   }
   sem_wait(&sem_rdy);
   wtimeout(wnd_main, 1000);
-  while ( active && sem_getvalue(sp_ui, &i_sval) == 0 && i_sval > 0 ) {
+  while ( sem_getvalue(sp_ui, &i_sval) == 0 && i_sval > 0 ) {
     if ((key = wgetch(wnd_main)) == '\0') {
       break;
     }
@@ -309,7 +301,7 @@ do_ui(void)
       continue;
     }
     pthread_mutex_lock(&mtx_busy);
-    active = process_key(key, pw_input, wnd_main);
+    if ( process_key(key, pw_input, wnd_main) == false ) sem_trywait(sp_ui);
     activate_input(wnd_main, pw_input);
     do_ui_update(false);
     pthread_mutex_unlock(&mtx_busy);
@@ -327,7 +319,6 @@ do_ui(void)
   free_txtwindow(infownd);
   free_ui();
   ret = DOUI_OK;
-  sem_trywait(sp_ui);
   mq_close(mq_passwd);
 error:
   if (title) free(title);

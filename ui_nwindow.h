@@ -19,12 +19,13 @@ struct txtwindow {
   size_t text_len;
   int (*window_func)(WINDOW *, struct txtwindow *);
   chtype attrs;
+  chtype text_attrs;
 };
 
 typedef int (*window_func)(WINDOW *, struct txtwindow *);
 
 struct txtwindow *
-init_txtwindow(unsigned int, unsigned int y, unsigned int width, unsigned int height, chtype attrs, window_func cb_update);
+init_txtwindow(unsigned int, unsigned int y, unsigned int width, unsigned int height, chtype attrs, chtype text_attrs, window_func cb_update);
 
 void
 free_txtwindow(struct txtwindow *a);
@@ -36,9 +37,12 @@ void
 register_txtwindow(struct txtwindow *a);
 
 void
-set_txtwindow_text(struct txtwindow *a, const char *text);
+set_txtwindow_text(struct txtwindow *a, char *text);
 
 void
 set_txtwindow_scrollable(struct txtwindow *a, bool scrollable); 
+
+void
+set_txtwindow_title(struct txtwindow *a, const char *title);
 
 #endif
