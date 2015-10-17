@@ -65,6 +65,7 @@ run_cryptcreate(char *pass, char *crypt_cmd)
   if (crypt_cmd == NULL || pass == NULL) return (-1);
   asprintf(&cmd, "echo '%s' | %s", pass, crypt_cmd);
   retval = system(cmd);
+  free(cmd);
   return (retval);
 }
 
@@ -95,17 +96,22 @@ main(int argc, char **argv)
   signal(SIGTERM, sigfunc);
   signal(SIGKILL, sigfunc);
 
+  mq_attr.mq_flags = 0;
+  mq_attr.mq_msgsize = MAX_PASSWD_LEN;
+  mq_attr.mq_maxmsg = 3;
+  mq_attr.mq_curmsgs = 0;
+
   if ( clock_gettime(CLOCK_REALTIME, &ts_sem_input) == -1 ) {
     fprintf(stderr, "%s: clock get time error: %d (%s)\n", argv[0], errno, strerror(errno));
     goto error;
   }
   if ( (sp_ui = sem_open(SEM_GUI, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED ||
           (sp_input = sem_open(SEM_INP, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0)) == SEM_FAILED ||
-(mq_passwd = mq_open(MSQ_PWD, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, NULL)) == (mqd_t) -1 ) {
+(mq_passwd = mq_open(MSQ_PWD, O_NONBLOCK | O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG, &mq_attr)) == (mqd_t) -1 ) {
     if ( errno == EEXIST ) {
       fprintf(stderr, "%s: already started?\n", argv[0]);
     } else {
-      fprintf(stderr, "%s: can not create semaphore: %d (%s)\n", argv[0], errno, strerror(errno));
+      fprintf(stderr, "%s: can not create semaphore/message queue: %d (%s)\n", argv[0], errno, strerror(errno));
     }
     goto error;
   }
@@ -154,26 +160,27 @@ main(int argc, char **argv)
     goto error;
   }
 
+  sem_post(sp_ui);
   if ((child = fork()) == 0) {
     /* child */
     fclose(stderr);
     /* Slave process: TUI */
-    sem_post(sp_ui);
     do_ui();
   } else if (child > 0) {
     /* parent */
     fclose(stdin);
     fclose(stdout);
     /* Master process: mainloop (read passwd from message queue or fifo and exec cryptcreate */
-    while ( sem_getvalue(sp_ui, &i_sval) == 0 && i_sval > 0 ) {
-      if ( sem_getvalue(sp_input, &i_sval) == 0 && i_sval > 0 ) {
-        if (read(ffd, pbuf, MAX_PASSWD_LEN) > 0) {
-          if (run_cryptcreate(pbuf, crypt_cmd) != 0) {
-            fprintf(stderr, "cryptcreate error\n");
-          }
+    while ( (sem_getvalue(sp_ui, &i_sval) == 0 && i_sval > 0) || (sem_getvalue(sp_input, &i_sval) == 0 && i_sval > 0) ) {
+      if (read(ffd, pbuf, MAX_PASSWD_LEN) >= 0) {
+        if (run_cryptcreate(pbuf, crypt_cmd) != 0) {
+          fprintf(stderr, "cryptcreate error\n");
         }
-      } else if ( mq_receive(mq_passwd, pbuf, MAX_PASSWD_LEN, NULL) > 0 ) {
-exit(77);
+      } else if ( mq_receive(mq_passwd, pbuf, MAX_PASSWD_LEN, NULL) >= 0 ) {
+        if (run_cryptcreate(pbuf, crypt_cmd) != 0) {
+          fprintf(stderr, "cryptcreate error\n");
+        }
+        sem_wait(sp_input);
       }
       usleep(100000);
     }
