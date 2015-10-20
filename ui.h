@@ -4,8 +4,6 @@
 #include <ncurses.h>
 #include <stdint.h>
 
-#define MAX_PASSWD_LEN	128
-
 #define UICB_OK		0
 #define UICB_ERR_UNDEF	1
 #define UICB_ERR_CB	2

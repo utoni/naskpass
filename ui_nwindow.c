@@ -16,21 +16,30 @@ init_txtwindow(unsigned int x, unsigned int y, unsigned int width, unsigned int 
   a->height = height;
   a->scrollable = false;
   a->title_len = INITIAL_TITLE_LEN;
-  a->text_len = INITIAL_TEXT_LEN;
   a->title = calloc(a->title_len+1, sizeof(char));
-  a->text = calloc(a->text_len+1, sizeof(char));
+  a->text = NULL;
   a->attrs = attrs;
   a->text_attrs = text_attrs;
   a->window_func = cb_update;
   return (a);
 }
 
+static void
+__free_text(struct txtwindow *a)
+{
+  if (a->text) {
+    if (a->text[0]) {
+      free(a->text[0]);
+    }
+    free(a->text);
+    a->text = NULL;
+  }
+}
+
 void
 free_txtwindow(struct txtwindow *a)
 {
-  if (a->text) {
-    free(a->text);
-  }
+  __free_text(a);
   if (a->title) {
     free(a->title);
   }
@@ -64,6 +73,11 @@ print_wnd(struct txtwindow *a)
   attron(a->text_attrs);
   mvprintw(y-2, (float)x+(float)(w/2)-(float)(a->title_len*2/3), "[ %s ]", a->title);
   /* print windows text */
+  i = 0;
+  while ( a->text[i] ) {
+    mvprintw(y+i, x, a->text[i]);
+    i++;
+  }
   attroff(a->text_attrs);
 }
 
@@ -96,21 +110,24 @@ __do_textcpy(char **p_dest, size_t sz_dest, const char *p_src, size_t sz_src)
   return sz_src;
 }
 
+/* seperate a String with NEWLINES into an array */
 static char **
 __do_textadjust(struct txtwindow *a, char *text)
 {
   int i = 0, rows = (int)(strlen(text) / a->width)+1;
   char **adj_text = calloc(rows+1, sizeof(char *));
-  char *p_strtok = strdupa(text), *tok;
+  char *p_strtok, *tok;
   const char sep[] = "\n";
 
-  printf("___[%d],[%d],[%lu],[%s]\n", rows, a->width, (long unsigned int) strlen(text), text);
   if (rows > a->height) goto error;
-  adj_text[0] = text;
+  p_strtok = strdup(text);
   while ( (tok = strsep(&p_strtok, sep)) && rows-- >= 0 ) {
+    if (strlen(tok) > a->width) {
+      strcpy(tok+a->width-3, "...");
+      *(tok+a->width) = '\0'; 
+    }
+    adj_text[i] = tok;
     i++;
-    fprintf(stdout, "___[%p , %p],[%s],[%d]\n", p_strtok, tok, tok, rows);
-//    adj_text[i] = 
   }
   return adj_text;
 error:
@@ -121,9 +138,12 @@ error:
 void
 set_txtwindow_text(struct txtwindow *a, char *text)
 {
-  char **fmt_text = __do_textadjust(a, text), **curline = fmt_text;
+  char **fmt_text = __do_textadjust(a, text);
 
-  //a->text_len = __do_textcpy(&a->text, a->text_len, text, strlen(text));
+  if (fmt_text) {
+    __free_text(a);
+    a->text = fmt_text;
+  }
 }
 
 void

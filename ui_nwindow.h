@@ -5,7 +5,6 @@
 
 
 #define INITIAL_TITLE_LEN 32
-#define INITIAL_TEXT_LEN 128
 
 struct txtwindow {
   unsigned int y;
@@ -15,8 +14,7 @@ struct txtwindow {
   bool scrollable;
   char *title;
   size_t title_len;
-  char *text;
-  size_t text_len;
+  char **text;
   int (*window_func)(WINDOW *, struct txtwindow *);
   chtype attrs;
   chtype text_attrs;

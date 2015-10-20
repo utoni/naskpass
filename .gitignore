@@ -3,4 +3,5 @@
 /tests/consumer
 /tests/semtest
 /tests/mqtest
+/tests/strsep
 *.swp

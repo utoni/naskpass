@@ -46,8 +46,8 @@ static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mtx_busy = PTHREAD_MUTEX_INITIALIZER;
 static sem_t sem_rdy;
-static sem_t *sp_ui, *sp_input;
-static mqd_t mq_passwd;
+static sem_t /* TUI active? */ *sp_ui, /* Textfield input available? */ *sp_input;
+static mqd_t mq_passwd, mq_info;
 
 
 void
@@ -261,19 +261,20 @@ do_ui(void)
   struct statusbar *higher, *lower;
   struct txtwindow *infownd;
   char key = '\0';
-  char *title = NULL;
+  char *title = NULL, mq_msg[IPC_MQSIZ+1];
   int i_sval = -1, ret = DOUI_ERR;
 
   asprintf(&title, "/* %s-%s */", PKGNAME, VERSION);
   sp_ui = sem_open(SEM_GUI, 0, 0, 0);
   sp_input = sem_open(SEM_INP, 0, 0, 0);
   mq_passwd = mq_open(MSQ_PWD, O_WRONLY, 0, NULL);
-  if ( sem_init(&sem_rdy, 0, 0) == -1 || !sp_ui || !sp_input || mq_passwd == (mqd_t)-1 ) {
-    perror("init semaphore");
+  mq_info = mq_open(MSQ_INF, O_RDONLY, 0, NULL);
+  if ( sem_init(&sem_rdy, 0, 0) == -1 || !sp_ui || !sp_input || mq_passwd == (mqd_t)-1 || mq_info == (mqd_t)-1 ) {
+    perror("init semaphore/messageq");
     goto error;
   }
   init_ui();
-  pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS, (unsigned int)(max_y / 2)-PASSWD_YRELPOS, PASSWD_WIDTH, "PASSWORD: ", MAX_PASSWD_LEN, COLOR_PAIR(3), COLOR_PAIR(2));
+  pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS, (unsigned int)(max_y / 2)-PASSWD_YRELPOS, PASSWD_WIDTH, "PASSWORD: ", IPC_MQSIZ, COLOR_PAIR(3), COLOR_PAIR(2));
   heartbeat = init_anic(0, 0, A_BOLD | COLOR_PAIR(1), "[%c]");
   higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3), NULL);
   lower = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3), lower_statusbar_update);
@@ -284,8 +285,8 @@ do_ui(void)
   register_statusbar(lower);
   register_anic(heartbeat);
   register_txtwindow(infownd);
-  set_txtwindow_title(infownd, "WARNUNG");
-  set_txtwindow_text(infownd, "String0...............\nString1..................\nString2.....");
+  set_txtwindow_title(infownd, "WARNING");
+  set_txtwindow_text(infownd, "String0---------------#\nString1--------------------#\nString2-----#");
   activate_input(wnd_main, pw_input);
   set_statusbar_text(higher, title);
   if (run_ui_thrd() != 0) {
@@ -301,7 +302,11 @@ do_ui(void)
       continue;
     }
     pthread_mutex_lock(&mtx_busy);
-    if ( process_key(key, pw_input, wnd_main) == false ) sem_trywait(sp_ui);
+    if ( process_key(key, pw_input, wnd_main) == false ) {
+      memset(mq_msg, '\0', IPC_MQSIZ+1);
+      mq_receive(mq_info, mq_msg, IPC_MQSIZ+1, 0);
+      sem_trywait(sp_ui);
+    }
     activate_input(wnd_main, pw_input);
     do_ui_update(false);
     pthread_mutex_unlock(&mtx_busy);
@@ -320,6 +325,7 @@ do_ui(void)
   free_ui();
   ret = DOUI_OK;
   mq_close(mq_passwd);
+  mq_close(mq_info);
 error:
   if (title) free(title);
   if (sp_ui) sem_close(sp_ui);
