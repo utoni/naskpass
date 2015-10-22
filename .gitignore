@@ -5,3 +5,4 @@
 /tests/mqtest
 /tests/strsep
 *.swp
+*.o

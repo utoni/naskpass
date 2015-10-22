@@ -1,17 +1,27 @@
-CFLAGS ?= $(shell ncurses5-config --cflags) -Wall -D_GNU_SOURCE=1
+CFLAGS = $(shell ncurses5-config --cflags) -Wall -D_GNU_SOURCE=1 -fPIC
 DBGFLAGS = -g
-LDFLAGS ?= $(shell ncurses5-config --libs) -pthread -lrt
-CC ?= gcc
-INSTALL ?= install
-VERSION ?= $(shell if [ -d ./.git ]; then echo -n "git-"; git rev-parse --short HEAD; else echo "1.2a"; fi)
+LDFLAGS = $(shell ncurses5-config --libs) -pthread -lrt
+CC = gcc
+INSTALL = install
+STRIP = strip
+VERSION = $(shell if [ -d ./.git ]; then echo -n "git-"; git rev-parse --short HEAD; else echo "1.2a"; fi)
 BIN = naskpass
-SOURCES = status.c ui_ani.c ui_input.c ui_statusbar.c ui_nwindow.c ui.c main.c
+SOURCES = status.c ui_ani.c ui_input.c ui_statusbar.c ui_nwindow.c ui.c ui_elements.c main.c
+OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 
-all: $(BIN)
+all: $(OBJECTS) $(BIN)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -D_VERSION=\"$(VERSION)\" -c $< -o $@
 
 $(BIN): $(SOURCES)
-	$(CC) $(SOURCES) -D_VERSION=\"$(VERSION)\" $(CFLAGS) $(LDFLAGS) -o $(BIN)
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $(BIN)
 	$(MAKE) -C tests CC='$(CC)' CFLAGS='$(CFLAGS)' all
+
+strip:
+	$(STRIP) $(BIN)
+
+release: all strip
 
 debug:
 	$(MAKE) CFLAGS='$(CFLAGS) $(DBGFLAGS)'
@@ -31,6 +41,7 @@ uninstall:
 	rmdir --ignore-fail-on-non-empty $(DESTDIR)/usr/share/naskpass
 
 clean:
+	rm -f $(OBJECTS)
 	rm -f $(BIN)
 	$(MAKE) -C tests clean
 

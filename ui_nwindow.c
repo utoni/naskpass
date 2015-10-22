@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ui.h"
 #include "ui_nwindow.h"
 
 
@@ -14,7 +13,7 @@ init_txtwindow(unsigned int x, unsigned int y, unsigned int width, unsigned int 
   a->y = y;
   a->width = width;
   a->height = height;
-  a->scrollable = false;
+  a->active = false;
   a->title_len = INITIAL_TITLE_LEN;
   a->title = calloc(a->title_len+1, sizeof(char));
   a->text = NULL;
@@ -74,19 +73,21 @@ print_wnd(struct txtwindow *a)
   mvprintw(y-2, (float)x+(float)(w/2)-(float)(a->title_len*2/3), "[ %s ]", a->title);
   /* print windows text */
   i = 0;
-  while ( a->text[i] ) {
+  while ( a->text && a->text[i] ) {
     mvprintw(y+i, x, a->text[i]);
     i++;
   }
   attroff(a->text_attrs);
 }
 
-int
+static int
 txtwindow_cb(WINDOW *win, void *data, bool timedout)
 {
   struct txtwindow *a = (struct txtwindow *) data;
 
-  print_wnd(a);
+  if (a->active == true) {
+    print_wnd(a);
+  }
   return (UICB_OK);
 }
 

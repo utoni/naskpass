@@ -26,9 +26,16 @@
 
 
 typedef int (*ui_callback)(WINDOW *, void *, bool);
+typedef int (*ui_input_callback)(WINDOW *, void *, int);
+
+
+union ui_type {
+  ui_callback ui_element;
+  ui_input_callback ui_input;
+};
 
 struct nask_ui {
-  ui_callback ui_elt_cb;
+  union ui_type type;
   WINDOW *wnd;
   void *data;
   struct nask_ui *next;
@@ -36,6 +43,9 @@ struct nask_ui {
 
 void
 register_ui_elt(ui_callback uicb, void *data, WINDOW *wnd);
+
+void
+register_ui_input(ui_input_callback ipcb, void *data, WINDOW *wnd);
 
 void
 unregister_ui_elt(void *data);
