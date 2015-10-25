@@ -12,29 +12,32 @@
 #include <time.h>
 #include <mqueue.h>
 
+#include "config.h"
+
+#include "ui.h"
+#include "ui_ipc.h"
 #include "ui_ani.h"
 #include "ui_input.h"
 #include "ui_statusbar.h"
-#include "ui.h"
-#include "config.h"
 
 #define MSG(msg_idx) msg_arr[msg_idx]
 
 
-static sem_t *sp_ui, *sp_input, *sp_busy;
-static mqd_t mq_passwd, mq_info;
-
 enum msg_index {
   MSG_BUSY_FD = 0,
-  MSG_BUSY
+  MSG_BUSY,
+  MSG_NO_FIFO,
+  MSG_FIFO_ERR,
+  MSG_NUM
 };
-static const char *msg_arr[] = { "Please wait, got a piped password ..", "Please wait, busy .." };
+static const char *msg_arr[] = { "Please wait, got a piped password ..", "Please wait, busy ..",
+                                 "check_fifo: %s is not a FIFO\n", "check_fifo: %s error(%d): %s\n" };
 
 
 static void
 usage(char *arg0)
 {
-  fprintf(stderr, "%s (%s)\n  %s\n", PKGNAME, VERSION, PKGDESC);
+  fprintf(stderr, "\n%s (%s)\n  %s\n", PKGNAME, VERSION, PKGDESC);
   fprintf(stderr, "  Written by %s (%s).\n", AUTHOR, AUTHOR_EMAIL);
   fprintf(stderr, "  License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n\n");
   fprintf(stderr, "  Command:\n\t%s [args]\n", arg0);
@@ -54,13 +57,13 @@ check_fifo(char *fifo_path)
         if (S_ISFIFO(st.st_mode) == 1) {
           return (true);
         } else {
-          fprintf(stderr, "stat: %s is not a FIFO\n", fifo_path);
+          fprintf(stderr, MSG(MSG_NO_FIFO), fifo_path);
           return (false);
         }
       }
     }
   }
-  perror("check_fifo");
+  fprintf(stderr, MSG(MSG_FIFO_ERR), fifo_path, errno, strerror(errno));
   return (false);
 }
 
@@ -81,11 +84,9 @@ void sigfunc(int signal)
 {
   switch (signal) {
     case SIGTERM:
-    case SIGKILL:
     case SIGINT:
-      sem_trywait(sp_ui);
-      sem_trywait(sp_input);
-      sem_trywait(sp_busy);
+      ui_ipc_semtrywait(SEM_UI);
+      ui_ipc_semtrywait(SEM_IN);
       break;
   }
 }
@@ -93,42 +94,23 @@ void sigfunc(int signal)
 int
 main(int argc, char **argv)
 {
-  int ret = EXIT_FAILURE, ffd = -1, c_status, opt, i_sval;
+  int ret = EXIT_FAILURE, ffd = -1, c_status, opt;
   pid_t child;
   char pbuf[IPC_MQSIZ+1];
   char *fifo_path = NULL;
   char *crypt_cmd = NULL;
   struct timespec ts_sem_input;
-  struct mq_attr mq_attr;
 
   signal(SIGINT, sigfunc);
   signal(SIGTERM, sigfunc);
-  signal(SIGKILL, sigfunc);
-
-  mq_attr.mq_flags = 0;
-  mq_attr.mq_msgsize = IPC_MQSIZ;
-  mq_attr.mq_maxmsg = 3;
-  mq_attr.mq_curmsgs = 0;
 
   if ( clock_gettime(CLOCK_REALTIME, &ts_sem_input) == -1 ) {
     fprintf(stderr, "%s: clock get time error: %d (%s)\n", argv[0], errno, strerror(errno));
     goto error;
   }
 
-  sp_ui = sem_open(SEM_GUI, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
-  sp_input = sem_open(SEM_INP, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
-  sp_busy = sem_open(SEM_BSY, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
-  mq_passwd = mq_open(MSQ_PWD, O_NONBLOCK | O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG, &mq_attr);
-  mq_info = mq_open(MSQ_INF, O_NONBLOCK | O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG, &mq_attr);
-
-  if ( sp_ui == SEM_FAILED || sp_input == SEM_FAILED || sp_busy == SEM_FAILED ||
-          mq_passwd == (mqd_t) -1 || mq_info == (mqd_t) -1 ) {
-
-    if ( errno == EEXIST ) {
-      fprintf(stderr, "%s: already started?\n", argv[0]);
-    } else {
-      fprintf(stderr, "%s: can not create semaphore/message queue: %d (%s)\n", argv[0], errno, strerror(errno));
-    }
+  if (ui_ipc_init(1) != 0) {
+    fprintf(stderr, "%s: can not create semaphore/message queue: %d (%s)\n", argv[0], errno, strerror(errno));
     goto error;
   }
 
@@ -165,7 +147,7 @@ main(int argc, char **argv)
     goto error;
   }
 
-  sem_post(sp_ui);
+  ui_ipc_sempost(SEM_UI);
   if ((child = fork()) == 0) {
     /* child */
     fclose(stderr);
@@ -176,20 +158,20 @@ main(int argc, char **argv)
     fclose(stdin);
     fclose(stdout);
     /* Master process: mainloop (read passwd from message queue or fifo and exec cryptcreate */
-    while ( (sem_getvalue(sp_ui, &i_sval) == 0 && i_sval > 0) || (sem_getvalue(sp_input, &i_sval) == 0 && i_sval > 0) ) {
+    while ( ui_ipc_getvalue(SEM_UI) > 0 || ui_ipc_getvalue(SEM_IN) > 0 ) {
       if (read(ffd, pbuf, IPC_MQSIZ) >= 0) {
-        sem_post(sp_busy);
-        mq_send(mq_info, MSG(MSG_BUSY_FD), strlen(MSG(MSG_BUSY_FD)), 0);
+        ui_ipc_sempost(SEM_BS);
+        ui_ipc_msgsend(MQ_IF, MSG(MSG_BUSY_FD), strlen(MSG(MSG_BUSY_FD)));
         if (run_cryptcreate(pbuf, crypt_cmd) != 0) {
           fprintf(stderr, "cryptcreate error\n");
         }
-      } else if ( mq_receive(mq_passwd, pbuf, IPC_MQSIZ, NULL) >= 0 ) {
-        sem_post(sp_busy);
-        mq_send(mq_info, MSG(MSG_BUSY), strlen(MSG(MSG_BUSY)), 0);
+      } else if ( ui_ipc_msgrecv(MQ_PW, pbuf, IPC_MQSIZ) > 0 ) {
+        ui_ipc_sempost(SEM_BS);
+        ui_ipc_msgsend(MQ_IF, MSG(MSG_BUSY), strlen(MSG(MSG_BUSY)));
         if (run_cryptcreate(pbuf, crypt_cmd) != 0) {
           fprintf(stderr, "cryptcreate error\n");
         }
-        sem_wait(sp_input);
+        ui_ipc_semwait(SEM_IN);
       }
       usleep(100000);
     }
@@ -206,15 +188,6 @@ error:
   if (ffd >= 0) close(ffd);
   if (crypt_cmd != NULL) free(crypt_cmd);
   if (fifo_path != NULL) free(fifo_path);
-  sem_close(sp_ui);
-  sem_close(sp_input);
-  sem_close(sp_busy);
-  mq_close(mq_passwd);
-  mq_close(mq_info);
-  sem_unlink(SEM_GUI);
-  sem_unlink(SEM_INP);
-  sem_unlink(SEM_BSY);
-  mq_unlink(MSQ_PWD);
-  mq_unlink(MSQ_INF);
+  ui_ipc_free(1);
   exit(ret);
 }

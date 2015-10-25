@@ -8,6 +8,7 @@
 #define SEM_GUI "/naskpass-gui"
 #define SEM_INP "/naskpass-input"
 #define SEM_BSY "/naskpass-busy"
+#define SEM_RDY "/naskpass-initialized"
 #define MSQ_PWD "/naskpass-passwd"
 #define MSQ_INF "/naskpass-info"
 

@@ -125,7 +125,7 @@ activate_input(WINDOW *win, struct input *a)
   } else {
     wmove(win, a->y, a->x + p_len + a->cur_pos);
   }
-  return (UICB_OK);
+  return (activate_ui_input( (void *) a )); 
 }
 
 int
@@ -174,7 +174,16 @@ input_cb(WINDOW *win, void *data, bool timed_out)
 }
 
 void
-register_input(WINDOW *win, struct input *a)
+register_input(WINDOW *win, struct input *a, ui_input_callback uin)
 {
+  a->cb_input = uin;
   register_ui_elt(input_cb, (void *) a, win);
+  register_ui_input(uin, (void *) a, win);
+}
+
+void
+unregister_input(struct input *a)
+{
+  unregister_ui_input( (void *) a );
+  unregister_ui_elt( (void *) a );
 }

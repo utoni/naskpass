@@ -7,15 +7,16 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
+#include "semconfig.h"
+
 
 sem_t *mysem = NULL;
 pid_t child;
 
-#define LOG(cmd) fprintf(stderr, "%s\n", cmd);
 
 int main(int argc, char **argv) {
-  sem_unlink("/mysem");
-  if ( (mysem = sem_open("/mysem", O_CREAT, S_IRUSR | S_IWUSR, 1)) != NULL ) {
+  sem_unlink(TESTSEM);
+  if ( (mysem = sem_open(TESTSEM, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0)) != NULL ) {
     if ( (child = fork()) == 0 ) {
       /* child */
       sleep(1);
@@ -37,6 +38,7 @@ int main(int argc, char **argv) {
     sem_close(mysem);
     exit(1);
   }
+  sem_unlink(TESTSEM);
   exit(0);
 }
 

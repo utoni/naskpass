@@ -2,8 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ui.h"
+#include "ui_ipc.h"
+#include "ui_ani.h"
+#include "ui_input.h"
+#include "ui_statusbar.h"
+#include "ui_nwindow.h"
 #include "ui_elements.h"
 
+#include "status.h"
 
 #define PASSWD_WIDTH 35
 #define PASSWD_HEIGHT 5
@@ -44,6 +51,57 @@ infownd_update(WINDOW *win, struct txtwindow *tw)
   return (0);
 }
 
+static int
+mq_passwd_send(char *passwd, size_t len)
+{
+  int ret;
+
+  ui_ipc_sempost(SEM_IN);
+  ret = ui_ipc_msgsend(MQ_PW, passwd, len);
+  memset(passwd, '\0', len);
+  return ret;
+}
+
+static int
+passwd_input_cb(WINDOW *wnd, void *data, int key)
+{
+  struct input *a = (struct input *) data;
+
+/*
+ *  if ( process_key(key, pw_input, wnd_main) == false ) {
+ *    curs_set(0);
+ *    memset(mq_msg, '\0', IPC_MQSIZ+1);
+ *    mq_receive(mq_info, mq_msg, IPC_MQSIZ+1, 0);
+ *    set_txtwindow_text(infownd, mq_msg);
+ *    set_txtwindow_active(infownd, true);
+ *    sleep(3);
+ *    sem_trywait(sp_ui);
+ *  }
+ *  activate_input(wnd_main, pw_input);
+ */
+  switch (key) {
+    case UIKEY_ENTER:
+      if ( mq_passwd_send(a->input, a->input_len) > 0 ) {
+        return DOUI_OK;
+      } else return DOUI_ERR;
+      break;
+    case UIKEY_BACKSPACE:
+      del_input(wnd, a);
+      break;
+    case UIKEY_ESC:
+      return DOUI_ERR;
+      break;
+    case UIKEY_DOWN:
+    case UIKEY_UP:
+    case UIKEY_LEFT:
+    case UIKEY_RIGHT:
+      break;
+    default:
+      add_input(wnd, a, key);
+  }
+  return DOUI_OK;
+}
+
 void
 init_ui_elements(WINDOW *wnd_main, unsigned int max_x, unsigned int max_y)
 {
@@ -56,7 +114,7 @@ init_ui_elements(WINDOW *wnd_main, unsigned int max_x, unsigned int max_y)
   infownd->userptr = calloc(4, sizeof(char));
   (*(char*)(infownd->userptr)) = '.';
 
-  register_input(NULL, pw_input);
+  register_input(NULL, pw_input, passwd_input_cb);
   register_statusbar(higher);
   register_statusbar(lower);
   register_anic(heartbeat);
@@ -72,7 +130,7 @@ free_ui_elements(void)
   unregister_ui_elt(lower);
   unregister_ui_elt(higher);
   unregister_ui_elt(heartbeat);
-  unregister_ui_elt(pw_input);
+  unregister_input(pw_input);
   free_input(pw_input);
   free_anic(heartbeat);
   free_statusbar(higher);

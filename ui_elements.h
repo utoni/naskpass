@@ -1,13 +1,6 @@
 #ifndef UI_ELEMENTS_H
 #define UI_ELEMENTS_H 1
 
-#include "ui.h"
-#include "ui_ani.h"
-#include "ui_input.h"
-#include "ui_statusbar.h"
-#include "ui_nwindow.h"
-
-#include "status.h"
 #include "config.h"
 
 

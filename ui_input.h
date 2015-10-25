@@ -16,6 +16,7 @@ struct input {
   char *prompt;
   chtype attrs;
   chtype shadow;
+  ui_input_callback cb_input;
 };
 
 struct input *
@@ -37,6 +38,9 @@ int
 input_cb(WINDOW *win, void *data, bool timed_out);
 
 void
-register_input(WINDOW *win, struct input *a);
+register_input(WINDOW *win, struct input *a, ui_input_callback uin);
+
+void
+unregister_input(struct input *a);
 
 #endif

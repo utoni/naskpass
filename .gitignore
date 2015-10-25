@@ -2,7 +2,10 @@
 /tests/producer
 /tests/consumer
 /tests/semtest
+/tests/semtest2
 /tests/mqtest
 /tests/strsep
 *.swp
 *.o
+*.d
+

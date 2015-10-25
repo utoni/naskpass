@@ -12,10 +12,11 @@
 #define DOUI_OK		0
 #define DOUI_ERR	1
 #define DOUI_TMOUT	2
-#define DOUI_PASSWD	3
+#define DOUI_NINIT	3
 
 #define UILOOP_TIMEOUT	1
 
+#define UIKEY_ACTIVATE	0
 #define UIKEY_ENTER	10
 #define UIKEY_BACKSPACE	7
 #define UIKEY_ESC	27
@@ -29,13 +30,19 @@ typedef int (*ui_callback)(WINDOW *, void *, bool);
 typedef int (*ui_input_callback)(WINDOW *, void *, int);
 
 
-union ui_type {
+enum ui_type {
+  UI_ELEMENT,
+  UI_INPUT
+};
+
+union ui_data {
   ui_callback ui_element;
   ui_input_callback ui_input;
 };
 
 struct nask_ui {
-  union ui_type type;
+  enum ui_type type;
+  union ui_data callback;
   WINDOW *wnd;
   void *data;
   struct nask_ui *next;
@@ -49,6 +56,12 @@ register_ui_input(ui_input_callback ipcb, void *data, WINDOW *wnd);
 
 void
 unregister_ui_elt(void *data);
+
+void
+unregister_ui_input(void *data);
+
+int
+activate_ui_input(void *data);
 
 void
 ui_thrd_force_update(void);
