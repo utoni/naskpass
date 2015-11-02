@@ -150,9 +150,13 @@ main(int argc, char **argv)
   ui_ipc_sempost(SEM_UI);
   if ((child = fork()) == 0) {
     /* child */
+    if (ffd >= 0) close(ffd);
+    if (crypt_cmd != NULL) free(crypt_cmd);
+    if (fifo_path != NULL) free(fifo_path);
     fclose(stderr);
     /* Slave process: TUI */
     do_ui();
+    exit(0);
   } else if (child > 0) {
     /* parent */
     fclose(stdin);

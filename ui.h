@@ -30,12 +30,7 @@ typedef int (*ui_callback)(WINDOW *, void *, bool);
 typedef int (*ui_input_callback)(WINDOW *, void *, int);
 
 
-enum ui_type {
-  UI_ELEMENT,
-  UI_INPUT
-};
-
-union ui_data {
+struct ui_data {
   ui_callback ui_element;
   ui_input_callback ui_input;
 };

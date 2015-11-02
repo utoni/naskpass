@@ -168,6 +168,7 @@ process_key(char key)
 {
   atmout = APP_TIMEOUT;
   if ( active != NULL ) {
+printf("XXXXXXXX\n");
     return ( active->callback.ui_input(active->wnd, active->data, key) == DOUI_OK ? true : false );
   }
   return false;
@@ -299,10 +300,8 @@ do_ui(void)
       continue;
     }
     if ( process_key(key) != true ) {
-printf("BLABL\n");
       break;
-    }
-printf("BLUBB\n");
+    } else printf("XXXXX\n");
     do_ui_update(false);
   }
   ui_thrd_force_update();

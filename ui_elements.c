@@ -66,7 +66,8 @@ static int
 passwd_input_cb(WINDOW *wnd, void *data, int key)
 {
   struct input *a = (struct input *) data;
-
+printf("XXXXXXX\n");
+return DOUI_OK;
 /*
  *  if ( process_key(key, pw_input, wnd_main) == false ) {
  *    curs_set(0);
