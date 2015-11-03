@@ -69,5 +69,8 @@ anic_cb(WINDOW *win, void *data, bool timed_out)
 void
 register_anic(struct anic *a)
 {
-  register_ui_elt(anic_cb, (void *) a, NULL);
+  struct ui_callbacks cbs;
+  cbs.ui_element = anic_cb;
+  cbs.ui_input = NULL;
+  register_ui_elt(&cbs, (void *) a, NULL);
 }

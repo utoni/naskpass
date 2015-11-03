@@ -94,7 +94,10 @@ txtwindow_cb(WINDOW *win, void *data, bool timedout)
 void inline
 register_txtwindow(struct txtwindow *a)
 {
-  register_ui_elt(txtwindow_cb, (void *) a, NULL);
+  struct ui_callbacks cbs;
+  cbs.ui_element = txtwindow_cb;
+  cbs.ui_input = NULL;
+  register_ui_elt(&cbs, (void *) a, NULL);
 }
 
 static size_t

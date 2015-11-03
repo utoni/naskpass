@@ -26,34 +26,27 @@
 #define UIKEY_RIGHT	5
 
 
-typedef int (*ui_callback)(WINDOW *, void *, bool);
-typedef int (*ui_input_callback)(WINDOW *, void *, int);
+typedef int (*uicb_base)(WINDOW *, void *, bool);
+typedef int (*uicb_input)(WINDOW *, void *, int);
 
 
-struct ui_data {
-  ui_callback ui_element;
-  ui_input_callback ui_input;
+struct ui_callbacks {
+  uicb_base ui_element;
+  uicb_input ui_input;
 };
 
 struct nask_ui {
-  enum ui_type type;
-  union ui_data callback;
+  struct ui_callbacks cbs;
   WINDOW *wnd;
   void *data;
   struct nask_ui *next;
 };
 
 void
-register_ui_elt(ui_callback uicb, void *data, WINDOW *wnd);
-
-void
-register_ui_input(ui_input_callback ipcb, void *data, WINDOW *wnd);
+register_ui_elt(struct ui_callbacks *cbs, void *data, WINDOW *wnd);
 
 void
 unregister_ui_elt(void *data);
-
-void
-unregister_ui_input(void *data);
 
 int
 activate_ui_input(void *data);

@@ -66,8 +66,6 @@ static int
 passwd_input_cb(WINDOW *wnd, void *data, int key)
 {
   struct input *a = (struct input *) data;
-printf("XXXXXXX\n");
-return DOUI_OK;
 /*
  *  if ( process_key(key, pw_input, wnd_main) == false ) {
  *    curs_set(0);
@@ -131,7 +129,7 @@ free_ui_elements(void)
   unregister_ui_elt(lower);
   unregister_ui_elt(higher);
   unregister_ui_elt(heartbeat);
-  unregister_input(pw_input);
+  unregister_ui_elt(pw_input);
   free_input(pw_input);
   free_anic(heartbeat);
   free_statusbar(higher);

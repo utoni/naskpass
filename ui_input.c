@@ -162,7 +162,7 @@ del_input(WINDOW *win, struct input *a)
   return (UICB_OK);
 }
 
-int
+static int
 input_cb(WINDOW *win, void *data, bool timed_out)
 {
   struct input *a = (struct input *) data;
@@ -174,16 +174,11 @@ input_cb(WINDOW *win, void *data, bool timed_out)
 }
 
 void
-register_input(WINDOW *win, struct input *a, ui_input_callback uin)
+register_input(WINDOW *win, struct input *a, uicb_input ipcb)
 {
-  a->cb_input = uin;
-  register_ui_elt(input_cb, (void *) a, win);
-  register_ui_input(uin, (void *) a, win);
+  struct ui_callbacks cbs;
+  cbs.ui_element = input_cb;
+  cbs.ui_input = ipcb;
+  register_ui_elt(&cbs, (void *) a, win);
 }
 
-void
-unregister_input(struct input *a)
-{
-  unregister_ui_input( (void *) a );
-  unregister_ui_elt( (void *) a );
-}

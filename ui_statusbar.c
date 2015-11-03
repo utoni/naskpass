@@ -63,7 +63,10 @@ statusbar_cb(WINDOW *win, void *data, bool timed_out)
 void
 register_statusbar(struct statusbar *a)
 {
-  register_ui_elt(statusbar_cb, (void *) a, NULL);
+  struct ui_callbacks cbs;
+  cbs.ui_element = statusbar_cb;
+  cbs.ui_input = NULL;
+  register_ui_elt(&cbs, (void *) a, NULL);
 }
 
 inline void
