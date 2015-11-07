@@ -47,6 +47,7 @@ static pthread_t thrd;
 static unsigned int atmout = APP_TIMEOUT;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mtx_busy = PTHREAD_MUTEX_INITIALIZER;
 
 
 void
@@ -98,10 +99,9 @@ activate_ui_input(void *data)
   struct nask_ui *cur = nui;
 
   if (cur == NULL || data == NULL) return DOUI_NINIT;
-  while ( cur != NULL ) {
-    if ( cur == data ) {
+  while ( cur->data != NULL ) {
+    if ( cur->data == data ) {
       if ( cur->cbs.ui_input != NULL && cur->cbs.ui_input(cur->wnd, data, UIKEY_ACTIVATE) == DOUI_OK ) {
-printf("************\n");
         active = cur;
         return DOUI_OK;
       }
@@ -162,15 +162,16 @@ ui_thrd(void *arg)
   wait.tv_nsec = now.tv_usec * 1000;
   do_ui_update(true);
   ui_ipc_sempost(SEM_RD);
+  pthread_mutex_lock(&mtx_update);
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
-    pthread_mutex_lock(&mtx_update);
+    pthread_mutex_unlock(&mtx_busy);
     cnd_ret = pthread_cond_timedwait(&cnd_update, &mtx_update, &wait);
+    pthread_mutex_lock(&mtx_busy);
     if (--atmout == 0) ui_ipc_semtrywait(SEM_UI);
     do_ui_update( (cnd_ret == ETIMEDOUT ? true : false) );
     if (cnd_ret == ETIMEDOUT) {
       wait.tv_sec += UILOOP_TIMEOUT;
     }
-    pthread_mutex_unlock(&mtx_update);
   }
   pthread_mutex_unlock(&mtx_update);
   return (NULL);
@@ -180,7 +181,9 @@ void
 ui_thrd_force_update(void)
 {
   pthread_mutex_lock(&mtx_update);
+  pthread_mutex_lock(&mtx_busy);
   pthread_cond_signal(&cnd_update);
+  pthread_mutex_unlock(&mtx_busy);
   pthread_mutex_unlock(&mtx_update);
 }
 
@@ -239,7 +242,7 @@ do_ui(void)
     goto error;
   }
   ui_ipc_semwait(SEM_RD);
-  wtimeout(wnd_main, 10);
+  wtimeout(wnd_main, 1000);
   pthread_mutex_unlock(&mtx_update);
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
     if ((key = wgetch(wnd_main)) == '\0') {
@@ -248,15 +251,11 @@ do_ui(void)
     if (key == -1) {
       continue;
     }
-/*
     if ( process_key(key) != true ) {
-      break;
+//      break;
     }
-*/
-process_key(key);
-    do_ui_update(false);
+//    do_ui_update(false);
   }
-  ui_thrd_force_update();
   stop_ui_thrd();
   free_ui_elements();
 

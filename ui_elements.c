@@ -34,7 +34,13 @@ lower_statusbar_update(WINDOW *win, struct statusbar *bar)
   char *tmp = get_system_stat();
   set_statusbar_text(bar, tmp);
   free(tmp);
-  return (0);
+  return 0;
+}
+
+static int
+higher_statusbar_update(WINDOW *win, struct statusbar *bar)
+{
+  return 0;
 }
 
 static int
@@ -48,7 +54,7 @@ infownd_update(WINDOW *win, struct txtwindow *tw)
       memset(tmp+1, '\0', 2);
     } else strcat(tmp, ".");
   } else (*tmp) = '.';
-  return (0);
+  return 0;
 }
 
 static int
@@ -80,9 +86,12 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
  */
   switch (key) {
     case UIKEY_ENTER:
-      if ( mq_passwd_send(a->input, a->input_len) > 0 ) {
-        return DOUI_OK;
-      } else return DOUI_ERR;
+      mq_passwd_send(a->input, a->input_len);
+      memset(a->input, '\0', a->input_len);
+      a->input_len = 0;
+      a->input_pos = 0;
+      a->cur_pos = 0;
+      ui_thrd_force_update();
       break;
     case UIKEY_BACKSPACE:
       del_input(wnd, a);
@@ -94,6 +103,8 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
     case UIKEY_UP:
     case UIKEY_LEFT:
     case UIKEY_RIGHT:
+      break;
+    case UIKEY_ACTIVATE:
       break;
     default:
       add_input(wnd, a, key);
@@ -107,7 +118,7 @@ init_ui_elements(WINDOW *wnd_main, unsigned int max_x, unsigned int max_y)
   asprintf(&title, "/* %s-%s */", PKGNAME, VERSION);
   pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS, (unsigned int)(max_y / 2)-PASSWD_YRELPOS, PASSWD_WIDTH, "PASSWORD: ", IPC_MQSIZ, COLOR_PAIR(3), COLOR_PAIR(2));
   heartbeat = init_anic(0, 0, A_BOLD | COLOR_PAIR(1), "[%c]");
-  higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3), NULL);
+  higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3), higher_statusbar_update);
   lower = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3), lower_statusbar_update);
   infownd = init_txtwindow((unsigned int)(max_x / 2)-INFOWND_XRELPOS, (unsigned int)(max_y / 2)-INFOWND_YRELPOS, INFOWND_WIDTH, INFOWND_HEIGHT, COLOR_PAIR(4), COLOR_PAIR(4) | A_BOLD, infownd_update);
   infownd->userptr = calloc(4, sizeof(char));

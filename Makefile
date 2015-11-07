@@ -26,7 +26,7 @@ release: all strip
 
 debug:
 	$(MAKE) CFLAGS='$(CFLAGS) $(DBGFLAGS)'
-	$(MAKE) -C tests CFLAGS='$(CFLAGS) $(DBGFLAGS)'
+	@$(MAKE) -C tests CFLAGS='$(CFLAGS) $(DBGFLAGS)'
 
 install:
 	$(INSTALL) -D -m 0755 $(BIN) $(DESTDIR)/lib/cryptsetup/naskpass

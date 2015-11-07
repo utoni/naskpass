@@ -101,16 +101,21 @@ print_input(WINDOW *win, struct input *a)
 
   print_wnd(3, a);
   attron(a->attrs);
-  if (win == NULL) {
-    mvprintw(a->y, a->x, a->prompt);
-    tmp = calloc(a->width+1, sizeof(char));
-    for (i = 0; i < a->width; i++) {
-      *(tmp + i) = '_';
-    }
-    mvprintw(a->y, a->x + p_len, tmp);
-    free(tmp);
+  if (win) {
+    mvwprintw(win, a->y, a->x, a->prompt);
   } else {
+    mvprintw(a->y, a->x, a->prompt);
   }
+  tmp = calloc(a->width+1, sizeof(char));
+  for (i = 0; i < a->width; i++) {
+    *(tmp + i) = '_';
+  }
+  if (win) {
+    mvwprintw(win, a->y, a->x + p_len, tmp);
+  } else {
+    mvprintw(a->y, a->x + p_len, tmp);
+  }
+  free(tmp);
   print_input_text(win, a);
   attroff(a->attrs);
 }
