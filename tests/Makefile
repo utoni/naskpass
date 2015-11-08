@@ -8,7 +8,7 @@ DEPS = $(patsubst %.c,%.d,$(SOURCES))
 all: $(BINARIES)
 
 semtest2:
-	$(CC) $(CFLAGS) $(LDFLAGS) ../ui_ipc.o semtest2.c -o semtest2
+	$(CC) $(CFLAGS) $(LDFLAGS) -I ../src ../src/ui_ipc.o semtest2.c -o semtest2
 
 %: %.c
 	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $(patsubst %.c,%,$<)

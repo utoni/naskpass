@@ -167,6 +167,18 @@ del_input(WINDOW *win, struct input *a)
   return (UICB_OK);
 }
 
+int
+clear_input(WINDOW *win, struct input *a)
+{
+  if (a == NULL) return (UICB_ERR_UNDEF);
+  memset(a->input, '\0', a->input_max);
+  a->input_len = 0;
+  a->input_pos = 0;
+  a->cur_pos = 0;
+  print_input(win, a);
+  return (UICB_OK);
+}
+
 static int
 input_cb(WINDOW *win, void *data, bool timed_out)
 {

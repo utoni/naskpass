@@ -64,7 +64,6 @@ mq_passwd_send(char *passwd, size_t len)
 
   ui_ipc_sempost(SEM_IN);
   ret = ui_ipc_msgsend(MQ_PW, passwd, len);
-  memset(passwd, '\0', len);
   return ret;
 }
 
@@ -87,18 +86,15 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
   switch (key) {
     case UIKEY_ENTER:
       mq_passwd_send(a->input, a->input_len);
-      memset(a->input, '\0', a->input_len);
-      a->input_len = 0;
-      a->input_pos = 0;
-      a->cur_pos = 0;
-      ui_thrd_force_update();
+      clear_input(wnd, a);
+      set_txtwindow_text(infownd, "BLA");
+      set_txtwindow_active(infownd, true);
       break;
     case UIKEY_BACKSPACE:
       del_input(wnd, a);
       break;
     case UIKEY_ESC:
       return DOUI_ERR;
-      break;
     case UIKEY_DOWN:
     case UIKEY_UP:
     case UIKEY_LEFT:
@@ -117,7 +113,7 @@ init_ui_elements(WINDOW *wnd_main, unsigned int max_x, unsigned int max_y)
 {
   asprintf(&title, "/* %s-%s */", PKGNAME, VERSION);
   pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS, (unsigned int)(max_y / 2)-PASSWD_YRELPOS, PASSWD_WIDTH, "PASSWORD: ", IPC_MQSIZ, COLOR_PAIR(3), COLOR_PAIR(2));
-  heartbeat = init_anic(0, 0, A_BOLD | COLOR_PAIR(1), "[%c]");
+  heartbeat = init_anic_default(0, 0, A_BOLD | COLOR_PAIR(1), "[%c]");
   higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3), higher_statusbar_update);
   lower = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3), lower_statusbar_update);
   infownd = init_txtwindow((unsigned int)(max_x / 2)-INFOWND_XRELPOS, (unsigned int)(max_y / 2)-INFOWND_YRELPOS, INFOWND_WIDTH, INFOWND_HEIGHT, COLOR_PAIR(4), COLOR_PAIR(4) | A_BOLD, infownd_update);
@@ -127,7 +123,7 @@ init_ui_elements(WINDOW *wnd_main, unsigned int max_x, unsigned int max_y)
   register_input(NULL, pw_input, passwd_input_cb);
   register_statusbar(higher);
   register_statusbar(lower);
-  register_anic(heartbeat);
+  register_anic_default(heartbeat);
   register_txtwindow(infownd);
   set_txtwindow_title(infownd, "WARNING");
   activate_input(wnd_main, pw_input);
@@ -142,10 +138,14 @@ free_ui_elements(void)
   unregister_ui_elt(heartbeat);
   unregister_ui_elt(pw_input);
   free_input(pw_input);
-  free_anic(heartbeat);
+  free_anic_default(heartbeat);
   free_statusbar(higher);
   free_statusbar(lower);
   free(infownd->userptr);
   free_txtwindow(infownd);
   free_ui();
+  if (title) {
+    free(title);
+    title = NULL;
+  }
 }

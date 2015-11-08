@@ -16,7 +16,6 @@
 
 static sem_t *sems[SEM_NUM];
 static mqd_t msqs[MSQ_NUM];
-static unsigned char initialized = 0;
 
 
 int
@@ -26,9 +25,6 @@ ui_ipc_init(int is_master)
   mode_t crt_flags;
   struct mq_attr m_attr;
 
-  if (initialized) {
-    return -1;
-  }
   bzero(sems, sizeof(sem_t*)*SEM_NUM);
   bzero(msqs, sizeof(mqd_t)*MSQ_NUM);
   m_attr.mq_flags = 0;
@@ -52,7 +48,6 @@ ui_ipc_init(int is_master)
   JMP_IF( sems[SEM_IN] = sem_open(SEM_INP, sp_oflags, crt_flags, 0), SEM_FAILED, error );
   JMP_IF( sems[SEM_BS] = sem_open(SEM_BSY, sp_oflags, crt_flags, 0), SEM_FAILED, error );
   JMP_IF( sems[SEM_RD] = sem_open(SEM_RDY, sp_oflags, crt_flags, 0), SEM_FAILED, error );
-  initialized = 1;
   return 0;
 error:
   return errno;
@@ -63,9 +58,6 @@ ui_ipc_free(int is_master)
 {
   int i;
 
-  if (!initialized) {
-    return;
-  }
   for (i = 0; i < SEM_NUM; i++) {
     if (sems[i]) sem_close(sems[i]);
   }
@@ -80,7 +72,6 @@ ui_ipc_free(int is_master)
     mq_unlink(MSQ_PWD);
     mq_unlink(MSQ_INF);
   }
-  initialized = 0;
 }
 
 int

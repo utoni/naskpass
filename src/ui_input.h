@@ -34,6 +34,9 @@ add_input(WINDOW *win, struct input *a, int key);
 int
 del_input(WINDOW *win, struct input *a);
 
+int
+clear_input(WINDOW *win, struct input *a);
+
 void
 register_input(WINDOW *win, struct input *a, uicb_input ipcb);
 

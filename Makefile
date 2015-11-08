@@ -6,7 +6,7 @@ INSTALL = install
 STRIP = strip
 VERSION = $(shell if [ -d ./.git ]; then echo -n "git-"; git rev-parse --short HEAD; else echo "1.2a"; fi)
 BIN = naskpass
-SOURCES = status.c ui_ani.c ui_input.c ui_statusbar.c ui_nwindow.c ui.c ui_elements.c ui_ipc.c main.c
+SOURCES = $(wildcard src/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 DEPS = $(patsubst %.c,%.d,$(SOURCES))
 
@@ -25,7 +25,7 @@ strip: $(OBJECTS) $(BIN)
 release: all strip
 
 debug:
-	$(MAKE) CFLAGS='$(CFLAGS) $(DBGFLAGS)'
+	@$(MAKE) CFLAGS='$(CFLAGS) $(DBGFLAGS)'
 	@$(MAKE) -C tests CFLAGS='$(CFLAGS) $(DBGFLAGS)'
 
 install:

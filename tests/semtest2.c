@@ -7,7 +7,7 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#include "../ui_ipc.h"
+#include "ui_ipc.h"
 
 pid_t child;
 

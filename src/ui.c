@@ -111,6 +111,16 @@ activate_ui_input(void *data)
   return DOUI_ERR;
 }
 
+int
+reactivate_ui_input(void)
+{
+  if (active) {
+    if (active->cbs.ui_element) {
+    }
+    return ( active->cbs.ui_input(active->wnd, active->data, UIKEY_ACTIVATE) );
+  } else return DOUI_ERR;
+}
+
 static bool
 process_key(char key)
 {
@@ -180,11 +190,9 @@ ui_thrd(void *arg)
 void
 ui_thrd_force_update(void)
 {
-  pthread_mutex_lock(&mtx_update);
   pthread_mutex_lock(&mtx_busy);
   pthread_cond_signal(&cnd_update);
   pthread_mutex_unlock(&mtx_busy);
-  pthread_mutex_unlock(&mtx_update);
 }
 
 WINDOW *
@@ -229,17 +237,15 @@ int
 do_ui(void)
 {
   char key = '\0';
-  char *title = NULL;
   int ret = DOUI_ERR;
 
-  asprintf(&title, "/* %s-%s */", PKGNAME, VERSION);
   /* init TUI and UI Elements (input field, status bar, etc) */
   init_ui();
   init_ui_elements(wnd_main, max_x, max_y);
 
   pthread_mutex_lock(&mtx_update);
   if (run_ui_thrd() != 0) {
-    goto error;
+    return ret;
   }
   ui_ipc_semwait(SEM_RD);
   wtimeout(wnd_main, 1000);
@@ -252,17 +258,13 @@ do_ui(void)
       continue;
     }
     if ( process_key(key) != true ) {
-//      break;
+      ui_ipc_semtrywait(SEM_UI);
+      ui_thrd_force_update();
     }
-//    do_ui_update(false);
   }
   stop_ui_thrd();
   free_ui_elements();
 
-  ret = DOUI_OK;
-error:
-  if (title) free(title);
-  title = NULL;
-  return ret;
+  return DOUI_OK;
 }
 
