@@ -71,22 +71,13 @@ static int
 passwd_input_cb(WINDOW *wnd, void *data, int key)
 {
   struct input *a = (struct input *) data;
-/*
- *  if ( process_key(key, pw_input, wnd_main) == false ) {
- *    curs_set(0);
- *    memset(mq_msg, '\0', IPC_MQSIZ+1);
- *    mq_receive(mq_info, mq_msg, IPC_MQSIZ+1, 0);
- *    set_txtwindow_text(infownd, mq_msg);
- *    set_txtwindow_active(infownd, true);
- *    sleep(3);
- *    sem_trywait(sp_ui);
- *  }
- *  activate_input(wnd_main, pw_input);
- */
+
   switch (key) {
     case UIKEY_ENTER:
+      deactivate_input(pw_input);
       mq_passwd_send(a->input, a->input_len);
       clear_input(wnd, a);
+      set_txtwindow_title(infownd, "BUSY");
       set_txtwindow_text(infownd, "BLA");
       set_txtwindow_active(infownd, true);
       break;
@@ -125,7 +116,6 @@ init_ui_elements(WINDOW *wnd_main, unsigned int max_x, unsigned int max_y)
   register_statusbar(lower);
   register_anic_default(heartbeat);
   register_txtwindow(infownd);
-  set_txtwindow_title(infownd, "WARNING");
   activate_input(wnd_main, pw_input);
   set_statusbar_text(higher, title);
 }

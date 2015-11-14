@@ -47,6 +47,7 @@ static pthread_t thrd;
 static unsigned int atmout = APP_TIMEOUT;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mtx_input = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mtx_busy = PTHREAD_MUTEX_INITIALIZER;
 
 
@@ -96,39 +97,49 @@ unregister_ui_elt(void *data)
 int
 activate_ui_input(void *data)
 {
+  int ret = DOUI_ERR;
   struct nask_ui *cur = nui;
 
   if (cur == NULL || data == NULL) return DOUI_NINIT;
+  pthread_mutex_lock(&mtx_input);
   while ( cur->data != NULL ) {
     if ( cur->data == data ) {
       if ( cur->cbs.ui_input != NULL && cur->cbs.ui_input(cur->wnd, data, UIKEY_ACTIVATE) == DOUI_OK ) {
         active = cur;
-        return DOUI_OK;
+        ret = DOUI_OK;
+        break;
       }
     }
     cur = cur->next;
   }
-  return DOUI_ERR;
+  pthread_mutex_unlock(&mtx_input);
+  return ret;
 }
 
 int
-reactivate_ui_input(void)
+deactivate_ui_input(void *data)
 {
-  if (active) {
-    if (active->cbs.ui_element) {
-    }
-    return ( active->cbs.ui_input(active->wnd, active->data, UIKEY_ACTIVATE) );
-  } else return DOUI_ERR;
+  int ret = DOUI_ERR;
+
+  pthread_mutex_lock(&mtx_input);
+  if (active != NULL && data == active->data) {
+    active = NULL;
+    ret = DOUI_OK;
+  }
+  pthread_mutex_unlock(&mtx_input);
+  return ret;
 }
 
 static bool
 process_key(char key)
 {
+  bool ret = false;
+
   atmout = APP_TIMEOUT;
   if ( active != NULL ) {
-    return ( active->cbs.ui_input(active->wnd, active->data, key) == DOUI_OK ? true : false );
+    ret = ( active->cbs.ui_input(active->wnd, active->data, key) == DOUI_OK ? true : false );
   }
-  return false;
+  return ret;
 }
 
 static int
@@ -174,11 +185,11 @@ ui_thrd(void *arg)
   ui_ipc_sempost(SEM_RD);
   pthread_mutex_lock(&mtx_update);
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
-    pthread_mutex_unlock(&mtx_busy);
     cnd_ret = pthread_cond_timedwait(&cnd_update, &mtx_update, &wait);
-    pthread_mutex_lock(&mtx_busy);
     if (--atmout == 0) ui_ipc_semtrywait(SEM_UI);
+    pthread_mutex_lock(&mtx_busy);
     do_ui_update( (cnd_ret == ETIMEDOUT ? true : false) );
+    pthread_mutex_unlock(&mtx_busy);
     if (cnd_ret == ETIMEDOUT) {
       wait.tv_sec += UILOOP_TIMEOUT;
     }

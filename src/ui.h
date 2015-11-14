@@ -51,6 +51,9 @@ unregister_ui_elt(void *data);
 int
 activate_ui_input(void *data);
 
+int
+deactivate_ui_input(void *data);
+
 void
 ui_thrd_force_update(void);
 

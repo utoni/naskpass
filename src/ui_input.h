@@ -29,6 +29,9 @@ int
 activate_input(WINDOW *win,  struct input *a);
 
 int
+deactivate_input(struct input *a);
+
+int
 add_input(WINDOW *win, struct input *a, int key);
 
 int

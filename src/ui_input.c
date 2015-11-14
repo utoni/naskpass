@@ -125,12 +125,20 @@ activate_input(WINDOW *win, struct input *a)
 {
   if (a == NULL) return (UICB_ERR_UNDEF);
   size_t p_len = strlen(a->prompt);
+  curs_set(1);
   if (win == NULL) {
     move(a->y, a->x + p_len + a->cur_pos);
   } else {
     wmove(win, a->y, a->x + p_len + a->cur_pos);
   }
   return (activate_ui_input( (void *) a )); 
+}
+
+int
+deactivate_input(struct input *a)
+{
+  curs_set(0);
+  return (deactivate_ui_input(a));
 }
 
 int
@@ -142,7 +150,8 @@ add_input(WINDOW *win, struct input *a, int key)
   ++a->input_pos;
   ++a->input_len;
   a->cur_pos = (a->cur_pos+1 < a->width ? a->cur_pos+1 : a->cur_pos);
-  print_input(win, a);
+  //print_input(win, a);
+  ui_thrd_force_update();
   return (UICB_OK);
 }
 
