@@ -48,6 +48,15 @@ register_ui_elt(struct ui_callbacks *cbs, void *data, WINDOW *wnd);
 void
 unregister_ui_elt(void *data);
 
+void
+ui_set_cur(unsigned int x, unsigned int y);
+
+int
+ui_get_curx(void);
+
+int
+ui_get_cury(void);
+
 int
 activate_ui_input(void *data);
 

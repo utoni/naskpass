@@ -40,6 +40,7 @@
 
 
 static unsigned int max_x, max_y;
+static unsigned int cur_x, cur_y;
 static WINDOW *wnd_main;
 static struct nask_ui /* simple linked list to all UI objects */ *nui = NULL,
                       /* current active input */ *active = NULL;
@@ -94,6 +95,25 @@ unregister_ui_elt(void *data)
   }
 }
 
+void
+ui_set_cur(unsigned int x, unsigned int y)
+{
+  cur_x = x;
+  cur_y = y;
+}
+
+int
+ui_get_curx(void)
+{
+  return (cur_x);
+}
+
+int
+ui_get_cury(void)
+{
+  return (cur_y);
+}
+
 int
 activate_ui_input(void *data)
 {
@@ -146,8 +166,6 @@ static int
 do_ui_update(bool timed_out)
 {
   int retval = UICB_OK;
-  int curx = getcurx(wnd_main);
-  int cury = getcury(wnd_main);
   struct nask_ui *cur = nui;
 
   /* call all draw callback's */
@@ -166,7 +184,7 @@ do_ui_update(bool timed_out)
   mvprintw(0, max_x - STRLEN(APP_TIMEOUT_FMT), "[" APP_TIMEOUT_FMT "]", atmout);
   attroff(COLOR_PAIR(1));
   /* EoT (End of Todo) */
-  wmove(wnd_main, cury, curx);
+  wmove(wnd_main, cur_y, cur_x);
   wrefresh(wnd_main);
   return (retval);
 }
@@ -212,6 +230,8 @@ init_ui(void)
   wnd_main = initscr();
   max_x = getmaxx(wnd_main);
   max_y = getmaxy(wnd_main);
+  cur_x = getcurx(wnd_main);
+  cur_y = getcury(wnd_main);
   start_color();
   init_pair(1, COLOR_RED, COLOR_WHITE);
   init_pair(2, COLOR_WHITE, COLOR_BLACK);
