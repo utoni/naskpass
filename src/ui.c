@@ -12,7 +12,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <mqueue.h>
-#include <signal.h>
 
 #include "ui.h"
 #include "ui_ipc.h"
