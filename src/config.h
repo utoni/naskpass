@@ -12,8 +12,10 @@
 #define MSQ_PWD "/naskpass-passwd"
 #define MSQ_INF "/naskpass-info"
 
-#ifdef _VERSION
-#define VERSION _VERSION
-#else
+#ifdef HAVE_CONFIG_H
+#include "version.h"
+#endif
+
+#ifndef VERSION
 #define VERSION "unknown"
 #endif

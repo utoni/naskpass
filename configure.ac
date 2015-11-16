@@ -3,7 +3,7 @@
 #
 
 AC_PREREQ([2.67])
-AC_INIT([naskpass], [0.01], [matzeton@googlemail.com])
+AC_INIT([naskpass], [0], [matzeton@googlemail.com])
 AC_CONFIG_AUX_DIR([build])
 AM_INIT_AUTOMAKE([1.11 foreign no-define -Wall -Werror])
 AM_WITH_DMALLOC
@@ -65,4 +65,8 @@ AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_LDFLAGS])
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
+
+echo "Run 'make' to finish the process."
+test -d .git && VERSION="git-$(git rev-parse --short HEAD)"
+echo "#define VERSION \"${VERSION}\"" >src/version.h
 

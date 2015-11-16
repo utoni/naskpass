@@ -1,5 +1,10 @@
 SUBDIRS = src
 
+install-exec-local:
+	/bin/mkdir -p '$(prefix)/lib/cryptsetup'
+	/usr/bin/install -c src/naskpass '$(prefix)/lib/cryptsetup/naskpass'
+	rm '$(prefix)/bin/naskpass'
+	rmdir '$(prefix)/bin'
 
 clean-local:
 	rm -f naskpass

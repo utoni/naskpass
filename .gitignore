@@ -1,4 +1,5 @@
 /naskpass
+/src/version.h
 /tests/producer
 /tests/consumer
 /tests/semtest

@@ -3,7 +3,6 @@ LDFLAGS = $(shell ncurses5-config --libs) -pthread -lrt
 CC = gcc
 INSTALL = install
 STRIP = strip
-VERSION = $(shell if [ -d ./.git ]; then echo -n "git-"; git rev-parse --short HEAD; else echo "1.2a"; fi)
 BIN = naskpass
 SOURCES = $(wildcard src/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
@@ -12,7 +11,7 @@ DEPS = $(patsubst %.c,%.d,$(SOURCES))
 all: $(OBJECTS) $(BIN)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -D_VERSION=\"$(VERSION)\" -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BIN): $(SOURCES)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $(BIN)
@@ -46,7 +45,4 @@ clean:
 	rm -f $(BIN)
 	$(MAKE) -C tests clean
 
-source:
-	-dh_make --createorig -p naskpass_$(VERSION) -s -y
-
-.PHONY: all install clean
+.PHONY: all debug release strip install uninstall clean

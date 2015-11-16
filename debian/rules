@@ -10,6 +10,7 @@ configure-stamp:
 	dh_testdir
 	./autogen.sh
 	./configure
+	echo "#define VERSION \"$(DEBVERS)\"" >src/version.h
 	touch configure-stamp
 
 build: configure-stamp build-stamp
@@ -30,7 +31,8 @@ distclean: build
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_clean
+	dh_prep
 	dh_installdirs
 	$(MAKE) install prefix=$(CURDIR)/debian/naskpass
 	mkdir -p $(CURDIR)/debian/naskpass/usr/share/naskpass
