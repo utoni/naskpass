@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <assert.h>
 
 #include "semconfig.h"
 
@@ -19,11 +20,11 @@ int main(int argc, char **argv) {
   if ( (mysem = sem_open(TESTSEM, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0)) != NULL ) {
     if ( (child = fork()) == 0 ) {
       /* child */
-      sleep(1);
+      usleep(250);
       LOG("child: sempost");
       sem_post(mysem);
       LOG("child: done");
-      sleep(1);
+      usleep(250);
       exit(0);
     } else if (child > 0) {
       /* parent */
@@ -38,6 +39,11 @@ int main(int argc, char **argv) {
     sem_close(mysem);
     exit(1);
   }
+
+  int sval;
+  assert ( sem_getvalue(mysem, &sval) == 0 );
+  assert (sval == 0);
+
   sem_unlink(TESTSEM);
   exit(0);
 }

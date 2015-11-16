@@ -17,6 +17,7 @@ build: configure-stamp build-stamp
 build-stamp:
 	dh_testdir
 	$(MAKE)
+	$(MAKE) -C tests -f Makefile run
 	touch build-stamp
 
 clean:

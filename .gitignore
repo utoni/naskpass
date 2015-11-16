@@ -1,7 +1,7 @@
 /naskpass
 /src/version.h
 /tests/producer
-/tests/consumer
+/tests/producer_consumer
 /tests/semtest
 /tests/semtest2
 /tests/mqtest

@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
     printf("factory producing %d items\n", semval);
 
     while ( semval-- >= 0 ) {
-      usleep(250000);
+      usleep(250);
       LOG("consumer: -1");
       assert( sem_wait(mysem) == 0 );
       printf("remaining: %d\n", semval);
@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
     exit(1);
   }
   assert( sem_close(mysem) == 0 );
+  assert( sem_unlink(TESTSEM) == 0 && sem_unlink(CNTSEM) == 0 );
 
   exit(0);
 }
