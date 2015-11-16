@@ -203,7 +203,7 @@ ui_thrd(void *arg)
   pthread_mutex_lock(&mtx_update);
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
     cnd_ret = pthread_cond_timedwait(&cnd_update, &mtx_update, &wait);
-    if (--atmout == 0) ui_ipc_semtrywait(SEM_UI);
+    if (--atmout <= 0) ui_ipc_semtrywait(SEM_UI);
     pthread_mutex_lock(&mtx_busy);
     do_ui_update( (cnd_ret == ETIMEDOUT ? true : false) );
     pthread_mutex_unlock(&mtx_busy);

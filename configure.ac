@@ -34,7 +34,7 @@ AC_HEADER_STDC
 AC_HEADER_STAT
 AC_HEADER_DIRENT
 AC_HEADER_ASSERT
-AC_CHECK_HEADERS([stdio.h stdlib.h stdbool.h string.h unistd.h errno.h sys/stat.h sys/types.h sys/wait.h fcntl.h semaphore.h time.h mqueue.h])
+AC_CHECK_HEADERS([stdio.h stdlib.h stdbool.h string.h unistd.h errno.h sys/stat.h sys/types.h sys/wait.h fcntl.h semaphore.h time.h mqueue.h alloca.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_COMPUTE_INT

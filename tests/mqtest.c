@@ -1,18 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <mqueue.h>
 
 #include <assert.h>
 
 
 static mqd_t mq_test;
+static mqd_t mq_recv;
 static const size_t bufsiz = 256;
 
 int main(int argc, char **argv)
 {
+  int c_stat;
   struct mq_attr m_attr;
   char buf[bufsiz], recv[bufsiz];
   unsigned int prio;
@@ -31,10 +35,10 @@ int main(int argc, char **argv)
   mq_unlink("/testmq");
   assert( (mq_test = mq_open( "/testmq", O_NONBLOCK | O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG, &m_attr )) != (mqd_t)-1 );
   assert( mq_getattr(mq_test, &m_attr) == 0 );
-  printf("flags.........: %ld\n"
-         "maxmsg........: %ld\n"
-         "msgsize.......: %ld\n"
-         "curmsg........: %ld\n",
+  printf("flags..........: %ld\n"
+         "maxmsg.........: %ld\n"
+         "msgsize........: %ld\n"
+         "curmsg.........: %ld\n",
          m_attr.mq_flags, m_attr.mq_maxmsg, m_attr.mq_msgsize, m_attr.mq_curmsgs);
 
   strcpy(buf, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVQXYZ");
@@ -43,6 +47,17 @@ int main(int argc, char **argv)
 
   printf("SENT(%03lu bytes): %s\n", (long unsigned int) strlen(buf), buf);
   printf("RECV(%03lu bytes): %s\n", (long unsigned int) sz_recv, recv);
+
+  memset(recv, '\0', bufsiz);
+  if (fork() > 0) {
+    assert( (mq_recv = mq_open( "/testmq", O_RDONLY, S_IRWXU | S_IRWXG, &m_attr )) != (mqd_t)-1 );
+    assert ( (sz_recv = mq_receive(mq_recv, recv, bufsiz, &prio)) > 0 );
+    printf("RECV(%03lu bytes): %s\n", (long unsigned int) sz_recv, recv);
+    return 0;
+  }
+  printf("SENT(%03lu bytes): %s\n", (long unsigned int) strlen(buf), buf);
+  assert ( mq_send(mq_test, buf, bufsiz, 0) == 0 );
+  wait(&c_stat);
 
   return 0;
 }

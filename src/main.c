@@ -142,21 +142,22 @@ main(int argc, char **argv)
     while ( ui_ipc_getvalue(SEM_UI) > 0 || ui_ipc_getvalue(SEM_IN) > 0 ) {
       ui_ipc_sempost(SEM_BS);
       if (read(ffd, pbuf, IPC_MQSIZ) >= 0) {
-        ui_ipc_msgsend(MQ_IF, MSG(MSG_BUSY_FD), strlen(MSG(MSG_BUSY_FD)));
+        ui_ipc_msgsend(MQ_IF, MSG(MSG_BUSY_FD));
         if (run_cryptcreate(pbuf, GETOPT(CRYPT_CMD).str) != 0) {
-          ui_ipc_msgsend(MQ_IF, MSG(MSG_CRYPTCMD_ERR), strlen(MSG(MSG_CRYPTCMD_ERR)));
+          ui_ipc_msgsend(MQ_IF, MSG(MSG_CRYPTCMD_ERR));
         }
-      } else if ( ui_ipc_msgrecv(MQ_PW, pbuf, IPC_MQSIZ) != (int)-1 ) {
-        ui_ipc_msgsend(MQ_IF, MSG(MSG_BUSY), strlen(MSG(MSG_BUSY)));
+      } else if ( ui_ipc_msgcount(MQ_PW) > 0 ) {
+        ui_ipc_msgrecv(MQ_PW, pbuf);
+        ui_ipc_msgsend(MQ_IF, MSG(MSG_BUSY));
         if (run_cryptcreate(pbuf, GETOPT(CRYPT_CMD).str) != 0) {
-          ui_ipc_msgsend(MQ_IF, MSG(MSG_CRYPTCMD_ERR), strlen(MSG(MSG_CRYPTCMD_ERR)));
+          ui_ipc_msgsend(MQ_IF, MSG(MSG_CRYPTCMD_ERR));
         }
         ui_ipc_semwait(SEM_IN);
       }
       ui_ipc_semwait(SEM_BS);
       usleep(100000);
       waitpid(child, &c_status, WNOHANG);
-      if ( WIFSIGNALED(c_status) != 0 ) {
+      if ( WIFEXITED(c_status) != 0 ) {
         break;
       }
     }

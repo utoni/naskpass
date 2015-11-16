@@ -4,6 +4,8 @@
 #include "status.h"
 #include "config.h"
 
+#define IPC_MQSIZ 128
+
 
 enum UI_IPC_SEM {
   SEM_RD = 0, /* UI Init done? */
@@ -44,9 +46,12 @@ ui_ipc_semtimedwait(enum UI_IPC_MSQ e_sp, int timeout);
 #endif
 
 int
-ui_ipc_msgsend(enum UI_IPC_MSQ e_mq, const char *msg_ptr, size_t msg_len);
+ui_ipc_msgsend(enum UI_IPC_MSQ e_mq, const char *msg_ptr);
 
 ssize_t
-ui_ipc_msgrecv(enum UI_IPC_MSQ e_mq, char *msg_ptr, size_t msg_len);
+ui_ipc_msgrecv(enum UI_IPC_MSQ e_mq, char *msg_ptr);
+
+long
+ui_ipc_msgcount(enum UI_IPC_MSQ e_mq);
 
 #endif

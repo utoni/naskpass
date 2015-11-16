@@ -12,8 +12,6 @@
 #define MSQ_PWD "/naskpass-passwd"
 #define MSQ_INF "/naskpass-info"
 
-#define IPC_MQSIZ 128
-
 #ifdef _VERSION
 #define VERSION _VERSION
 #else

@@ -1,12 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #ifdef SEM_TIMEDWAIT
 #include <time.h>
 #endif
 #include <semaphore.h>
 #include <mqueue.h>
 #include <sys/stat.h>
+#include <alloca.h>
 #include <errno.h>
 
 #include "ui_ipc.h"
@@ -35,14 +36,14 @@ ui_ipc_init(int is_master)
     sp_oflags = O_CREAT | O_EXCL;
     mq_oflags = O_NONBLOCK | O_CREAT | O_EXCL;
     crt_flags = S_IRUSR | S_IWUSR;
-    JMP_IF( msqs[MQ_PW]  = mq_open(MSQ_PWD, mq_oflags | O_RDONLY, crt_flags, &m_attr), (mqd_t)-1, error );
-    JMP_IF( msqs[MQ_IF]  = mq_open(MSQ_INF, mq_oflags | O_WRONLY, crt_flags, &m_attr), (mqd_t)-1, error );
+    JMP_IF( msqs[MQ_PW] = mq_open(MSQ_PWD, mq_oflags | O_RDONLY, crt_flags, &m_attr), (mqd_t)-1, error );
+    JMP_IF( msqs[MQ_IF] = mq_open(MSQ_INF, mq_oflags | O_WRONLY, crt_flags, &m_attr), (mqd_t)-1, error );
   } else {
     sp_oflags = 0;
     mq_oflags = 0;
     crt_flags = 0;
-    JMP_IF( msqs[MQ_PW]  = mq_open(MSQ_PWD, mq_oflags | O_WRONLY, crt_flags, &m_attr), (mqd_t)-1, error );
-    JMP_IF( msqs[MQ_IF]  = mq_open(MSQ_INF, mq_oflags | O_RDONLY, crt_flags, &m_attr), (mqd_t)-1, error );
+    JMP_IF( msqs[MQ_PW] = mq_open(MSQ_PWD, mq_oflags | O_WRONLY, crt_flags, &m_attr), (mqd_t)-1, error );
+    JMP_IF( msqs[MQ_IF] = mq_open(MSQ_INF, mq_oflags | O_RDONLY, crt_flags, &m_attr), (mqd_t)-1, error );
   }
   JMP_IF( sems[SEM_UI] = sem_open(SEM_GUI, sp_oflags, crt_flags, 0), SEM_FAILED, error );
   JMP_IF( sems[SEM_IN] = sem_open(SEM_INP, sp_oflags, crt_flags, 0), SEM_FAILED, error );
@@ -117,14 +118,25 @@ ui_ipc_semtimedwait(enum UI_IPC_SEM e_sp, int timeout)
 #endif
 
 int
-ui_ipc_msgsend(enum UI_IPC_MSQ e_mq, const char *msg_ptr, size_t msg_len)
+ui_ipc_msgsend(enum UI_IPC_MSQ e_mq, const char *msg_ptr)
 {
-  return ( mq_send(msqs[e_mq], msg_ptr, msg_len, 0) );
+  char *tmp = alloca(IPC_MQSIZ);
+  memset(tmp, '\0', IPC_MQSIZ);
+  strncpy(tmp, msg_ptr, IPC_MQSIZ);
+  return ( mq_send(msqs[e_mq], tmp, IPC_MQSIZ, 0) );
 }
 
 ssize_t
-ui_ipc_msgrecv(enum UI_IPC_MSQ e_mq, char *msg_ptr, size_t msg_len)
+ui_ipc_msgrecv(enum UI_IPC_MSQ e_mq, char *msg_ptr)
 {
-  return ( mq_receive(msqs[e_mq], msg_ptr, msg_len, NULL) ); 
+  return mq_receive(msqs[e_mq], msg_ptr, IPC_MQSIZ, NULL);
 }
 
+long
+ui_ipc_msgcount(enum UI_IPC_MSQ e_mq)
+{
+  struct mq_attr m_attr;
+  bzero(&m_attr, sizeof(struct mq_attr));
+  if (mq_getattr(msqs[e_mq], &m_attr) != 0) return -1;
+  return m_attr.mq_curmsgs;
+}

@@ -58,12 +58,12 @@ infownd_update(WINDOW *win, struct txtwindow *tw)
 }
 
 static int
-mq_passwd_send(char *passwd, size_t len)
+mq_passwd_send(char *passwd)
 {
   int ret;
 
   ui_ipc_sempost(SEM_IN);
-  ret = ui_ipc_msgsend(MQ_PW, passwd, len);
+  ret = ui_ipc_msgsend(MQ_PW, passwd);
   return ret;
 }
 
@@ -71,14 +71,17 @@ static int
 passwd_input_cb(WINDOW *wnd, void *data, int key)
 {
   struct input *a = (struct input *) data;
+  char ipc_buf[IPC_MQSIZ+1];
 
+  memset(ipc_buf, '\0', IPC_MQSIZ+1);
   switch (key) {
     case UIKEY_ENTER:
       deactivate_input(pw_input);
-      mq_passwd_send(a->input, a->input_len);
+      mq_passwd_send(a->input);
       clear_input(wnd, a);
+      ui_ipc_msgrecv(MQ_IF, ipc_buf);
       set_txtwindow_title(infownd, "BUSY");
-      set_txtwindow_text(infownd, "BLA");
+      set_txtwindow_text(infownd, ipc_buf);
       set_txtwindow_active(infownd, true);
       break;
     case UIKEY_BACKSPACE:
