@@ -1,5 +1,4 @@
-CFLAGS = $(shell ncurses5-config --cflags) -Wall -Wundef -Wshadow -D_GNU_SOURCE=1 -fPIC -fomit-frame-pointer -fno-inline -fstrength-reduce -frerun-cse-after-loop -frerun-loop-opt -fexpensive-optimizations -fstrict-aliasing -Os -MD -MP
-DBGFLAGS = -g
+CFLAGS = $(shell ncurses5-config --cflags) -Wall -Wundef -Wshadow -D_GNU_SOURCE=1 -fPIC -fomit-frame-pointer -fno-inline -fstrength-reduce -frerun-cse-after-loop -frerun-loop-opt -fexpensive-optimizations -fstrict-aliasing -Os -MD -MP -g
 LDFLAGS = $(shell ncurses5-config --libs) -pthread -lrt
 CC = gcc
 INSTALL = install
@@ -25,8 +24,8 @@ strip: $(OBJECTS) $(BIN)
 release: all strip
 
 debug:
-	@$(MAKE) CFLAGS='$(CFLAGS) $(DBGFLAGS)'
-	@$(MAKE) -C tests CFLAGS='$(CFLAGS) $(DBGFLAGS)'
+	@$(MAKE) CFLAGS='$(CFLAGS)
+	@$(MAKE) -C tests CFLAGS='$(CFLAGS)
 
 install:
 	$(INSTALL) -D -m 0755 $(BIN) $(DESTDIR)/lib/cryptsetup/naskpass
