@@ -121,7 +121,7 @@ print_input(WINDOW *win, struct input *a)
 }
 
 int
-activate_input(WINDOW *win, struct input *a)
+activate_input(struct input *a)
 {
   if (a == NULL) return (UICB_ERR_UNDEF);
   curs_set(1);
@@ -146,7 +146,6 @@ add_input(WINDOW *win, struct input *a, int key)
   ++a->input_len;
   a->cur_pos = (a->cur_pos+1 < a->width ? a->cur_pos+1 : a->cur_pos);
   ui_set_cur(a->x + strlen(a->prompt) + a->cur_pos, a->y);
-  ui_thrd_force_update();
   return (UICB_OK);
 }
 
@@ -168,7 +167,6 @@ del_input(WINDOW *win, struct input *a)
   }
   mvwprintw(win, a->y, a->x + a->cur_pos + strlen(a->prompt), "_");
   ui_set_cur(a->x + strlen(a->prompt) + a->cur_pos, a->y);
-  ui_thrd_force_update();
   return (UICB_OK);
 }
 
@@ -181,7 +179,6 @@ clear_input(WINDOW *win, struct input *a)
   a->input_pos = 0;
   a->cur_pos = 0;
   ui_set_cur(a->x + strlen(a->prompt) + a->cur_pos, a->y);
-  ui_thrd_force_update();
   return (UICB_OK);
 }
 

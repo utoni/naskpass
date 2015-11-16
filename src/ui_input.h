@@ -26,7 +26,7 @@ void
 free_input(struct input *a);
 
 int
-activate_input(WINDOW *win,  struct input *a);
+activate_input(struct input *a);
 
 int
 deactivate_input(struct input *a);

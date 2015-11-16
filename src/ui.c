@@ -47,7 +47,6 @@ static pthread_t thrd;
 static unsigned int atmout = APP_TIMEOUT;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t mtx_input = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t mtx_busy = PTHREAD_MUTEX_INITIALIZER;
 
 
@@ -132,7 +131,6 @@ activate_ui_input(void *data)
   struct nask_ui *cur = nui;
 
   if (cur == NULL || data == NULL) return DOUI_NINIT;
-  pthread_mutex_lock(&mtx_input);
   while ( cur->data != NULL ) {
     if ( cur->data == data ) {
       if ( cur->cbs.ui_input != NULL && cur->cbs.ui_input(cur->wnd, data, UIKEY_ACTIVATE) == DOUI_OK ) {
@@ -143,7 +141,6 @@ activate_ui_input(void *data)
     }
     cur = cur->next;
   }
-  pthread_mutex_unlock(&mtx_input);
   return ret;
 }
 
@@ -152,12 +149,10 @@ deactivate_ui_input(void *data)
 {
   int ret = DOUI_ERR;
 
-  pthread_mutex_lock(&mtx_input);
   if (active != NULL && data == active->data) {
     active = NULL;
     ret = DOUI_OK;
   }
-  pthread_mutex_unlock(&mtx_input);
   return ret;
 }
 
@@ -235,6 +230,20 @@ ui_thrd_force_update(void)
   pthread_mutex_unlock(&mtx_busy);
 }
 
+void
+ui_thrd_suspend(void)
+{
+  ui_thrd_force_update();
+  pthread_mutex_lock(&mtx_busy);
+}
+
+void
+ui_thrd_resume(void)
+{
+  pthread_mutex_unlock(&mtx_busy);
+  ui_thrd_force_update();
+}
+
 WINDOW *
 init_ui(void)
 {
@@ -293,18 +302,15 @@ do_ui(void)
     return ret;
   }
   ui_ipc_semwait(SEM_RD);
-  wtimeout(wnd_main, 1000);
   pthread_mutex_unlock(&mtx_update);
+  wtimeout(stdscr, 1000);
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
-    if ((key = wgetch(wnd_main)) == '\0') {
-      break;
-    }
-    if (key == -1) {
+    if ((key = wgetch(wnd_main)) == ERR) {
       continue;
     }
     if ( process_key(key) != true ) {
-      ui_ipc_semtrywait(SEM_UI);
-      ui_thrd_force_update();
+      //ui_ipc_semtrywait(SEM_UI);
+      //ui_thrd_force_update();
     }
   }
   stop_ui_thrd();

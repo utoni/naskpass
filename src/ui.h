@@ -72,6 +72,12 @@ deactivate_ui_input(void *data);
 void
 ui_thrd_force_update(void);
 
+void
+ui_thrd_suspend(void);
+
+void
+ui_thrd_resume(void);
+
 WINDOW *
 init_ui(void);
 

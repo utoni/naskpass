@@ -7,7 +7,7 @@
 
 #define INITIAL_TITLE_LEN 32
 
-#define set_txtwindow_active(wnd, activate) wnd->active = activate; ui_thrd_force_update()
+#define set_txtwindow_active(wnd, activate) wnd->active = activate;
 
 struct txtwindow {
   unsigned int y;
