@@ -48,13 +48,19 @@ register_ui_elt(struct ui_callbacks *cbs, void *data, WINDOW *wnd);
 void
 unregister_ui_elt(void *data);
 
+unsigned int
+ui_get_maxx(void);
+
+unsigned int
+ui_get_maxy(void);
+
 void
 ui_set_cur(unsigned int x, unsigned int y);
 
-int
+unsigned int
 ui_get_curx(void);
 
-int
+unsigned int
 ui_get_cury(void);
 
 int

@@ -19,7 +19,7 @@
 #include "ui_ani.h"
 #include "ui_input.h"
 #include "ui_statusbar.h"
-#include "ui_nwindow.h"
+#include "ui_txtwindow.h"
 
 #include "status.h"
 #include "config.h"
@@ -94,6 +94,18 @@ unregister_ui_elt(void *data)
   }
 }
 
+unsigned int
+ui_get_maxx(void)
+{
+  return max_x;
+}
+
+unsigned int
+ui_get_maxy(void)
+{
+  return max_y;
+}
+
 void
 ui_set_cur(unsigned int x, unsigned int y)
 {
@@ -101,13 +113,13 @@ ui_set_cur(unsigned int x, unsigned int y)
   cur_y = y;
 }
 
-int
+unsigned int
 ui_get_curx(void)
 {
   return (cur_x);
 }
 
-int
+unsigned int
 ui_get_cury(void)
 {
   return (cur_y);
@@ -235,7 +247,10 @@ init_ui(void)
   init_pair(1, COLOR_RED, COLOR_WHITE);
   init_pair(2, COLOR_WHITE, COLOR_BLACK);
   init_pair(3, COLOR_BLACK, COLOR_WHITE);
+  /* TXTwindow */
   init_pair(4, COLOR_YELLOW, COLOR_RED);
+  init_pair(5, COLOR_WHITE, COLOR_CYAN);
+  /* EoF TXTwindow */
   raw();
   keypad(stdscr, TRUE);
   noecho();

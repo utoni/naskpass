@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 
 #include "ui.h"
@@ -7,7 +8,7 @@
 #include "ui_ani.h"
 #include "ui_input.h"
 #include "ui_statusbar.h"
-#include "ui_nwindow.h"
+#include "ui_txtwindow.h"
 #include "ui_elements.h"
 
 #include "status.h"
@@ -17,9 +18,7 @@
 #define PASSWD_XRELPOS (unsigned int)(PASSWD_WIDTH / 2) - (PASSWD_WIDTH / 6)
 #define PASSWD_YRELPOS (unsigned int)(PASSWD_HEIGHT / 2) + 1
 #define INFOWND_WIDTH 25
-#define INFOWND_HEIGHT 3
-#define INFOWND_XRELPOS (unsigned int)(INFOWND_WIDTH / 2) - (INFOWND_WIDTH / 6)
-#define INFOWND_YRELPOS (unsigned int)(INFOWND_HEIGHT / 2) + 1
+#define INFOWND_HEIGHT 1
 
 static struct input *pw_input;
 static struct anic *heartbeat;
@@ -80,9 +79,14 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       mq_passwd_send(a->input);
       clear_input(wnd, a);
       ui_ipc_msgrecv(MQ_IF, ipc_buf);
+      set_txtwindow_color(infownd, COLOR_PAIR(5), COLOR_PAIR(5));
       set_txtwindow_title(infownd, "BUSY");
       set_txtwindow_text(infownd, ipc_buf);
       set_txtwindow_active(infownd, true);
+      sleep(2);
+      ui_ipc_msgrecv(MQ_IF, ipc_buf);
+      set_txtwindow_color(infownd, COLOR_PAIR(4), COLOR_PAIR(4) | A_BOLD);
+      set_txtwindow_text(infownd, ipc_buf);
       break;
     case UIKEY_BACKSPACE:
       del_input(wnd, a);
@@ -106,11 +110,17 @@ void
 init_ui_elements(WINDOW *wnd_main, unsigned int max_x, unsigned int max_y)
 {
   asprintf(&title, "/* %s-%s */", PKGNAME, VERSION);
-  pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS, (unsigned int)(max_y / 2)-PASSWD_YRELPOS, PASSWD_WIDTH, "PASSWORD: ", IPC_MQSIZ, COLOR_PAIR(3), COLOR_PAIR(2));
+  pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS,
+                        (unsigned int)(max_y / 2)-PASSWD_YRELPOS,
+                        PASSWD_WIDTH, "PASSWORD: ",
+                        IPC_MQSIZ, COLOR_PAIR(3), COLOR_PAIR(2));
   heartbeat = init_anic_default(0, 0, A_BOLD | COLOR_PAIR(1), "[%c]");
-  higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3), higher_statusbar_update);
-  lower = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3), lower_statusbar_update);
-  infownd = init_txtwindow((unsigned int)(max_x / 2)-INFOWND_XRELPOS, (unsigned int)(max_y / 2)-INFOWND_YRELPOS, INFOWND_WIDTH, INFOWND_HEIGHT, COLOR_PAIR(4), COLOR_PAIR(4) | A_BOLD, infownd_update);
+  higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3),
+                          higher_statusbar_update);
+  lower = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3),
+                         lower_statusbar_update);
+  infownd = init_txtwindow_centered(INFOWND_WIDTH, INFOWND_HEIGHT,
+                                    infownd_update);
   infownd->userptr = calloc(4, sizeof(char));
   (*(char*)(infownd->userptr)) = '.';
 

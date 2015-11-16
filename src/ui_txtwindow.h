@@ -27,7 +27,10 @@ struct txtwindow {
 typedef int (*window_func)(WINDOW *, struct txtwindow *);
 
 struct txtwindow *
-init_txtwindow(unsigned int, unsigned int y, unsigned int width, unsigned int height, chtype attrs, chtype text_attrs, window_func cb_update);
+init_txtwindow(unsigned int x, unsigned int y, unsigned int width, unsigned int height, window_func cb_update);
+
+struct txtwindow *
+init_txtwindow_centered(unsigned int width, unsigned int height, window_func cb_update);
 
 void
 free_txtwindow(struct txtwindow *a);
@@ -40,5 +43,11 @@ set_txtwindow_text(struct txtwindow *a, char *text);
 
 void
 set_txtwindow_title(struct txtwindow *a, const char *title);
+
+void
+set_txtwindow_color(struct txtwindow *a, chtype wnd, chtype txt);
+
+void
+set_txtwindow_pos(struct txtwindow *a, unsigned int x, unsigned int y);
 
 #endif
