@@ -8,11 +8,11 @@ struct statusbar {
   unsigned int y;
   unsigned int width;
   char *text;
-  int (*status_func)(WINDOW *, struct statusbar *);
+  int (*status_func)(WINDOW *, struct statusbar *, bool);
   chtype attrs;
 };
 
-typedef int (*status_func)(WINDOW *, struct statusbar *);
+typedef int (*status_func)(WINDOW *, struct statusbar *, bool);
 
 struct statusbar *
 init_statusbar(unsigned int y, unsigned int width, chtype attrs, status_func cb_update);

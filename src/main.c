@@ -34,8 +34,8 @@ enum msg_index {
   MSG_CRYPTCMD_ERR,
   MSG_NUM
 };
-static const char *msg_arr[] = { "Please wait, got a piped password ..",
-                                 "Please wait, busy ..",
+static const char *msg_arr[] = { "Please wait, got a piped password",
+                                 "Please wait, busy",
                                  "check_fifo: %s is not a FIFO\n",
                                  "check_fifo: %s error(%d): %s\n",
                                  "fifo: cryptcreate busy",

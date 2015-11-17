@@ -18,13 +18,12 @@ struct txtwindow {
   char *title;
   size_t title_len;
   char **text;
-  int (*window_func)(WINDOW *, struct txtwindow *);
+  int (*window_func)(WINDOW *, struct txtwindow *, bool);
   chtype attrs;
   chtype text_attrs;
-  void *userptr;
 };
 
-typedef int (*window_func)(WINDOW *, struct txtwindow *);
+typedef int (*window_func)(WINDOW *, struct txtwindow *, bool);
 
 struct txtwindow *
 init_txtwindow(unsigned int x, unsigned int y, unsigned int width, unsigned int height, window_func cb_update);
@@ -49,5 +48,8 @@ set_txtwindow_color(struct txtwindow *a, chtype wnd, chtype txt);
 
 void
 set_txtwindow_pos(struct txtwindow *a, unsigned int x, unsigned int y);
+
+void
+set_txtwindow_dim(struct txtwindow *a, unsigned int w, unsigned int h);
 
 #endif

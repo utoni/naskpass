@@ -19,51 +19,44 @@
 #define PASSWD_YRELPOS (unsigned int)(PASSWD_HEIGHT / 2) + 1
 #define INFOWND_WIDTH 25
 #define INFOWND_HEIGHT 1
+#define BSTR_LEN 3
 
 static struct input *pw_input;
 static struct anic *heartbeat;
 static struct statusbar *higher, *lower;
 static struct txtwindow *infownd;
+static struct tctwindow *errwnd;
 static char *title = NULL;
+static char busy_str[BSTR_LEN+1] = ".\0\0\0";
 
 
 static int
-lower_statusbar_update(WINDOW *win, struct statusbar *bar)
+lower_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
 {
+  if (ui_timeout == FALSE) return DOUI_OK;
   char *tmp = get_system_stat();
   set_statusbar_text(bar, tmp);
   free(tmp);
-  return 0;
+  return DOUI_OK;
 }
 
 static int
-higher_statusbar_update(WINDOW *win, struct statusbar *bar)
+higher_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
 {
-  return 0;
+  return DOUI_OK;
 }
 
 static int
-infownd_update(WINDOW *win, struct txtwindow *tw)
+infownd_update(WINDOW *win, struct txtwindow *tw, bool ui_timeout)
 {
-  char *tmp = (char*)(tw->userptr);
-  size_t len = strlen(tmp);
-
-  if (tw->active) {
-    if ( len == 3 ) {
-      memset(tmp+1, '\0', 2);
-    } else strcat(tmp, ".");
-  } else (*tmp) = '.';
-  return 0;
-}
-
-static int
-mq_passwd_send(char *passwd)
-{
-  int ret;
-
-  ui_ipc_sempost(SEM_IN);
-  ret = ui_ipc_msgsend(MQ_PW, passwd);
-  return ret;
+  if (ui_timeout == TRUE && tw->active == TRUE) {
+    size_t len = strlen(busy_str);
+    if (len > BSTR_LEN) {
+      memset(busy_str, '\0', BSTR_LEN+1);
+      busy_str[0] = '.';
+    } else strcat(busy_str, ".");
+  }
+  return DOUI_OK;
 }
 
 static int
@@ -76,33 +69,44 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
   wtimeout(stdscr, -1);
   switch (key) {
     case UIKEY_ENTER:
-      mq_passwd_send(a->input);
+      ui_ipc_msgsend(MQ_PW, a->input);
+
       ui_thrd_suspend();
       clear_input(wnd, a);
       deactivate_input(pw_input);
+      ui_thrd_resume();
+
       ui_ipc_msgrecv(MQ_IF, ipc_buf);
+
+      ui_thrd_suspend();
       set_txtwindow_color(infownd, COLOR_PAIR(5), COLOR_PAIR(5));
       set_txtwindow_title(infownd, "BUSY");
       set_txtwindow_text(infownd, ipc_buf);
       set_txtwindow_active(infownd, true);
       ui_thrd_resume();
+
       sleep(2);
       ui_ipc_msgrecv(MQ_IF, ipc_buf);
+
       ui_thrd_suspend();
       set_txtwindow_color(infownd, COLOR_PAIR(4), COLOR_PAIR(4) | A_BOLD);
       set_txtwindow_title(infownd, "ERROR");
       set_txtwindow_text(infownd, ipc_buf);
       ui_thrd_resume();
-//      while (getch() != '\n') { }
-wgetch(stdscr);
+
+      while (wgetch(stdscr) != '\n') { };
+
       ui_thrd_suspend();
       set_txtwindow_active(infownd, false);
       activate_input(pw_input);
       ui_thrd_resume();
+
+      //ui_thrd_force_update();
+      ui_ipc_sempost(SEM_IN);
       break;
     case UIKEY_BACKSPACE:
       del_input(wnd, a);
-      ui_thrd_force_update();
+      //ui_thrd_force_update();
       break;
     case UIKEY_ESC:
       return DOUI_ERR;
@@ -115,7 +119,7 @@ wgetch(stdscr);
       break;
     default:
       add_input(wnd, a, key);
-      ui_thrd_force_update();
+      //ui_thrd_force_update();
   }
   wtimeout(stdscr, 1000);
   return DOUI_OK;
@@ -136,8 +140,6 @@ init_ui_elements(WINDOW *wnd_main, unsigned int max_x, unsigned int max_y)
                          lower_statusbar_update);
   infownd = init_txtwindow_centered(INFOWND_WIDTH, INFOWND_HEIGHT,
                                     infownd_update);
-  infownd->userptr = calloc(4, sizeof(char));
-  (*(char*)(infownd->userptr)) = '.';
 
   register_input(NULL, pw_input, passwd_input_cb);
   register_statusbar(higher);
@@ -159,7 +161,6 @@ free_ui_elements(void)
   free_anic_default(heartbeat);
   free_statusbar(higher);
   free_statusbar(lower);
-  free(infownd->userptr);
   free_txtwindow(infownd);
   free_ui();
   if (title) {

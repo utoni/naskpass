@@ -96,6 +96,11 @@ txtwindow_cb(WINDOW *win, void *data, bool timedout)
 
   if (a->active == true) {
     print_wnd(a);
+    if (a->window_func) {
+      attron(a->text_attrs);
+      a->window_func(win, a, timedout);
+      attroff(a->text_attrs);
+    }
   }
   return (UICB_OK);
 }
@@ -171,5 +176,12 @@ set_txtwindow_color(struct txtwindow *a, chtype wnd, chtype txt)
 {
   a->attrs = wnd;
   a->text_attrs = txt;
+}
+
+void
+set_txtwindow_dim(struct txtwindow *a, unsigned int w, unsigned int h)
+{
+  a->width = w;
+  a->height = h;
 }
 

@@ -36,11 +36,6 @@ statusbar_cb(WINDOW *win, void *data, bool timed_out)
   size_t len;
 
   if (a == NULL) return (UICB_ERR_UNDEF);
-  if (timed_out == true) {
-    if (a->status_func != NULL) {
-      a->status_func(win, a);
-    }
-  }
   attron(a->attrs);
   len = strnlen(a->text, a->width);
   if (len < a->width) {
@@ -50,6 +45,9 @@ statusbar_cb(WINDOW *win, void *data, bool timed_out)
   memset(tmp, ' ', a->width);
   tmp[a->width] = '\0';
   strncpy((tmp + diff_pos), a->text, len);
+  if (a->status_func != NULL) {
+    a->status_func(win, a, timed_out);
+  }
   if (win != NULL) {
     mvwprintw(win, a->y, 0, tmp);
   } else {

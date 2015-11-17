@@ -45,4 +45,7 @@ clean:
 	rm -f $(BIN)
 	$(MAKE) -C tests clean
 
-.PHONY: all debug release strip install uninstall clean
+test:
+	$(MAKE) -C tests run
+
+.PHONY: all debug release strip install uninstall clean test

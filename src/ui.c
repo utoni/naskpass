@@ -161,7 +161,6 @@ process_key(char key)
 {
   bool ret = false;
 
-  atmout = APP_TIMEOUT;
   if ( active != NULL ) {
     ret = ( active->cbs.ui_input(active->wnd, active->data, key) == DOUI_OK ? true : false );
   }
@@ -176,6 +175,9 @@ do_ui_update(bool timed_out)
 
   /* call all draw callback's */
   erase();
+  if (timed_out == TRUE && atmout > 0) {
+    atmout--;
+  } else atmout = APP_TIMEOUT;
   while (cur != NULL) {
     if (cur->cbs.ui_element != NULL) {
       cur->cbs.ui_element(cur->wnd, cur->data, timed_out);
@@ -199,18 +201,18 @@ static void *
 ui_thrd(void *arg)
 {
   int cnd_ret;
-  struct timeval now;
+  struct timespec now;
   struct timespec wait;
 
-  gettimeofday(&now, NULL);
+  //gettimeofday(&now, NULL);
+  clock_gettime(CLOCK_REALTIME, &now);
   wait.tv_sec = now.tv_sec + UILOOP_TIMEOUT;
-  wait.tv_nsec = now.tv_usec * 1000;
+  wait.tv_nsec = now.tv_nsec * 1000;
   do_ui_update(true);
   ui_ipc_sempost(SEM_RD);
   pthread_mutex_lock(&mtx_update);
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
     cnd_ret = pthread_cond_timedwait(&cnd_update, &mtx_update, &wait);
-    if (--atmout <= 0) ui_ipc_semtrywait(SEM_UI);
     pthread_mutex_lock(&mtx_busy);
     do_ui_update( (cnd_ret == ETIMEDOUT ? true : false) );
     pthread_mutex_unlock(&mtx_busy);
@@ -309,9 +311,9 @@ do_ui(void)
       continue;
     }
     if ( process_key(key) != true ) {
-      //ui_ipc_semtrywait(SEM_UI);
-      //ui_thrd_force_update();
+      ui_ipc_semtrywait(SEM_UI);
     }
+    ui_thrd_force_update();
   }
   stop_ui_thrd();
   free_ui_elements();
