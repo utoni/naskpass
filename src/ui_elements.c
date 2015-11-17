@@ -66,7 +66,7 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
   char ipc_buf[IPC_MQSIZ+1];
 
   memset(ipc_buf, '\0', IPC_MQSIZ+1);
-  wtimeout(stdscr, -1);
+//  wtimeout(stdscr, -1);
   switch (key) {
     case UIKEY_ENTER:
       ui_ipc_msgsend(MQ_PW, a->input);
@@ -84,6 +84,7 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       set_txtwindow_text(infownd, ipc_buf);
       set_txtwindow_active(infownd, true);
       ui_thrd_resume();
+      ui_thrd_force_update();
 
       sleep(2);
       ui_ipc_msgrecv(MQ_IF, ipc_buf);
@@ -101,14 +102,22 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       activate_input(pw_input);
       ui_thrd_resume();
 
-      //ui_thrd_force_update();
       ui_ipc_sempost(SEM_IN);
       break;
     case UIKEY_BACKSPACE:
       del_input(wnd, a);
-      //ui_thrd_force_update();
       break;
     case UIKEY_ESC:
+      wtimeout(stdscr, 0);
+      ui_thrd_suspend();
+      deactivate_input(pw_input);
+      set_txtwindow_active(infownd, true);
+      set_txtwindow_color(infownd, COLOR_PAIR(5), COLOR_PAIR(5));
+      set_txtwindow_title(infownd, "BUSY");
+      set_txtwindow_text(infownd, "bye bye");
+      ui_thrd_resume();
+      ui_thrd_force_update();
+      sleep(2);
       return DOUI_ERR;
     case UIKEY_DOWN:
     case UIKEY_UP:
@@ -119,9 +128,9 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       break;
     default:
       add_input(wnd, a, key);
-      //ui_thrd_force_update();
   }
-  wtimeout(stdscr, 1000);
+//  wtimeout(stdscr, 1000);
+  refresh();
   return DOUI_OK;
 }
 

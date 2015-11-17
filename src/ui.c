@@ -7,6 +7,7 @@
 #include <semaphore.h>
 #include <string.h>
 #include <ncurses.h>
+#include <signal.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -202,22 +203,20 @@ ui_thrd(void *arg)
 {
   int cnd_ret;
   struct timespec now;
-  struct timespec wait;
 
-  //gettimeofday(&now, NULL);
-  clock_gettime(CLOCK_REALTIME, &now);
-  wait.tv_sec = now.tv_sec + UILOOP_TIMEOUT;
-  wait.tv_nsec = now.tv_nsec * 1000;
   do_ui_update(true);
   ui_ipc_sempost(SEM_RD);
   pthread_mutex_lock(&mtx_update);
+  clock_gettime(CLOCK_REALTIME, &now);
+  now.tv_sec += UILOOP_TIMEOUT;
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
-    cnd_ret = pthread_cond_timedwait(&cnd_update, &mtx_update, &wait);
+    cnd_ret = pthread_cond_timedwait(&cnd_update, &mtx_update, &now);
     pthread_mutex_lock(&mtx_busy);
     do_ui_update( (cnd_ret == ETIMEDOUT ? true : false) );
     pthread_mutex_unlock(&mtx_busy);
     if (cnd_ret == ETIMEDOUT) {
-      wait.tv_sec += UILOOP_TIMEOUT;
+      clock_gettime(CLOCK_REALTIME, &now);
+      now.tv_sec += UILOOP_TIMEOUT;
     }
   }
   pthread_mutex_unlock(&mtx_update);
@@ -235,7 +234,6 @@ ui_thrd_force_update(void)
 void
 ui_thrd_suspend(void)
 {
-  ui_thrd_force_update();
   pthread_mutex_lock(&mtx_busy);
 }
 
@@ -243,7 +241,6 @@ void
 ui_thrd_resume(void)
 {
   pthread_mutex_unlock(&mtx_busy);
-  ui_thrd_force_update();
 }
 
 WINDOW *
@@ -265,6 +262,7 @@ init_ui(void)
   raw();
   keypad(stdscr, TRUE);
   noecho();
+  nodelay(stdscr, TRUE);
   cbreak();
   return (wnd_main);
 }
@@ -305,13 +303,13 @@ do_ui(void)
   }
   ui_ipc_semwait(SEM_RD);
   pthread_mutex_unlock(&mtx_update);
-  wtimeout(stdscr, 1000);
+  wtimeout(stdscr, 500);
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
     if ((key = wgetch(wnd_main)) == ERR) {
       continue;
     }
     if ( process_key(key) != true ) {
-      ui_ipc_semtrywait(SEM_UI);
+      raise(SIGTERM);
     }
     ui_thrd_force_update();
   }
