@@ -6,6 +6,7 @@
 /tests/semtest2
 /tests/mqtest
 /tests/strsep
+/tests/pthread
 *.swp
 *.o
 *.d
