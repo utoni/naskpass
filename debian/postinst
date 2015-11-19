@@ -11,7 +11,7 @@ set -e
 case "$1" in
 
     configure)
-        nask_update
+        nask_update || true
         db_input high naskpass/activate || true
         db_go
         db_get naskpass/activate
