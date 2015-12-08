@@ -11,12 +11,12 @@ set -e
 case "$1" in
 
     configure)
-        nask_update || true
-        db_input high naskpass/activate || true
+        nask_update
+        db_input high naskpass/activate
         db_go
         db_get naskpass/activate
-        if [ "$RET" = "true" ]; then
-          nask_activate || true
+        if [ "x$RET" = "xtrue" ]; then
+          nask_activate
           if [ "x${ERRMSG}" != "x" ]; then
             echo "* ${ERRMSG}" >&2
             nask_deactivate
@@ -28,7 +28,6 @@ case "$1" in
     ;;
 
     abort-upgrade)
-        db_purge
     ;;
 
     *)
