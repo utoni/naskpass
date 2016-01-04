@@ -73,7 +73,7 @@ run_cryptcreate(char *pass, char *crypt_cmd)
   char *cmd;
 
   if (crypt_cmd == NULL || pass == NULL) return (-1);
-  asprintf(&cmd, "echo '%s' | %s >/dev/null 2>/dev/null", pass, crypt_cmd);
+  asprintf(&cmd, "echo '%s' | %s", pass, crypt_cmd);
   retval = system(cmd);
   free(cmd);
   return (retval);
@@ -112,7 +112,12 @@ main(int argc, char **argv)
   }
 
   memset(pbuf, '\0', IPC_MQSIZ+1);
-  parse_cmd(argc, argv);
+  if ( parse_cmd(argc, argv) != 0 )
+    goto error;
+  if (OPT(CRYPT_CMD).found == 0) {
+    usage(argv[0]);
+    goto error;
+  }
   if (check_fifo(GETOPT(FIFO_PATH).str) == false) {
     usage(argv[0]);
     goto error;
@@ -164,7 +169,10 @@ main(int argc, char **argv)
         break;
       }
     }
-    wait(&c_status);
+    waitpid(child, &c_status, WNOHANG);
+    if ( WIFEXITED(c_status) == 0 ) {
+      wait(&c_status);
+    }
     memset(pbuf, '\0', IPC_MQSIZ+1);
   } else {
     /* fork error */

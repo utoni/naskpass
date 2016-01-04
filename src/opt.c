@@ -39,6 +39,9 @@ parse_cmd(int argc, char **argv)
       case 'c':
         s_OPT(CRYPT_CMD, strdup(optarg));
         break;
+      default:
+        usage(argv[0]);
+        return 1;
     }
   }
   return 0;

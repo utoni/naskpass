@@ -311,7 +311,7 @@ setup_mapping()
 				fi
 			else
 				dmesg -n 1
-				if ! $cryptkeyscript -c "cryptsetup -T 1 open $cryptsource $crypttarget"; then
+				if ! $cryptkeyscript -c "/sbin/cryptsetup -T 1 open $cryptsource $crypttarget"; then
 					message "naskpass: failed"
 					continue
 				else
