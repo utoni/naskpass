@@ -3,22 +3,28 @@ LDFLAGS = $(shell ncurses5-config --libs) -pthread -lrt
 CC = gcc
 INSTALL = install
 STRIP = strip
-BIN = naskpass
+BIN_NASKP = naskpass
+BIN_CHECK = $(BIN_NASKP)_check
+BINS = $(BIN_NASKP) $(BIN_CHECK)
 SOURCES = $(wildcard src/*.c)
 OBJECTS = $(patsubst %.c,%.o,$(SOURCES))
 DEPS = $(patsubst %.c,%.d,$(SOURCES))
 
-all: $(OBJECTS) $(BIN)
+all: $(OBJECTS) $(BINS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BIN): $(SOURCES)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $(BIN)
+$(BIN_NASKP): $(SOURCES)
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $(BIN_NASKP)
 	$(MAKE) -C tests CC='$(CC)' CFLAGS='$(CFLAGS)' all
 
-strip: $(OBJECTS) $(BIN)
-	$(STRIP) $(BIN)
+$(BIN_CHECK): src/check/check.c
+	$(CC) $(CFLAGS) $(LDFLAGS) src/check/check.c -o $(BIN_CHECK)
+
+strip: $(OBJECTS) $(BINS)
+	$(STRIP) $(BIN_NASKP)
+	$(STRIP) $(BIN_CHECK)
 
 release: all strip
 
@@ -27,7 +33,8 @@ debug:
 	@$(MAKE) -C tests CFLAGS='$(CFLAGS)
 
 install:
-	$(INSTALL) -D -m 0755 $(BIN) $(DESTDIR)/lib/cryptsetup/naskpass
+	$(INSTALL) -D -m 0755 $(BIN_NASKP) $(DESTDIR)/lib/cryptsetup/naskpass
+	$(INSTALL) -D -m 0755 $(BIN_CHECK) $(DESTDIR)/lib/cryptsetup/naskpass_check
 	$(INSTALL) -D -m 0755 scripts/naskpass.inithook $(DESTDIR)/usr/share/naskpass/naskpass.hook.initramfs
 	$(INSTALL) -D -m 0755 scripts/naskpass.initscript $(DESTDIR)/usr/share/naskpass/naskpass.script.initramfs
 	$(INSTALL) -D -m 0755 scripts/naskconf $(DESTDIR)/usr/share/naskpass/naskconf
@@ -42,7 +49,7 @@ uninstall:
 clean:
 	rm -f $(DEPS)
 	rm -f $(OBJECTS)
-	rm -f $(BIN)
+	rm -f $(BINS)
 	$(MAKE) -C tests clean
 
 test:

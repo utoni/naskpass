@@ -5,7 +5,7 @@
 AC_PREREQ([2.67])
 AC_INIT([naskpass], [0], [matzeton@googlemail.com])
 AC_CONFIG_AUX_DIR([build])
-AM_INIT_AUTOMAKE([1.11 foreign no-define -Wall -Werror])
+AM_INIT_AUTOMAKE([1.11 subdir-objects foreign no-define -Wall -Werror])
 AM_WITH_DMALLOC
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
