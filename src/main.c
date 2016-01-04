@@ -73,7 +73,7 @@ run_cryptcreate(char *pass, char *crypt_cmd)
   char *cmd;
 
   if (crypt_cmd == NULL || pass == NULL) return (-1);
-  asprintf(&cmd, "echo '%s' | %s", pass, crypt_cmd);
+  asprintf(&cmd, "echo '%s' | %s >/dev/null 2>/dev/null", pass, crypt_cmd);
   retval = system(cmd);
   free(cmd);
   return (retval);
@@ -152,6 +152,8 @@ main(int argc, char **argv)
         ui_ipc_msgsend(MQ_IF, MSG(MSG_BUSY));
         if (run_cryptcreate(pbuf, GETOPT(CRYPT_CMD).str) != 0) {
           ui_ipc_msgsend(MQ_IF, MSG(MSG_CRYPTCMD_ERR));
+        } else {
+          ui_ipc_semtrywait(SEM_UI);
         }
         ui_ipc_semwait(SEM_IN);
       }
