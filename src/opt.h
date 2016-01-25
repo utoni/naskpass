@@ -20,7 +20,8 @@ struct opt {
 
 enum opt_index {
   FIFO_PATH = 0,
-  CRYPT_CMD
+  CRYPT_CMD,
+  LOG_FILE
 };
 
 

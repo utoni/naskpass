@@ -9,7 +9,7 @@
 
 #define CONFIG_OPT(default_val) { {0},0,{default_val} }
 
-struct opt config_opts[] =  { CONFIG_OPT(DEFAULT_FIFO), CONFIG_OPT(NULL) };
+struct opt config_opts[] =  { CONFIG_OPT(DEFAULT_FIFO), CONFIG_OPT(NULL), CONFIG_OPT("/tmp/naskpass.log") };
 const int opt_siz = ( sizeof(config_opts)/sizeof(config_opts[0]) );
 
 
@@ -20,7 +20,7 @@ usage(char *arg0)
   fprintf(stderr, "  Written by %s (%s).\n", AUTHOR, AUTHOR_EMAIL);
   fprintf(stderr, "  License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n\n");
   fprintf(stderr, "  Command:\n\t%s [args]\n", arg0);
-  fprintf(stderr, "  Arguments:\n\t-h this\n\t-f [passfifo] default: %s\n\t-c [cryptcreate]\n", DEFAULT_FIFO);
+  fprintf(stderr, "  Arguments:\n\t-h this\n\t-l [logfile] default: %s\n\t-f [passfifo] default: %s\n\t-c [cryptcreate]\n", GETOPT(LOG_FILE), GETOPT(FIFO_PATH));
 }
 
 int
