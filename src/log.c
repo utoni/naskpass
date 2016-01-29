@@ -7,24 +7,32 @@
 
 #define LOG_BUFSIZ 128
 
-static FILE* logfile;
+static FILE* logfile = NULL;
 
 
 int log_init(char* file)
 {
+  if (!file) return -1;
   logfile = fopen(file, "a+");
   return (logfile ? 0 : errno);
+}
+
+void log_free(void)
+{
+  if (logfile)
+    fclose(logfile);
+  logfile = NULL;
 }
 
 int logs(char* format, ...)
 {
   int ret;
-  char* buf;
   va_list vargs;
 
-  buf = (char*) calloc(LOG_BUFSIZ, sizeof(char));
+  if (!logfile) return -1;
   va_start(vargs, format);
-  ret = vsnprintf(buf, LOG_BUFSIZ, format, vargs);
+  ret = vfprintf(logfile, format, vargs);
+  fflush(logfile);
   va_end(vargs);
   return ret;
 }

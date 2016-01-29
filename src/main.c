@@ -15,6 +15,7 @@
 
 #include "config.h"
 #include "opt.h"
+#include "log.h"
 
 #include "ui.h"
 #include "ui_ipc.h"
@@ -114,12 +115,13 @@ main(int argc, char **argv)
   memset(pbuf, '\0', IPC_MQSIZ+1);
   if ( parse_cmd(argc, argv) != 0 )
     goto error;
+  log_init( GETOPT(LOG_FILE).str );
+  logs("%s\n", "log init");
   if (OPT(CRYPT_CMD).found == 0) {
-    usage(argv[0]);
+    fprintf(stderr, "%s: crypt cmd is mandatory\n", argv[0]);
     goto error;
   }
   if (check_fifo(GETOPT(FIFO_PATH).str) == false) {
-    usage(argv[0]);
     goto error;
   }
   if ((ffd = open(GETOPT(FIFO_PATH).str, O_NONBLOCK | O_RDWR)) < 0) {
@@ -130,6 +132,7 @@ main(int argc, char **argv)
   ui_ipc_sempost(SEM_UI);
   if ((child = fork()) == 0) {
     /* child */
+    logs("%s\n", "child");
     if (ffd >= 0) close(ffd);
     fclose(stderr);
     /* Slave process: TUI */
@@ -140,6 +143,7 @@ main(int argc, char **argv)
     exit(0);
   } else if (child > 0) {
     /* parent */
+    logs("%s\n", "parent");
     fclose(stdin);
     fclose(stdout);
     ui_ipc_sempost(SEM_BS);
@@ -180,9 +184,13 @@ main(int argc, char **argv)
     goto error;
   }
 
+  logs("%s\n", "finished");
+  log_free();
   ret = EXIT_SUCCESS;
 error:
   if (ffd >= 0) close(ffd);
   ui_ipc_free(1);
+  logs("%s\n", "init error");
+  log_free();
   exit(ret);
 }
