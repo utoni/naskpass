@@ -303,7 +303,9 @@ setup_mapping()
 
 		if [ ! -e "$NEWROOT" ]; then
 			if [ -x /bin/plymouth ] && plymouth --ping || [ $askpass_fallback -ne 0 ]; then
-				message "naskpass does not work with playmouth, falling back to default askpass .."
+				if [ $askpass_fallback -eq 0 ]; then
+                                        message "naskpass does not work with plymouth, falling back to default askpass .."
+                                fi
 				if ! crypttarget="$crypttarget" cryptsource="$cryptsource" \
 				     $cryptkeyscript "$cryptkey" | $cryptopen; then
 					message "cryptsetup: cryptsetup failed, bad password or options?"
