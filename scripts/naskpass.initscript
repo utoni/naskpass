@@ -290,7 +290,7 @@ setup_mapping()
 				# Plymouth will add a : if it is a non-graphical prompt
 				cryptkey="Please unlock disk $diskname"
 			else
-				if [ -x /lib/cryptsetup/naskpass ]; then
+				if [ -x /lib/cryptsetup/naskpass ] && [ $askpass_fallback -eq 0 ]; then
 					cryptkeyscript="/lib/cryptsetup/naskpass"
 					cryptkey=""
 				else
@@ -302,7 +302,7 @@ setup_mapping()
 
 
 		if [ ! -e "$NEWROOT" ]; then
-			if [ -x /bin/plymouth ] && plymouth --ping; then
+			if [ -x /bin/plymouth ] && plymouth --ping || [ $askpass_fallback -ne 0 ]; then
 				message "naskpass does not work with playmouth, falling back to default askpass .."
 				if ! crypttarget="$crypttarget" cryptsource="$cryptsource" \
 				     $cryptkeyscript "$cryptkey" | $cryptopen; then
@@ -383,6 +383,7 @@ setup_mapping()
 #
 
 # Do we have any kernel boot arguments?
+askpass_fallback=0
 cmdline_cryptopts=''
 unset cmdline_root
 for opt in $(cat /proc/cmdline); do
@@ -406,6 +407,9 @@ for opt in $(cat /proc/cmdline); do
 		*) # lilo major/minor number (See #398957). Ignore
 		esac
 		;;
+        cryptfallback)
+                askpass_fallback=1
+                ;;
 	esac
 done
 
