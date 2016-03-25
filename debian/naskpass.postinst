@@ -12,7 +12,7 @@ case "$1" in
 
     configure)
         nask_update
-        db_input high naskpass/activate
+        db_input high naskpass/activate || true
         db_go
         db_get naskpass/activate
         if [ "x$RET" = "xtrue" ]; then
@@ -27,7 +27,7 @@ case "$1" in
         update-initramfs -u
     ;;
 
-    abort-upgrade)
+    install|upgrade|abort-upgrade)
     ;;
 
     *)

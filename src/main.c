@@ -170,11 +170,13 @@ main(int argc, char **argv)
       usleep(100000);
       waitpid(child, &c_status, WNOHANG);
       if ( WIFEXITED(c_status) != 0 ) {
+        logs("%s\n", "child exited");
         break;
       }
     }
     waitpid(child, &c_status, WNOHANG);
     if ( WIFEXITED(c_status) == 0 ) {
+      logs("%s\n", "waiting for child");
       wait(&c_status);
     }
     memset(pbuf, '\0', IPC_MQSIZ+1);
