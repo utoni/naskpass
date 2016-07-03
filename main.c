@@ -83,7 +83,7 @@ run_cryptcreate(char *pass, char *crypt_cmd)
 int
 main(int argc, char **argv)
 {
-  int ffd, c_status, opt;
+  int ffd, opt;
   pid_t child;
   char pbuf[MAX_PASSWD_LEN+1];
   char *fifo_path = NULL;
@@ -139,7 +139,7 @@ main(int argc, char **argv)
       }
     }
     stop_ui();
-    wait(&c_status);
+    wait(&child);
     if (read(ffd, pbuf, MAX_PASSWD_LEN) > 0) {
       if (run_cryptcreate(pbuf, crypt_cmd) != 0) {
         fprintf(stderr, "cryptcreate error\n");
