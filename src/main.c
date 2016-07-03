@@ -174,11 +174,8 @@ main(int argc, char **argv)
         break;
       }
     }
-    waitpid(child, &c_status, WNOHANG);
-    if ( WIFEXITED(c_status) == 0 ) {
-      logs("%s\n", "waiting for child");
-      wait(&c_status);
-    }
+    logs("%s\n", "waiting for child");
+    wait(&child);
     memset(pbuf, '\0', IPC_MQSIZ+1);
   } else {
     /* fork error */
