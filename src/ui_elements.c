@@ -87,15 +87,16 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       ui_thrd_force_update();
 
       sleep(2);
-      ui_ipc_msgrecv(MQ_IF, ipc_buf);
 
-      ui_thrd_suspend();
-      set_txtwindow_color(infownd, COLOR_PAIR(4), COLOR_PAIR(4) | A_BOLD);
-      set_txtwindow_title(infownd, "ERROR");
-      set_txtwindow_text(infownd, ipc_buf);
-      ui_thrd_resume();
-
-      while (wgetch(stdscr) != '\n') { };
+      if (ui_ipc_msgcount(MQ_IF) > 0) {
+        ui_ipc_msgrecv(MQ_IF, ipc_buf);
+        ui_thrd_suspend();
+        set_txtwindow_color(infownd, COLOR_PAIR(4), COLOR_PAIR(4) | A_BOLD);
+        set_txtwindow_title(infownd, "ERROR");
+        set_txtwindow_text(infownd, ipc_buf);
+        ui_thrd_resume();
+        while (wgetch(stdscr) != '\n') { };
+      }
 
       ui_thrd_suspend();
       set_txtwindow_active(infownd, false);

@@ -129,7 +129,6 @@ main(int argc, char **argv)
     goto error;
   }
 
-  ui_ipc_sempost(SEM_UI);
   if ((child = fork()) == 0) {
     /* child */
     logs("%s\n", "child");
@@ -158,14 +157,19 @@ main(int argc, char **argv)
         }
       } else if ( ui_ipc_msgcount(MQ_PW) > 0 ) {
         ui_ipc_msgrecv(MQ_PW, pbuf);
+        logs("%s", "password, ");
         ui_ipc_msgsend(MQ_IF, MSG(MSG_BUSY));
         if (run_cryptcreate(pbuf, GETOPT(CRYPT_CMD).str) != 0) {
+          logs("%s", "cryptcreate error, ");
           ui_ipc_msgsend(MQ_IF, MSG(MSG_CRYPTCMD_ERR));
         } else {
+          logs("%s", "cryptcreate success, trywait SEM_UI, ");
           ui_ipc_semtrywait(SEM_UI);
         }
+        logs("%s", "wait SEM_IN, ");
         ui_ipc_semwait(SEM_IN);
       }
+      logs("%s", "wait SEM_BS, ");
       ui_ipc_semwait(SEM_BS);
       usleep(100000);
       waitpid(child, &c_status, WNOHANG);
@@ -173,6 +177,7 @@ main(int argc, char **argv)
         logs("%s\n", "child exited");
         break;
       }
+      logs("loop end (SEM_BS=%d, SEM_IN=%d, SEM_UI=%d).\n", ui_ipc_getvalue(SEM_BS), ui_ipc_getvalue(SEM_IN), ui_ipc_getvalue(SEM_UI));
     }
     logs("%s\n", "waiting for child");
     wait(&c_status);
