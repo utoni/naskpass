@@ -175,7 +175,7 @@ main(int argc, char **argv)
       }
     }
     logs("%s\n", "waiting for child");
-    wait(&child);
+    wait(&c_status);
     memset(pbuf, '\0', IPC_MQSIZ+1);
   } else {
     /* fork error */
