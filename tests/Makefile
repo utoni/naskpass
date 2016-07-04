@@ -10,6 +10,9 @@ all: $(BINARIES)
 %: %.c
 	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $(patsubst %.c,%,$<)
 
+ipctest: ipctest.c ../src/ui_ipc.c
+	$(CC) $(CFLAGS) $(LDFLAGS) ipctest.c ../src/ui_ipc.c -o ipctest
+
 clean:
 	rm -f $(DEPS)
 	rm -f $(BINARIES)
