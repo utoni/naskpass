@@ -13,7 +13,7 @@ AC_CONFIG_SRCDIR([src/aconfig.h.in])
 AC_CONFIG_HEADER([src/aconfig.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_USE_SYSTEM_EXTENSIONS
-CFLAGS="-Os"
+CFLAGS=""
 LDFLAGS=""
 
 # Checks for programs.
@@ -58,6 +58,17 @@ AC_FUNC_STAT
 AC_FUNC_MKTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([clock_gettime asprintf system printf fprintf mkfifo stat open close fork memmove memcpy memset strdup strndup strerror strstr strlen strnlen strtol openlog vsyslog closelog],,[AC_MSG_ERROR([*** Missing essential functions.])])
+
+AC_ARG_ENABLE(debug,
+AS_HELP_STRING([--enable-debug],
+               [enable debugging, default: no]),
+[case "${enableval}" in
+             yes) debug=true ;;
+             no)  debug=false ;;
+             *)   AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+esac],
+[debug=false])
+AM_CONDITIONAL(DEBUG, test x"$debug" = x"true")
 
 AC_DEFINE([HAVE_CONFIG], [1], [Do NOT change THIS!])
 LDFLAGS="${LDFLAGS} -pthread -lrt -lncurses"

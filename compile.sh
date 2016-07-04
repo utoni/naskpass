@@ -6,6 +6,6 @@ PWD=$(pwd)
 
 cd ${DIR}
 ./autogen.sh
-./configure
+./configure $*
 make
 cd ${PWD}
