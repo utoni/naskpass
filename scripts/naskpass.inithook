@@ -18,8 +18,12 @@ esac
 
 . /usr/share/initramfs-tools/hook-functions
 
-copy_exec /lib/cryptsetup/naskpass /lib/cryptsetup
-copy_exec /lib/cryptsetup/naskpass_check /lib/cryptsetup
+copy_exec /lib/cryptsetup/naskpass          /lib/cryptsetup
+copy_exec /lib/cryptsetup/naskpass_check    /lib/cryptsetup
+copy_exec /usr/share/naskpass/naskpass.pre  /lib/cryptsetup
+copy_exec /usr/share/naskpass/naskpass.post /lib/cryptsetup
+cp /usr/share/naskpass/naskpass.initconf    /etc/naskpass.conf
+
 mkdir -p ${DESTDIR}/lib/terminfo/l
 cp /lib/terminfo/l/linux ${DESTDIR}/lib/terminfo/l/
 

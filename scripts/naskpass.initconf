@@ -1,0 +1,7 @@
+# initramfs naskpass config file
+
+# network device
+NETDEV=eth0
+
+# maximum ip wait time in seconds
+MAXWAIT=10

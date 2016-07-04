@@ -39,9 +39,12 @@ install: build
 	dh_installdebconf
 	$(MAKE) install prefix=$(CURDIR)/debian/naskpass
 	mkdir -p $(CURDIR)/debian/naskpass/usr/share/naskpass
-	install -D -m755 ./scripts/naskconf $(CURDIR)/debian/naskpass/usr/share/naskpass/
-	install -D -m755 ./scripts/naskpass.inithook $(CURDIR)/debian/naskpass/usr/share/naskpass/
+	install -D -m755 ./scripts/naskconf            $(CURDIR)/debian/naskpass/usr/share/naskpass/
+	install -D -m755 ./scripts/naskpass.inithook   $(CURDIR)/debian/naskpass/usr/share/naskpass/
 	install -D -m755 ./scripts/naskpass.initscript $(CURDIR)/debian/naskpass/usr/share/naskpass/
+	install -D -m755 ./scripts/naskpass.initconf   $(CURDIR)/debian/naskpass/usr/share/naskpass/
+	install -D -m755 ./scripts/naskpass.pre        $(CURDIR)/debian/naskpass/usr/share/naskpass/
+	install -D -m755 ./scripts/naskpass.post       $(CURDIR)/debian/naskpass/usr/share/naskpass/
 
 binary-indep: build install
 

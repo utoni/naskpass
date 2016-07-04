@@ -312,14 +312,14 @@ setup_mapping()
 					continue
 				fi
 			else
-				dmesg -n 1
+				/lib/cryptsetup/naskpass.pre
 				if ! $cryptkeyscript -c "/sbin/cryptsetup -T 1 open $cryptsource $crypttarget"; then
 					message "naskpass: failed"
 					continue
 				else
 					message "naskpass: success"
 				fi
-				dmesg -n 4
+				/lib/cryptsetup/naskpass.post
 			fi
 		fi
 

@@ -20,7 +20,11 @@ usage(char *arg0)
   fprintf(stderr, "  Written by %s (%s).\n", AUTHOR, AUTHOR_EMAIL);
   fprintf(stderr, "  License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n\n");
   fprintf(stderr, "  Command:\n\t%s [args]\n", arg0);
-  fprintf(stderr, "  Arguments:\n\t-h this\n\t-l [logfile]\n\t-f [passfifo] default: %s\n\t-c [cryptcreate]\n", GETOPT(FIFO_PATH).str);
+  fprintf(stderr, "  Arguments:\n"
+                  "\t-h this\n"
+                  "\t-l [logfile]\n"
+                  "\t-f [passfifo] default: %s\n"
+                  "\t-c [cryptcreate]\n", GETOPT(FIFO_PATH).str);
 }
 
 int

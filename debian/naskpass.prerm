@@ -13,6 +13,7 @@ case "$1" in
     remove|purge)
         nask_deactivate
         db_purge
+        update-initramfs -u
     ;;
     upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;
