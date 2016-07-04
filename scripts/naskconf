@@ -14,8 +14,8 @@ _nask_cmd () {
       return 1
     fi
     dpkg-divert --package naskpass --add --rename --divert /var/backups/cryptroot.initramfs.bak ${ORGFILE}
-    cp /usr/share/naskpass/naskpass.script.initramfs ${ORGFILE}
-    ln -s /usr/share/naskpass/naskpass.hook.initramfs \
+    cp /usr/share/naskpass/naskpass.initscript ${ORGFILE}
+    ln -s /usr/share/naskpass/naskpass.inithook \
       /usr/share/initramfs-tools/hooks/naskpass
     db_set naskpass/active true
   elif [ "x$1" = "xDCTV" ] && [ "$RET" = "true" ]; then
@@ -23,9 +23,13 @@ _nask_cmd () {
     rm /usr/share/initramfs-tools/hooks/naskpass
     dpkg-divert --package naskpass --rename --remove ${ORGFILE}
     db_set naskpass/active false
+  elif [ "x$1" = "xUPDT" ] && [ "$RET" = "true" ]; then
+    cp /usr/share/naskpass/naskpass.initscript ${ORGFILE}
   fi
   return 0
 }
 
 nask_activate ()	{ _nask_cmd "ACTV"; return $?; }
 nask_deactivate ()	{ _nask_cmd "DCTV"; return $?; }
+nask_update ()		{ _nask_cmd "UPDT"; return $?; }
+

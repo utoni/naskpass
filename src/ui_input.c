@@ -101,31 +101,39 @@ print_input(WINDOW *win, struct input *a)
 
   print_wnd(3, a);
   attron(a->attrs);
-  if (win == NULL) {
-    mvprintw(a->y, a->x, a->prompt);
-    tmp = calloc(a->width+1, sizeof(char));
-    for (i = 0; i < a->width; i++) {
-      *(tmp + i) = '_';
-    }
-    mvprintw(a->y, a->x + p_len, tmp);
-    free(tmp);
+  if (win) {
+    mvwprintw(win, a->y, a->x, a->prompt);
   } else {
+    mvprintw(a->y, a->x, a->prompt);
   }
+  tmp = calloc(a->width+1, sizeof(char));
+  for (i = 0; i < a->width; i++) {
+    *(tmp + i) = '_';
+  }
+  if (win) {
+    mvwprintw(win, a->y, a->x + p_len, tmp);
+  } else {
+    mvprintw(a->y, a->x + p_len, tmp);
+  }
+  free(tmp);
   print_input_text(win, a);
   attroff(a->attrs);
 }
 
 int
-activate_input(WINDOW *win, struct input *a)
+activate_input(struct input *a)
 {
   if (a == NULL) return (UICB_ERR_UNDEF);
-  size_t p_len = strlen(a->prompt);
-  if (win == NULL) {
-    move(a->y, a->x + p_len + a->cur_pos);
-  } else {
-    wmove(win, a->y, a->x + p_len + a->cur_pos);
-  }
-  return (UICB_OK);
+  curs_set(1);
+  ui_set_cur(a->x + strlen(a->prompt) + a->cur_pos, a->y);
+  return (activate_ui_input( (void *) a )); 
+}
+
+int
+deactivate_input(struct input *a)
+{
+  curs_set(0);
+  return (deactivate_ui_input(a));
 }
 
 int
@@ -137,7 +145,7 @@ add_input(WINDOW *win, struct input *a, int key)
   ++a->input_pos;
   ++a->input_len;
   a->cur_pos = (a->cur_pos+1 < a->width ? a->cur_pos+1 : a->cur_pos);
-  print_input(win, a);
+  ui_set_cur(a->x + strlen(a->prompt) + a->cur_pos, a->y);
   return (UICB_OK);
 }
 
@@ -158,11 +166,23 @@ del_input(WINDOW *win, struct input *a)
     --a->cur_pos;
   }
   mvwprintw(win, a->y, a->x + a->cur_pos + strlen(a->prompt), "_");
-  print_input(win, a);
+  ui_set_cur(a->x + strlen(a->prompt) + a->cur_pos, a->y);
   return (UICB_OK);
 }
 
 int
+clear_input(WINDOW *win, struct input *a)
+{
+  if (a == NULL) return (UICB_ERR_UNDEF);
+  memset(a->input, '\0', a->input_max);
+  a->input_len = 0;
+  a->input_pos = 0;
+  a->cur_pos = 0;
+  ui_set_cur(a->x + strlen(a->prompt) + a->cur_pos, a->y);
+  return (UICB_OK);
+}
+
+static int
 input_cb(WINDOW *win, void *data, bool timed_out)
 {
   struct input *a = (struct input *) data;
@@ -174,7 +194,11 @@ input_cb(WINDOW *win, void *data, bool timed_out)
 }
 
 void
-register_input(WINDOW *win, struct input *a)
+register_input(WINDOW *win, struct input *a, uicb_input ipcb)
 {
-  register_ui_elt(input_cb, (void *) a, win);
+  struct ui_callbacks cbs;
+  cbs.ui_element = input_cb;
+  cbs.ui_input = ipcb;
+  register_ui_elt(&cbs, (void *) a, win);
 }
+

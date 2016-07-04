@@ -4,11 +4,61 @@
 #export DH_VERBOSE=1
 DEBVERS := $(shell dpkg-parsechangelog | sed -n -e 's/^Version: //p')
 
-%:
-	dh $@ 
 
-override_dh_auto_build:
-	$(MAKE) VERSION="$(DEBVERS)" all
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	./autogen.sh
+	./configure
+	echo "#define VERSION \"$(DEBVERS)\"" >src/version.h
+	touch configure-stamp
 
-override_dh_auto_install:
-	$(MAKE) DESTDIR=$(CURDIR)/debian/naskpass install
+build: configure-stamp build-stamp
+build-stamp:
+	dh_testdir
+	$(MAKE)
+	$(MAKE) -C tests -f Makefile run
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+	dh_clean
+
+distclean: build
+	$(MAKE) distclean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean
+	dh_prep
+	dh_installdirs
+	dh_installchangelogs
+	dh_installdebconf
+	$(MAKE) install prefix=$(CURDIR)/debian/naskpass
+	mkdir -p $(CURDIR)/debian/naskpass/usr/share/naskpass
+	install -D -m755 ./scripts/naskconf $(CURDIR)/debian/naskpass/usr/share/naskpass/
+	install -D -m755 ./scripts/naskpass.inithook $(CURDIR)/debian/naskpass/usr/share/naskpass/
+	install -D -m755 ./scripts/naskpass.initscript $(CURDIR)/debian/naskpass/usr/share/naskpass/
+
+binary-indep: build install
+
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installdocs
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean distclean binary-indep binary-arch binary install configure
+
