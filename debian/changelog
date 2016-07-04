@@ -1,5 +1,6 @@
-naskpass (1.2) unstable; urgency=low
+naskpass (1.2-1) unstable; urgency=low
   * jessie port
+  * works correct now
 
  -- Toni Uhlig <matzeton@googlemail.com>  Tue, 09 Jun 2015 11:14:20 +0100
 
