@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <syslog.h>
 
 #include "log.h"
 
@@ -12,16 +13,23 @@ static FILE* logfile = NULL;
 
 int log_init(char* file)
 {
-  if (!file) return -1;
-  logfile = fopen(file, "a+");
-  return (logfile ? 0 : errno);
+  if (!file) {
+    openlog("naskpass", LOG_NDELAY | LOG_PID, LOG_DAEMON);
+    return 0;
+  } else {
+    logfile = fopen(file, "a+");
+    return (logfile ? 0 : errno);
+  }
 }
 
 void log_free(void)
 {
-  if (logfile)
+  if (!logfile) {
+    closelog();
+  } else {
     fclose(logfile);
-  logfile = NULL;
+    logfile = NULL;
+  }
 }
 
 int logs(char* format, ...)
@@ -29,10 +37,14 @@ int logs(char* format, ...)
   int ret;
   va_list vargs;
 
-  if (!logfile) return -1;
   va_start(vargs, format);
-  ret = vfprintf(logfile, format, vargs);
-  fflush(logfile);
+  if (!logfile) {
+    vsyslog(LOG_DEBUG, format, vargs);
+    ret = 0;
+  } else {
+    ret = vfprintf(logfile, format, vargs);
+    fflush(logfile);
+  }
   va_end(vargs);
   return ret;
 }

@@ -3,9 +3,6 @@
 /* Define to 1 if you have the `alarm' function. */
 #undef HAVE_ALARM
 
-/* Define to 1 if you have the <alloca.h> header file. */
-#undef HAVE_ALLOCA_H
-
 /* Define to 1 if you have the `asprintf' function. */
 #undef HAVE_ASPRINTF
 
@@ -14,6 +11,9 @@
 
 /* Define to 1 if you have the `close' function. */
 #undef HAVE_CLOSE
+
+/* Define to 1 if you have the `closelog' function. */
+#undef HAVE_CLOSELOG
 
 /* Do NOT change THIS! */
 #undef HAVE_CONFIG
@@ -74,6 +74,9 @@
 /* Define to 1 if you have the `open' function. */
 #undef HAVE_OPEN
 
+/* Define to 1 if you have the `openlog' function. */
+#undef HAVE_OPENLOG
+
 /* Define to 1 if you have the `printf' function. */
 #undef HAVE_PRINTF
 
@@ -130,6 +133,9 @@
 /* Define to 1 if you have the `strtol' function. */
 #undef HAVE_STRTOL
 
+/* Define to 1 if you have the <syslog.h> header file. */
+#undef HAVE_SYSLOG_H
+
 /* Define to 1 if you have the `system' function. */
 #undef HAVE_SYSTEM
 
@@ -170,6 +176,9 @@
 
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
+
+/* Define to 1 if you have the `vsyslog' function. */
+#undef HAVE_VSYSLOG
 
 /* Define to 1 if `fork' works. */
 #undef HAVE_WORKING_FORK

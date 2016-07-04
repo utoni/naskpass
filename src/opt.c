@@ -28,7 +28,7 @@ parse_cmd(int argc, char **argv)
 {
   int opt;
 
-  while ((opt = getopt(argc, argv, "hf:c:l:")) != -1) {
+  while ((opt = getopt(argc, argv, "hf:c:l::")) != -1) {
     switch (opt) {
       case 'h':
         usage(argv[0]);
@@ -40,7 +40,9 @@ parse_cmd(int argc, char **argv)
         SETOPT_str(CRYPT_CMD, strdup(optarg));
         break;
       case 'l':
-        SETOPT_str(LOG_FILE, strdup(optarg));
+        if (optarg) {
+          SETOPT_str(LOG_FILE, strdup(optarg));
+        } else SETOPT_str(LOG_FILE, NULL);
         break;
       default:
         usage(argv[0]);

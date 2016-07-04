@@ -34,7 +34,7 @@ AC_HEADER_STDC
 AC_HEADER_STAT
 AC_HEADER_DIRENT
 AC_HEADER_ASSERT
-AC_CHECK_HEADERS([stdio.h stdlib.h stdbool.h string.h unistd.h errno.h sys/stat.h sys/types.h sys/wait.h fcntl.h semaphore.h time.h mqueue.h alloca.h])
+AC_CHECK_HEADERS([stdio.h stdlib.h stdbool.h string.h unistd.h errno.h sys/stat.h sys/types.h sys/wait.h fcntl.h semaphore.h time.h mqueue.h syslog.h],[],[AC_MSG_ERROR([*** missing essential header files])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_COMPUTE_INT
@@ -57,7 +57,7 @@ AC_FUNC_STRNLEN
 AC_FUNC_STAT
 AC_FUNC_MKTIME
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([clock_gettime asprintf system printf fprintf mkfifo stat open close fork memmove memcpy memset strdup strndup strerror strstr strlen strnlen strtol],,[AC_MSG_ERROR([*** Missing essential functions.])])
+AC_CHECK_FUNCS([clock_gettime asprintf system printf fprintf mkfifo stat open close fork memmove memcpy memset strdup strndup strerror strstr strlen strnlen strtol openlog vsyslog closelog],,[AC_MSG_ERROR([*** Missing essential functions.])])
 
 AC_DEFINE([HAVE_CONFIG], [1], [Do NOT change THIS!])
 LDFLAGS="${LDFLAGS} -pthread -lrt -lncurses"
