@@ -19,14 +19,13 @@ esac
 . /usr/share/initramfs-tools/hook-functions
 
 copy_exec /lib/cryptsetup/naskpass              /lib/cryptsetup
+copy_exec /lib/cryptsetup/naskshell             /bin
 copy_exec /lib/cryptsetup/naskpass_check        /lib/cryptsetup
 copy_exec /usr/share/naskpass/naskpass.pre      /lib/cryptsetup
 copy_exec /usr/share/naskpass/naskpass.post     /lib/cryptsetup
 copy_exec /usr/share/naskpass/naskpass.initconf /etc/naskpass.conf
 
 copy_exec /usr/sbin/sshd /sbin/sshd
-copy_exec /usr/bin/strace /bin/strace
-
 cp -R /etc/initramfs-tools/etc/ssh "${DESTDIR}/etc/"
 
 copy_exec /usr/lib/i386-linux-gnu/libnss_compat.so /usr/lib/i386-linux-gnu/
@@ -38,7 +37,7 @@ shadow:         compat
 EOF
 fi
 
-[ -r "${DESTDIR}/etc/passwd" ] || echo 'root:x:0:0:root:/root:/bin/sh' >"${DESTDIR}/etc/passwd"
+[ -r "${DESTDIR}/etc/passwd" ] || echo 'root:x:0:0:root:/root:/bin/naskshell' >"${DESTDIR}/etc/passwd"
 [ -r "${DESTDIR}/etc/group" ] || echo 'root:x:0:' >"${DESTDIR}/etc/group"
 [ -r "${DESTDIR}/etc/shadow" ] || echo 'root:*:16777:0:99999:7:::' >"${DESTDIR}/etc/shadow"
 

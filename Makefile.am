@@ -3,13 +3,15 @@ SUBDIRS = src
 install-exec-local:
 	/bin/mkdir -p '$(prefix)/lib/cryptsetup'
 	/usr/bin/install -c src/naskpass '$(prefix)/lib/cryptsetup/naskpass'
+	/usr/bin/install -c src/naskshell '$(prefix)/lib/cryptsetup/naskshell'
 	/usr/bin/install -c src/naskpass_check '$(prefix)/lib/cryptsetup/naskpass_check'
 	rm '$(prefix)/bin/naskpass'
+	rm '$(prefix)/bin/naskshell'
 	rm '$(prefix)/bin/naskpass_check'
 	rmdir '$(prefix)/bin'
 
 clean-local:
-	rm -f naskpass naskpass_check
+	rm -f naskpass naskshell naskpass_check
 
 distclean-local: clean-local
 	rm -f aclocal.m4 config.log config.status configure
