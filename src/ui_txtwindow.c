@@ -16,6 +16,7 @@ init_txtwindow(unsigned int x, unsigned int y, unsigned int width, unsigned int 
   a->active = false;
   a->title_len = INITIAL_TITLE_LEN;
   a->title = calloc(a->title_len+1, sizeof(char));
+  a->title_blink = false;
   a->text = NULL;
   a->attrs = 0;
   a->text_attrs = 0;
@@ -78,7 +79,11 @@ print_wnd(struct txtwindow *a)
   /* print window title */
   attroff(a->attrs);
   attron(a->text_attrs);
+  if (a->title_blink)
+    attron(A_BLINK);
   mvprintw(y-2, x+(w/2)-((a->title_len+4)/2), "[ %s ]", a->title);
+  if (a->title_blink)
+    attroff(A_BLINK);
   /* print windows text */
   i = -1;
   if (a->text) {

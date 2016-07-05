@@ -59,6 +59,21 @@ infownd_update(WINDOW *win, struct txtwindow *tw, bool ui_timeout)
   return DOUI_OK;
 }
 
+void
+show_info_wnd(struct txtwindow *wnd, char *title, char *text, chtype fore, chtype back, bool activate, bool blink)
+{
+  ui_thrd_suspend();
+  set_txtwindow_color(wnd, fore, back);
+  set_txtwindow_title(wnd, title);
+  set_txtwindow_text(wnd, text);
+  if (activate)
+    set_txtwindow_active(wnd, true);
+  if (blink)
+    set_txtwindow_blink(wnd, true);
+  ui_thrd_resume();
+  ui_thrd_force_update();
+}
+
 static int
 passwd_input_cb(WINDOW *wnd, void *data, int key)
 {
@@ -66,7 +81,6 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
   char ipc_buf[IPC_MQSIZ+1];
 
   memset(ipc_buf, '\0', IPC_MQSIZ+1);
-//  wtimeout(stdscr, -1);
   switch (key) {
     case UIKEY_ENTER:
       ui_ipc_msgsend(MQ_PW, a->input);
@@ -77,24 +91,13 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       ui_thrd_resume();
 
       ui_ipc_msgrecv(MQ_IF, ipc_buf);
-
-      ui_thrd_suspend();
-      set_txtwindow_color(infownd, COLOR_PAIR(5), COLOR_PAIR(5));
-      set_txtwindow_title(infownd, "BUSY");
-      set_txtwindow_text(infownd, ipc_buf);
-      set_txtwindow_active(infownd, true);
-      ui_thrd_resume();
-      ui_thrd_force_update();
+      show_info_wnd(infownd, "BUSY", ipc_buf, COLOR_PAIR(5), COLOR_PAIR(5), true, false);
 
       sleep(2);
 
       if (ui_ipc_msgcount(MQ_IF) > 0) {
         ui_ipc_msgrecv(MQ_IF, ipc_buf);
-        ui_thrd_suspend();
-        set_txtwindow_color(infownd, COLOR_PAIR(4), COLOR_PAIR(4) | A_BOLD);
-        set_txtwindow_title(infownd, "ERROR");
-        set_txtwindow_text(infownd, ipc_buf);
-        ui_thrd_resume();
+        show_info_wnd(infownd, "ERROR", ipc_buf, COLOR_PAIR(4), COLOR_PAIR(4) | A_BOLD, false, true);
         while (wgetch(stdscr) != '\n') { };
       }
 
@@ -130,7 +133,6 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
     default:
       add_input(wnd, a, key);
   }
-//  wtimeout(stdscr, 1000);
   refresh();
   return DOUI_OK;
 }

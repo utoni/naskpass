@@ -8,6 +8,7 @@
 #define INITIAL_TITLE_LEN 32
 
 #define set_txtwindow_active(wnd, activate) wnd->active = activate;
+#define set_txtwindow_blink(wnd, blink) wnd->title_blink = blink;
 
 struct txtwindow {
   unsigned int y;
@@ -16,6 +17,7 @@ struct txtwindow {
   unsigned int height;
   bool active;
   char *title;
+  bool title_blink;
   size_t title_len;
   char **text;
   int (*window_func)(WINDOW *, struct txtwindow *, bool);
