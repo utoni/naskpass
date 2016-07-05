@@ -1,12 +1,30 @@
 #!/bin/sh
 
+. /scripts/functions
 . /etc/naskpass.conf
 
+
+if [ "x${PRINTK}" != "x" ] && [ -r ${PRINTK} ] && [ -w ${PRINTK} ]; then
+	cat ${PRINTK} >${OLDPRINTK}
+	echo "0 0 0 0" >${PRINTK}
+fi
+sleep 0.2
 
 echo -n 'waiting for ip '
 CURWAIT=$MAXWAIT
 
-if [ -x /sbin/dropbear ]; then
+if [ -x /sbin/sshd ]; then
+
+if [ "x${NASK_DEV}" != "x" ] && [ "x${NASK_MAC}" != "x" ];  then
+	ifconfig ${NASK_DEV} hw ether ${NASK_MAC}
+fi
+
+if [ "x${NASK_DEV}" != "x" ] && [ "x${NASK_IP}" != "x" ];  then
+        ifconfig ${NASK_DEV} ${NASK_IP}
+else
+	configure_networking &
+fi
+
 while ! $(ifconfig -a | grep -qoE 'inet addr:'); do
 	echo -n '.'
 	if [ $CURWAIT -le 0 ]; then
@@ -14,8 +32,9 @@ while ! $(ifconfig -a | grep -qoE 'inet addr:'); do
 		break
 	fi
 	CURWAIT=$(expr $CURWAIT - 1)
-	sleep 1
+	sleep 0.5
 done
 echo
+/sbin/sshd
 fi
 

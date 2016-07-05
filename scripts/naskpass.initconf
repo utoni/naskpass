@@ -1,7 +1,15 @@
 # initramfs naskpass config file
 
-# network device
-NETDEV=eth0
-
 # maximum ip wait time in seconds
-MAXWAIT=10
+MAXWAIT=25
+
+# kernel printk path
+PRINTK=/proc/sys/kernel/printk
+OLDPRINTK=/tmp/naskpass.oldprintk
+
+# network options
+# NASK_IP, NASK_MAC requires NASK_DEV !
+#NASK_DEV=eth0
+# commenting out the following line will force debian's `configure_network` routine
+#NASK_IP=192.168.0.11
+#NASK_MAC=66:66:66:66:66:66
