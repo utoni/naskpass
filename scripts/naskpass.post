@@ -3,7 +3,7 @@
 . /etc/naskpass.conf
 
 if [ "x${OLDPRINTK}" != "x" ] && [ -r ${OLDPRINTK} ] && [ -w ${PRINTK} ]; then
-	cat ${OLDPRINTK} >${OLDPRINTK}
+	cat ${OLDPRINTK} >${PRINTK}
 fi
 
 kill $(pidof sshd)
