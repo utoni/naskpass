@@ -24,6 +24,11 @@ case "$1" in
         else
           nask_deactivate
         fi
+	if [ -x /usr/bin/ssh-keygen ]; then
+		[ -r /etc/initramfs-tools/etc/ssh/ssh_host_rsa_key ] || /usr/bin/ssh-keygen -t rsa -N '' -b 4096 -f /etc/initramfs-tools/etc/ssh/ssh_host_rsa_key
+		[ -r /etc/initramfs-tools/etc/ssh/ssh_host_dsa_key ] || /usr/bin/ssh-keygen -t dsa -N '' -b 1024 -f /etc/initramfs-tools/etc/ssh/ssh_host_dsa_key
+		[ -r /etc/initramfs-tools/etc/ssh/authorized_keys ] || touch /etc/initramfs-tools/etc/ssh/authorized_keys
+	fi
         update-initramfs -u
     ;;
 

@@ -1,3 +1,16 @@
 #!/bin/sh
 
 . /etc/naskpass.conf
+
+if [ "x${OLDPRINTK}" != "x" ] && [ -r ${OLDPRINTK} ] && [ -w ${PRINTK} ]; then
+	cat ${OLDPRINTK} >${OLDPRINTK}
+fi
+
+kill $(pidof sshd)
+
+for interface in $(ifconfig | grep -oE '^[a-zA-Z0-9]+\s+'); do
+	echo "disable ${interface}"
+	ifconfig ${interface} 0.0.0.0
+	ifconfig ${interface} down
+done
+
