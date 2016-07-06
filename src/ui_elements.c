@@ -63,13 +63,12 @@ void
 show_info_wnd(struct txtwindow *wnd, char *title, char *text, chtype fore, chtype back, bool activate, bool blink)
 {
   ui_thrd_suspend();
+  set_txtwindow_blink(wnd, blink);
   set_txtwindow_color(wnd, fore, back);
   set_txtwindow_title(wnd, title);
   set_txtwindow_text(wnd, text);
   if (activate)
     set_txtwindow_active(wnd, true);
-  if (blink)
-    set_txtwindow_blink(wnd, true);
   ui_thrd_resume();
   ui_thrd_force_update();
 }
@@ -97,7 +96,7 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
 
       if (ui_ipc_msgcount(MQ_IF) > 0) {
         ui_ipc_msgrecv(MQ_IF, ipc_buf);
-        show_info_wnd(infownd, "ERROR", ipc_buf, COLOR_PAIR(4), COLOR_PAIR(4) | A_BOLD, false, true);
+        show_info_wnd(infownd, "ERROR", ipc_buf, COLOR_PAIR(4), COLOR_PAIR(4), false, true);
         while (wgetch(stdscr) != '\n') { };
       }
 

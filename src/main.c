@@ -99,7 +99,7 @@ main(int argc, char **argv)
   char pbuf[IPC_MQSIZ+1];
   struct timespec ts_sem_input;
 
-  signal(SIGINT, sigfunc);
+  signal(SIGINT, SIG_IGN);
   signal(SIGTERM, sigfunc);
 
   if ( clock_gettime(CLOCK_REALTIME, &ts_sem_input) == -1 ) {
