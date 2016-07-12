@@ -1,17 +1,19 @@
 naskpass
 ========
 
-Ncurses based replacement for askpass (related to cryptsetup).
+Ncurses based replacement for askpass (related to cryptsetup). <br />
 
 dependencies
 ========
-post-build: libncurses5, libtinfo5
-pre-build: libncurses5-dev, libtinfo-dev
+post-build: coreutils, cryptsetup, libncurses5, libtinfo5 <br />
+pre-build: debhelper, libncurses5-dev, libtinfo-dev, autoconf, automake <br />
+Recommends: openssh-server <br />
+Conflicts: dropbear <br />
 
 note
 ========
-Conflicts: plymouth
-Plymouth may not like naskpass (never verified).
+Plymouth may not like naskpass (never verified). <br />
+Do not use debian and dropbear during boot (broken initscript). <br />
 
 screenshots
 ========
