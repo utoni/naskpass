@@ -13,3 +13,8 @@ note
 Conflicts: plymouth
 Plymouth may not like naskpass (never verified).
 
+screenshots
+========
+
+<img src=https://i.imgur.com/Vea7dQ5.jpg>
+<img src=https://i.imgur.com/rU2nrBW.jpg>
