@@ -1,7 +1,11 @@
 naskpass
 ========
-
 Ncurses based replacement for askpass (related to cryptsetup). <br />
+
+build instructions
+========
+debian: dpkg-buildpackage -b <br />
+non-debian: ./compile.sh <br />
 
 dependencies
 ========
