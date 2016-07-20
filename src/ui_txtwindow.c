@@ -152,7 +152,7 @@ __do_textadjust(struct txtwindow *a, char *text)
     }
     adj_text[i] = tok;
     i++;
-  } while (rows > 0);
+  } while (--rows > 0);
   return adj_text;
 error:
   free(adj_text);

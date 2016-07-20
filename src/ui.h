@@ -10,9 +10,9 @@
 #define UICB_ERR_BUF	3
 
 #define DOUI_OK		0
-#define DOUI_ERR	1
-#define DOUI_TMOUT	2
-#define DOUI_NINIT	3
+#define DOUI_ERR	4
+#define DOUI_TMOUT	5
+#define DOUI_NINIT	6
 
 #define UILOOP_TIMEOUT	1
 

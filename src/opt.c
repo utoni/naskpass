@@ -38,10 +38,12 @@ parse_cmd(int argc, char **argv)
         usage(argv[0]);
         return 1;
       case 'f':
-        SETOPT_str(FIFO_PATH, strdup(optarg));
+        if (optarg)
+          SETOPT_str(FIFO_PATH, strdup(optarg));
         break;
       case 'c':
-        SETOPT_str(CRYPT_CMD, strdup(optarg));
+        if (optarg)
+          SETOPT_str(CRYPT_CMD, strdup(optarg));
         break;
       case 'l':
         if (optarg) {

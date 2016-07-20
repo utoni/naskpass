@@ -83,13 +83,15 @@ unregister_ui_elt(void *data)
     next = cur->next;
     if (cur->data != NULL && cur->data == data) {
       free(cur);
+      cur = NULL;
       if (before != NULL) {
         before->next = next;
       } else {
         nui = next;
       }
     }
-    before = cur;
+    if (cur != NULL)
+      before = cur;
     cur = next;
   }
 }
@@ -197,7 +199,7 @@ do_ui_update(bool timed_out)
   mvprintw(0, max_x - STRLEN(APP_TIMEOUT_FMT), "[" APP_TIMEOUT_FMT "]", atmout);
   attroff(COLOR_PAIR(1));
   /* EoT (End of Todo) */
-  wmove(wnd_main, cur_y, cur_x);
+  retval |= (wmove(wnd_main, cur_y, cur_x) << 4);
   wrefresh(wnd_main);
   return (retval);
 }
@@ -303,6 +305,7 @@ do_ui(void)
 
   pthread_mutex_lock(&mtx_update);
   if (run_ui_thrd() != 0) {
+    pthread_mutex_unlock(&mtx_update);
     return ret;
   }
   ui_ipc_semwait(SEM_RD);

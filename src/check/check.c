@@ -35,17 +35,21 @@ int main(int argc, char **argv)
   m_attr.mq_curmsgs = 0;
 
   mq_unlink("/testmq");
-  myassert( (mq_test = mq_open( "/testmq", O_NONBLOCK | O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG, &m_attr )) != (mqd_t)-1, 0x1 );
+  mq_test = mq_open( "/testmq", O_NONBLOCK | O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG, &m_attr );
+  myassert( mq_test != (mqd_t)-1, 0x1 );
   myassert( mq_getattr(mq_test, &m_attr) == 0, 0x2 );
 
   strcpy(buf, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVQXYZ");
   myassert( mq_send(mq_test, buf, bufsiz, 0) == 0, 0x4 );
-  myassert( (sz_recv = mq_receive(mq_test, recv, bufsiz, &prio)) > 0, 0x8 );
+  sz_recv = mq_receive(mq_test, recv, bufsiz, &prio);
+  myassert( sz_recv > 0, 0x8 );
 
   memset(recv, '\0', bufsiz);
   if (fork() > 0) {
-    myassert( (mq_recv = mq_open( "/testmq", O_RDONLY, S_IRWXU | S_IRWXG, &m_attr )) != (mqd_t)-1, 0x10 );
-    myassert( (sz_recv = mq_receive(mq_recv, recv, bufsiz, &prio)) > 0, 0x20 );
+    mq_recv = mq_open( "/testmq", O_RDONLY, S_IRWXU | S_IRWXG, &m_attr );
+    myassert( mq_recv != (mqd_t)-1, 0x10 );
+    sz_recv = mq_receive(mq_recv, recv, bufsiz, &prio);
+    myassert( sz_recv > 0, 0x20 );
     return ret;
   }
   myassert( mq_send(mq_test, buf, bufsiz, 0) == 0, 0x40 );
@@ -55,7 +59,8 @@ int main(int argc, char **argv)
   myassert( mq_unlink("/testmq") == 0, 0x200 );
 
   myassert( sem_unlink("/testsem") == 0, 0x400 );
-  myassert( (sp_test = sem_open("/testsem", O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0)), 0x800 );
+  sp_test = sem_open("/testsem", O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
+  myassert( sp_test == 0, 0x800 );
   myassert( sem_post(sp_test) == 0, 0x1000 );
   myassert( sem_wait(sp_test) == 0, 0x1200 );
   myassert( sem_close(sp_test) == 0, 0x1400 );

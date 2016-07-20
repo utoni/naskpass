@@ -22,7 +22,7 @@ fi
 if [ "x${NASK_DEV}" != "x" ] && [ "x${NASK_IP}" != "x" ];  then
         ifconfig ${NASK_DEV} ${NASK_IP}
 else
-	configure_networking &
+	[ -x /bin/ipconfig ] && configure_networking &
 fi
 
 while ! $(ifconfig -a | grep -qoE 'inet addr:'); do
