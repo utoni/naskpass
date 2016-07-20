@@ -6,6 +6,7 @@ AC_PREREQ([2.67])
 AC_INIT([naskpass], [0], [matzeton@googlemail.com])
 AC_CONFIG_AUX_DIR([build])
 AM_INIT_AUTOMAKE([1.11 subdir-objects foreign no-define -Wall -Werror])
+AM_MAINTAINER_MODE([disable])
 AM_WITH_DMALLOC
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
@@ -57,7 +58,8 @@ AC_FUNC_STRNLEN
 AC_FUNC_STAT
 AC_FUNC_MKTIME
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([clock_gettime asprintf system printf fprintf mkfifo stat open close fork memmove memcpy memset strdup strndup strerror strstr strlen strnlen strtol openlog vsyslog closelog],,[AC_MSG_ERROR([*** Missing essential functions.])])
+AC_CHECK_FUNCS([clock_gettime],,)
+AC_CHECK_FUNCS([asprintf system printf fprintf mkfifo stat open close fork memmove memcpy memset strdup strndup strerror strstr strlen strnlen strtol openlog vsyslog closelog],,[AC_MSG_ERROR([*** Missing essential functions.])])
 
 AC_ARG_ENABLE(debug,
 AS_HELP_STRING([--enable-debug],
