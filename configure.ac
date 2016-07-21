@@ -12,15 +12,13 @@ AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AC_CONFIG_SRCDIR([src/aconfig.h.in])
 AC_CONFIG_HEADER([src/aconfig.h])
-AC_CONFIG_MACRO_DIR([m4])
 AC_USE_SYSTEM_EXTENSIONS
-CFLAGS=""
-LDFLAGS=""
 
 # Checks for programs.
 AM_PROG_AR
 AM_PROG_INSTALL_STRIP
 AC_PROG_CC
+AM_PROG_CC_C_O
 AC_PROG_INSTALL
 AC_PROG_RANLIB
 AC_C_INLINE
@@ -35,7 +33,7 @@ AC_HEADER_STDC
 AC_HEADER_STAT
 AC_HEADER_DIRENT
 AC_HEADER_ASSERT
-AC_CHECK_HEADERS([stdio.h stdlib.h stdbool.h string.h unistd.h errno.h sys/stat.h sys/types.h sys/wait.h fcntl.h semaphore.h time.h mqueue.h syslog.h],[],[AC_MSG_ERROR([*** missing essential header files])])
+AC_CHECK_HEADERS([glob.h stdio.h stdlib.h stdbool.h string.h unistd.h errno.h sys/stat.h sys/types.h sys/wait.h fcntl.h semaphore.h time.h mqueue.h syslog.h],[],[AC_MSG_ERROR([*** missing essential header files])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_COMPUTE_INT
@@ -46,8 +44,8 @@ AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT8_T
-AX_CHECK_TYPEDEF([size_t], [stdio.h],,[AC_MSG_ERROR([*** Missing size_t typedef in stdio.h])])
-AX_CHECK_TYPEDEF([ssize_t], [stdio.h],,[AC_MSG_ERROR([*** Missing size_t typedef in stdio.h])])
+AC_CHECK_TYPE(size_t, unsigned int)
+AC_CHECK_TYPE(ssize_t, unsigned int)
 
 # Checks for library functions.
 AC_FUNC_FORK
@@ -58,8 +56,27 @@ AC_FUNC_STRNLEN
 AC_FUNC_STAT
 AC_FUNC_MKTIME
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([clock_gettime],,)
 AC_CHECK_FUNCS([asprintf system printf fprintf mkfifo stat open close fork memmove memcpy memset strdup strndup strerror strstr strlen strnlen strtol openlog vsyslog closelog],,[AC_MSG_ERROR([*** Missing essential functions.])])
+
+AC_SEARCH_LIBS([initscr], [ncurses],,[AC_MSG_ERROR([*** Missing ncurses library. -lncurses])])
+AC_SEARCH_LIBS([wattr_on], [ncurses],,[AC_MSG_ERROR([*** Missing ncurses library. -lncurses])])
+AC_SEARCH_LIBS([wattr_off], [ncurses],,[AC_MSG_ERROR([*** Missing ncurses library. -lncurses])])
+AC_SEARCH_LIBS([mvprintw], [ncurses],,[AC_MSG_ERROR([*** Missing ncurses library. -lncurses])])
+AC_SEARCH_LIBS([mvwprintw], [ncurses],,[AC_MSG_ERROR([*** Missing ncurses library. -lncurses])])
+AC_SEARCH_LIBS([wmove], [ncurses],,[AC_MSG_ERROR([*** Missing ncurses library. -lncurses])])
+AC_SEARCH_LIBS([wgetch], [ncurses],,[AC_MSG_ERROR([*** Missing ncurses library. -lncurses])])
+AC_SEARCH_LIBS([wtimeout], [ncurses],,[AC_MSG_ERROR([*** Missing ncurses library. -lncurses])])
+AC_SEARCH_LIBS([wrefresh], [ncurses],,[AC_MSG_ERROR([*** Missing ncurses library. -lncurses])])
+AC_SEARCH_LIBS([pthread_create], [pthread],,[AC_MSG_ERROR([*** Missing posix threads library. -lpthread])])
+AC_SEARCH_LIBS([pthread_join], [pthread],,[AC_MSG_ERROR([*** Missing posix threads library. -lpthread])])
+AC_SEARCH_LIBS([pthread_mutex_lock], [pthread],,[AC_MSG_ERROR([*** Missing posix threads library. -lpthread])])
+AC_SEARCH_LIBS([pthread_mutex_unlock], [pthread],,[AC_MSG_ERROR([*** Missing posix threads library. -lpthread])])
+AC_SEARCH_LIBS([pthread_cond_timedwait], [pthread],,[AC_MSG_ERROR([*** Missing posix threads library. -lpthread])])
+AC_SEARCH_LIBS([pthread_cond_signal], [pthread],,[AC_MSG_ERROR([*** Missing posix threads library. -lpthread])])
+AC_SEARCH_LIBS([mq_open], [rt],,[AC_MSG_ERROR([*** Missing posix ipc library. -lrt])])
+AC_SEARCH_LIBS([mq_close], [rt],,[AC_MSG_ERROR([*** Missing posix ipc library. -lrt])])
+AC_SEARCH_LIBS([mq_unlink], [rt],,[AC_MSG_ERROR([*** Missing posix ipc library. -lrt])])
+AC_SEARCH_LIBS([clock_gettime], [rt],,[AC_MSG_ERROR([*** Missing posix ipc library. -lrt])])
 
 AC_ARG_ENABLE(debug,
 AS_HELP_STRING([--enable-debug],
@@ -73,7 +90,6 @@ esac],
 AM_CONDITIONAL(DEBUG, test x"$debug" = x"true")
 
 AC_DEFINE([HAVE_CONFIG], [1], [Do NOT change THIS!])
-LDFLAGS="${LDFLAGS} -pthread -lrt -lncurses"
 AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_LDFLAGS])
 AC_CONFIG_FILES([Makefile src/Makefile])

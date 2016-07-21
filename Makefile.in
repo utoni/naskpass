@@ -81,13 +81,13 @@ subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) build/ar-lib \
 	build/compile build/config.guess build/config.sub \
-	build/install-sh build/missing $(top_srcdir)/build/ar-lib \
-	$(top_srcdir)/build/compile $(top_srcdir)/build/config.guess \
+	build/depcomp build/install-sh build/missing \
+	$(top_srcdir)/build/ar-lib $(top_srcdir)/build/compile \
+	$(top_srcdir)/build/config.guess \
 	$(top_srcdir)/build/config.sub $(top_srcdir)/build/install-sh \
 	$(top_srcdir)/build/missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/ax_check_typedef.m4 \
-	$(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
