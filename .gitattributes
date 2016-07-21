@@ -1,8 +1,12 @@
+*.sh linguist-vendored
+scripts/* linguist-vendored
+debian/* linguist-vendored
 build/* linguist-vendored
 m4/* linguist-vendored
-
-configure.ac linguist-vendored
 configure linguist-vendored
-Makefile.am linguist-vendored
-autogen.sh linguist-vendored=false
-compile.sh linguist-vendored
+configure.ac linguist-vendored
+aclocal.m4 linguist-vendored
+*.am linguist-vendored
+*.in linguist-vendored
+.travis.yml linguist-vendored
+tests/Makefile linguist-vendored
