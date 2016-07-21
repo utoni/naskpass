@@ -2,7 +2,6 @@
 scripts/* linguist-vendored
 debian/* linguist-vendored
 build/* linguist-vendored
-m4/* linguist-vendored
 configure linguist-vendored
 configure.ac linguist-vendored
 aclocal.m4 linguist-vendored
