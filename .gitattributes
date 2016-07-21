@@ -1,0 +1,8 @@
+build/* linguist-vendored
+m4/* linguist-vendored
+
+configure.ac linguist-vendored
+configure linguist-vendored
+Makefile.am linguist-vendored
+autogen.sh linguist-vendored=false
+compile.sh linguist-vendored
