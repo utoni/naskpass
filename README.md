@@ -9,6 +9,7 @@ build instructions
 ========
 debian: dpkg-buildpackage -b <br />
 non-debian: ./compile.sh <br />
+non-autotools: ./configure && make <br />
 
 dependencies
 ========
