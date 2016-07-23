@@ -2,6 +2,6 @@ language: c
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y libncurses5-dev libncursesw5-dev
+  - sudo apt-get install -y debhelper libncurses5-dev libncursesw5-dev
   
-script: ./configure && make
+script: ./configure && make && dpkg-buildpackage -b -us -uc
