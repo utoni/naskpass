@@ -8,8 +8,7 @@
 
 
 enum UI_IPC_SEM {
-  SEM_RD = 0,  /* UI Init done? */
-  SEM_UI,      /* TUI active? */
+  SEM_UI = 0,  /* TUI active? */
   SEM_IN,      /* Textfield has input avail */
   SEM_BS,      /* Master process busy */
   SEM_NUM

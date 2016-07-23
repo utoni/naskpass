@@ -97,7 +97,7 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       if (ui_ipc_msgcount(MQ_IF) > 0) {
         ui_ipc_msgrecv(MQ_IF, ipc_buf);
         show_info_wnd(infownd, "ERROR", ipc_buf, COLOR_PAIR(4), COLOR_PAIR(4), true, true);
-        while (ui_wgetch(1500) != '\n') { };
+        while (ui_wgetchtest(1500, '\n') != DOUI_KEY) { };
       }
 
       ui_thrd_suspend();

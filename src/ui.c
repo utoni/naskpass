@@ -180,16 +180,18 @@ do_ui_update(bool timed_out)
   if (timed_out == TRUE && atmout > 0) {
     atmout--;
   } else if (timed_out == TRUE && atmout == 0) {
-    ui_ipc_semwait(SEM_UI);
+    ui_ipc_semtrywait(SEM_UI);
   } else {
     atmout = APP_TIMEOUT;
   }
   while (cur != NULL) {
     if (cur->cbs.ui_element != NULL) {
-      cur->cbs.ui_element(cur->wnd, cur->data, timed_out);
+      if ( (retval = cur->cbs.ui_element(cur->wnd, cur->data, timed_out)) != UICB_OK)
+        break;
       doupdate();
     } else {
       retval = UICB_ERR_CB;
+      break;
     }
     cur = cur->next;
   }
@@ -198,7 +200,7 @@ do_ui_update(bool timed_out)
   mvprintw(0, max_x - STRLEN(APP_TIMEOUT_FMT), "[" APP_TIMEOUT_FMT "]", atmout);
   attroff(COLOR_PAIR(1));
   /* EoT (End of Todo) */
-  retval |= (wmove(wnd_main, cur_y, cur_x) << 4);
+  wmove(wnd_main, cur_y, cur_x);
   wrefresh(wnd_main);
   return (retval);
 }
@@ -210,13 +212,13 @@ ui_thrd(void *arg)
   struct timespec now;
 
   do_ui_update(true);
-  ui_ipc_sempost(SEM_RD);
   pthread_mutex_lock(&mtx_update);
   clock_gettime(CLOCK_REALTIME, &now);
   now.tv_sec += UILOOP_TIMEOUT;
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
     cnd_ret = pthread_cond_timedwait(&cnd_update, &mtx_update, &now);
-    do_ui_update( (cnd_ret == ETIMEDOUT ? true : false) );
+    if ( do_ui_update( (cnd_ret == ETIMEDOUT ? true : false) ) != UICB_OK )
+      break;
     if (cnd_ret == ETIMEDOUT) {
       clock_gettime(CLOCK_REALTIME, &now);
       now.tv_sec += UILOOP_TIMEOUT;
@@ -292,12 +294,31 @@ stop_ui_thrd(void)
   return (pthread_join(thrd, NULL));
 }
 
+int ui_wgetchtest(int timeout, char testchar)
+{
+  int retval = DOUI_OK;
+  usleep(timeout/2);
+  pthread_mutex_lock(&mtx_update);
+  if ( ui_ipc_getvalue(SEM_UI) <= 0 ) {
+    retval = DOUI_KEY;
+  } else if ( wgetch(wnd_main) == testchar ) {
+    retval = DOUI_KEY;
+  }
+  pthread_mutex_unlock(&mtx_update);
+  usleep(timeout/2);
+  return retval;
+}
+
 char ui_wgetch(int timeout)
 {
   char key;
   usleep(timeout/2);
   pthread_mutex_lock(&mtx_update);
-  key = wgetch(wnd_main);
+  if ( ui_ipc_getvalue(SEM_UI) <= 0 ) {
+    key = ERR;
+  } else {
+    key = wgetch(wnd_main);
+  }
   pthread_mutex_unlock(&mtx_update);
   usleep(timeout/2);
   return key;
@@ -318,7 +339,6 @@ do_ui(void)
     pthread_mutex_unlock(&mtx_update);
     return ret;
   }
-  ui_ipc_semwait(SEM_RD);
   pthread_mutex_unlock(&mtx_update);
   timeout(0);
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {

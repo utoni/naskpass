@@ -191,10 +191,11 @@ main(int argc, char **argv)
   }
 
   ret = EXIT_SUCCESS;
+  ui_ipc_free(1);
 error:
   logs("%s\n", "exiting ..");
   if (ffd >= 0) close(ffd);
-  ui_ipc_free(1);
+  ui_ipc_free(0);
   log_free();
   exit(ret);
 }

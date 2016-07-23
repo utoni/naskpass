@@ -13,6 +13,7 @@
 #define DOUI_ERR	4
 #define DOUI_TMOUT	5
 #define DOUI_NINIT	6
+#define DOUI_KEY        7
 
 #define UILOOP_TIMEOUT	1
 
@@ -85,6 +86,8 @@ void
 free_ui(void);
 
 char ui_wgetch(int timeout);
+
+int ui_wgetchtest(int timeout, char testchar);
 
 int
 do_ui(void);
