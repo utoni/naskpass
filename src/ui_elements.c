@@ -25,7 +25,6 @@ static struct input *pw_input;
 static struct anic *heartbeat;
 static struct statusbar *higher, *lower;
 static struct txtwindow *infownd;
-static struct tctwindow *errwnd;
 static char *title = NULL;
 static char busy_str[BSTR_LEN+1] = ".\0\0\0";
 
@@ -60,14 +59,14 @@ infownd_update(WINDOW *win, struct txtwindow *tw, bool ui_timeout)
 }
 
 void
-show_info_wnd(struct txtwindow *wnd, char *title, char *text, chtype fore, chtype back, bool activate, bool blink)
+show_info_wnd(struct txtwindow *wnd, char *_title, char *text, chtype fore, chtype back, bool activate, bool blink)
 {
   ui_thrd_suspend();
   deactivate_input(pw_input);
   set_txtwindow_active(wnd, activate);
   set_txtwindow_blink(wnd, blink);
   set_txtwindow_color(wnd, fore, back);
-  set_txtwindow_title(wnd, title);
+  set_txtwindow_title(wnd, _title);
   set_txtwindow_text(wnd, text);
   ui_thrd_resume();
   ui_thrd_force_update(false);
