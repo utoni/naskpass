@@ -48,7 +48,6 @@ static pthread_t thrd;
 static unsigned int atmout = APP_TIMEOUT;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t mtx_busy = PTHREAD_MUTEX_INITIALIZER;
 
 
 void
@@ -217,9 +216,7 @@ ui_thrd(void *arg)
   now.tv_sec += UILOOP_TIMEOUT;
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
     cnd_ret = pthread_cond_timedwait(&cnd_update, &mtx_update, &now);
-    pthread_mutex_lock(&mtx_busy);
     do_ui_update( (cnd_ret == ETIMEDOUT ? true : false) );
-    pthread_mutex_unlock(&mtx_busy);
     if (cnd_ret == ETIMEDOUT) {
       clock_gettime(CLOCK_REALTIME, &now);
       now.tv_sec += UILOOP_TIMEOUT;
@@ -230,23 +227,25 @@ ui_thrd(void *arg)
 }
 
 void
-ui_thrd_force_update(void)
+ui_thrd_force_update(bool force_all)
 {
-  pthread_mutex_lock(&mtx_busy);
+  pthread_mutex_lock(&mtx_update);
+  if (force_all)
+    touchwin(wnd_main);
   pthread_cond_signal(&cnd_update);
-  pthread_mutex_unlock(&mtx_busy);
+  pthread_mutex_unlock(&mtx_update);
 }
 
 void
 ui_thrd_suspend(void)
 {
-  pthread_mutex_lock(&mtx_busy);
+  pthread_mutex_lock(&mtx_update);
 }
 
 void
 ui_thrd_resume(void)
 {
-  pthread_mutex_unlock(&mtx_busy);
+  pthread_mutex_unlock(&mtx_update);
 }
 
 WINDOW *
@@ -293,6 +292,17 @@ stop_ui_thrd(void)
   return (pthread_join(thrd, NULL));
 }
 
+char ui_wgetch(int timeout)
+{
+  char key;
+  usleep(timeout/2);
+  pthread_mutex_lock(&mtx_update);
+  key = wgetch(wnd_main);
+  pthread_mutex_unlock(&mtx_update);
+  usleep(timeout/2);
+  return key;
+}
+
 int
 do_ui(void)
 {
@@ -310,15 +320,16 @@ do_ui(void)
   }
   ui_ipc_semwait(SEM_RD);
   pthread_mutex_unlock(&mtx_update);
-  wtimeout(stdscr, 500);
+  timeout(0);
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
-    if ((key = wgetch(wnd_main)) == ERR) {
+    if ( (key = ui_wgetch(3000)) == ERR )
       continue;
-    }
+
     if ( process_key(key) != true ) {
       raise(SIGTERM);
     }
-    ui_thrd_force_update();
+
+    ui_thrd_force_update(false);
   }
   stop_ui_thrd();
   free_ui_elements();

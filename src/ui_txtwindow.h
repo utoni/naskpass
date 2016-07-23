@@ -10,6 +10,10 @@
 #define set_txtwindow_active(wnd, activate) wnd->active = activate;
 #define set_txtwindow_blink(wnd, blink) wnd->title_blink = blink;
 
+struct txtwindow;
+
+typedef int (*window_func)(WINDOW *, struct txtwindow *, bool);
+
 struct txtwindow {
   unsigned int y;
   unsigned int x;
@@ -20,12 +24,11 @@ struct txtwindow {
   bool title_blink;
   size_t title_len;
   char **text;
-  int (*window_func)(WINDOW *, struct txtwindow *, bool);
+  window_func window_func;
   chtype attrs;
   chtype text_attrs;
 };
 
-typedef int (*window_func)(WINDOW *, struct txtwindow *, bool);
 
 struct txtwindow *
 init_txtwindow(unsigned int x, unsigned int y, unsigned int width, unsigned int height, window_func cb_update);

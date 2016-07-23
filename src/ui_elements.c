@@ -63,14 +63,14 @@ void
 show_info_wnd(struct txtwindow *wnd, char *title, char *text, chtype fore, chtype back, bool activate, bool blink)
 {
   ui_thrd_suspend();
+  deactivate_input(pw_input);
+  set_txtwindow_active(wnd, activate);
   set_txtwindow_blink(wnd, blink);
   set_txtwindow_color(wnd, fore, back);
   set_txtwindow_title(wnd, title);
   set_txtwindow_text(wnd, text);
-  if (activate)
-    set_txtwindow_active(wnd, true);
   ui_thrd_resume();
-  ui_thrd_force_update();
+  ui_thrd_force_update(false);
 }
 
 static int
@@ -88,6 +88,7 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       clear_input(wnd, a);
       deactivate_input(pw_input);
       ui_thrd_resume();
+      ui_thrd_force_update(false);
 
       ui_ipc_msgrecv(MQ_IF, ipc_buf);
       show_info_wnd(infownd, "BUSY", ipc_buf, COLOR_PAIR(5), COLOR_PAIR(5), true, false);
@@ -96,14 +97,15 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
 
       if (ui_ipc_msgcount(MQ_IF) > 0) {
         ui_ipc_msgrecv(MQ_IF, ipc_buf);
-        show_info_wnd(infownd, "ERROR", ipc_buf, COLOR_PAIR(4), COLOR_PAIR(4), false, true);
-        while (wgetch(stdscr) != '\n') { };
+        show_info_wnd(infownd, "ERROR", ipc_buf, COLOR_PAIR(4), COLOR_PAIR(4), true, true);
+        while (ui_wgetch(1500) != '\n') { };
       }
 
       ui_thrd_suspend();
       set_txtwindow_active(infownd, false);
       activate_input(pw_input);
       ui_thrd_resume();
+      ui_thrd_force_update(true);
 
       ui_ipc_sempost(SEM_IN);
       break;
@@ -111,15 +113,7 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       del_input(wnd, a);
       break;
     case UIKEY_ESC:
-      wtimeout(stdscr, 0);
-      ui_thrd_suspend();
-      deactivate_input(pw_input);
-      set_txtwindow_active(infownd, true);
-      set_txtwindow_color(infownd, COLOR_PAIR(5), COLOR_PAIR(5));
-      set_txtwindow_title(infownd, "BUSY");
-      set_txtwindow_text(infownd, "bye bye");
-      ui_thrd_resume();
-      ui_thrd_force_update();
+      show_info_wnd(infownd, "BUSY", "bye bye", COLOR_PAIR(5), COLOR_PAIR(5), true, true);
       sleep(2);
       return DOUI_ERR;
     case UIKEY_DOWN:
@@ -132,7 +126,6 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
     default:
       add_input(wnd, a, key);
   }
-  refresh();
   return DOUI_OK;
 }
 

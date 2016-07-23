@@ -70,7 +70,7 @@ int
 deactivate_ui_input(void *data);
 
 void
-ui_thrd_force_update(void);
+ui_thrd_force_update(bool force_all);
 
 void
 ui_thrd_suspend(void);
@@ -83,6 +83,8 @@ init_ui(void);
 
 void
 free_ui(void);
+
+char ui_wgetch(int timeout);
 
 int
 do_ui(void);
