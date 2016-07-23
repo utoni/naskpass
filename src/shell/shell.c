@@ -27,7 +27,8 @@ int main(int argc, char **argv) {
   char *line = calloc(128, sizeof(char));
   size_t len = 128;
   ssize_t read = getline(&line, &len, stdin);
-  write(passfifo_fd, line, len);
+  if (write(passfifo_fd, line, len) == -1)
+    perror("write");
   printf("\n");
 
   if ( tcsetattr(0, TCSANOW, &old) != 0 )
