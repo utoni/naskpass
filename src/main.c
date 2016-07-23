@@ -98,6 +98,7 @@ main(int argc, char **argv)
   pid_t child;
   char pbuf[IPC_MQSIZ+1];
   struct timespec ts_sem_input;
+  bool csetup_ok = false;
 
   signal(SIGINT, SIG_IGN);
   signal(SIGTERM, sigfunc);
@@ -165,6 +166,7 @@ main(int argc, char **argv)
           logs_dbg("%s\n", "cryptcreate error");
           ui_ipc_msgsend(MQ_IF, MSG(MSG_CRYPTCMD_ERR));
         } else {
+          csetup_ok = true;
           logs_dbg("%s\n", "cryptcreate success, trywait SEM_UI");
           ui_ipc_semtrywait(SEM_UI);
         }
@@ -190,7 +192,10 @@ main(int argc, char **argv)
     goto error;
   }
 
-  ret = EXIT_SUCCESS;
+  if (csetup_ok)
+    ret = EXIT_SUCCESS;
+  else
+    ret = EXIT_FAILURE;
   ui_ipc_free(1);
 error:
   logs("%s\n", "exiting ..");
