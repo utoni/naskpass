@@ -1,4 +1,4 @@
-<img src=https://travis-ci.org/lnslbrty/naskpass.svg?branch=master>
+<img src=https://travis-ci.org/lnslbrty/naskpass.svg?branch=jessie>
 <img src=https://scan.coverity.com/projects/9389/badge.svg?flat=1>
 
 naskpass
