@@ -8,7 +8,7 @@ DEPS = $(patsubst %.c,%.d,$(SOURCES))
 all: $(BINARIES)
 
 %: %.c
-	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $(patsubst %.c,%,$<)
+	$(CC) $(CFLAGS) $< -o $(patsubst %.c,%,$<) $(LDFLAGS)
 
 ipctest: ipctest.c ../src/ui_ipc.c
 	$(CC) $(CFLAGS) ipctest.c ../src/ui_ipc.c -o ipctest $(LDFLAGS)
