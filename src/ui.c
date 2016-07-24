@@ -186,11 +186,11 @@ do_ui_update(bool timed_out)
   }
   while (cur != NULL) {
     if (cur->cbs.ui_element != NULL) {
-      if ( (retval = cur->cbs.ui_element(cur->wnd, cur->data, timed_out)) != UICB_OK)
-        break;
+      if ( cur->cbs.ui_element(cur->wnd, cur->data, timed_out) != UICB_OK)
+        retval = UICB_ERR_CB;
       doupdate();
     } else {
-      retval = UICB_ERR_CB;
+      retval = UICB_ERR_UNDEF;
       break;
     }
     cur = cur->next;
@@ -231,7 +231,7 @@ ui_thrd(void *arg)
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
     cnd_ret = ui_cond_timedwait(&cnd_update, &mtx_update, UILOOP_TIMEOUT);
     if (cnd_ret == 0) {
-      do_ui_update(false);
+      do_ui_update(true);
     } else if (cnd_ret == ETIMEDOUT) {
       do_ui_update(true);
     }
@@ -241,12 +241,15 @@ ui_thrd(void *arg)
 }
 
 void
-ui_thrd_force_update(bool force_all)
+ui_thrd_force_update(bool force_all, bool timedout)
 {
   pthread_mutex_lock(&mtx_update);
   if (force_all)
     touchwin(wnd_main);
-  pthread_cond_signal(&cnd_update);
+ if (timedout) 
+    pthread_cond_signal(&cnd_update);
+  else
+    do_ui_update(false);
   pthread_mutex_unlock(&mtx_update);
 }
 
@@ -355,14 +358,16 @@ do_ui(void)
   pthread_mutex_unlock(&mtx_update);
 
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
-    if ( (key = ui_wgetch(3000)) == ERR )
+    if ( (key = ui_wgetch(10000)) == ERR )
       continue;
 
     if ( process_key(key) != true ) {
       raise(SIGTERM);
     }
 
-    ui_thrd_force_update(false);
+    pthread_mutex_lock(&mtx_update);
+    do_ui_update(false);
+    pthread_mutex_unlock(&mtx_update);
   }
   stop_ui_thrd();
   free_ui_elements();

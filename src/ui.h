@@ -71,7 +71,7 @@ int
 deactivate_ui_input(void *data);
 
 void
-ui_thrd_force_update(bool force_all);
+ui_thrd_force_update(bool force_all, bool timedout);
 
 void
 ui_thrd_suspend(void);

@@ -69,7 +69,7 @@ show_info_wnd(struct txtwindow *wnd, char *_title, char *text, chtype fore, chty
   set_txtwindow_title(wnd, _title);
   set_txtwindow_text(wnd, text);
   ui_thrd_resume();
-  ui_thrd_force_update(false);
+  ui_thrd_force_update(false, false);
 }
 
 static int
@@ -87,7 +87,7 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       clear_input(wnd, a);
       deactivate_input(pw_input);
       ui_thrd_resume();
-      ui_thrd_force_update(false);
+      ui_thrd_force_update(false, false);
 
       ui_ipc_msgrecv(MQ_IF, ipc_buf);
       show_info_wnd(infownd, "BUSY", ipc_buf, COLOR_PAIR(5), COLOR_PAIR(5), true, false);
@@ -104,7 +104,7 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       set_txtwindow_active(infownd, false);
       activate_input(pw_input);
       ui_thrd_resume();
-      ui_thrd_force_update(true);
+      ui_thrd_force_update(true, false);
 
       ui_ipc_sempost(SEM_IN);
       break;
