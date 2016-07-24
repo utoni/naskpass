@@ -5,5 +5,5 @@ naskshell_SOURCES=shell/shell.c
 if DEBUG
 naskpass_CFLAGS=-O0 -g3 -DDEBUG
 else
-naskpass_CFLAGS=-Os
+naskpass_CFLAGS=-fPIC -fomit-frame-pointer -Os
 endif

@@ -142,6 +142,7 @@ main(int argc, char **argv)
       ui_ipc_semwait(SEM_BS);
       do_ui();
     }
+    ui_ipc_free(0);
     exit(0);
   } else if (child > 0) {
     /* parent */
@@ -200,7 +201,6 @@ main(int argc, char **argv)
 error:
   logs("%s\n", "exiting ..");
   if (ffd >= 0) close(ffd);
-  ui_ipc_free(0);
   log_free();
   exit(ret);
 }

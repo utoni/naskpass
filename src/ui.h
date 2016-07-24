@@ -15,7 +15,7 @@
 #define DOUI_NINIT	6
 #define DOUI_KEY        7
 
-#define UILOOP_TIMEOUT	1
+#define UILOOP_TIMEOUT	1000
 
 #define UIKEY_ACTIVATE	0
 #define UIKEY_ENTER	10

@@ -45,7 +45,7 @@ static WINDOW *wnd_main;
 static struct nask_ui /* simple linked list to all UI objects */ *nui = NULL,
                       /* current active input */ *active = NULL;
 static pthread_t thrd;
-static unsigned int atmout = APP_TIMEOUT;
+static int atmout = APP_TIMEOUT;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
 
@@ -177,12 +177,12 @@ do_ui_update(bool timed_out)
 
   /* call all draw callback's */
   erase();
-  if (timed_out == TRUE && atmout > 0) {
-    atmout--;
-  } else if (timed_out == TRUE && atmout == 0) {
-    ui_ipc_semtrywait(SEM_UI);
-  } else {
+  if (!timed_out) {
     atmout = APP_TIMEOUT;
+  } else if (atmout > 0) {
+    atmout--;
+  } else if (atmout == 0) {
+    ui_ipc_semtrywait(SEM_UI);
   }
   while (cur != NULL) {
     if (cur->cbs.ui_element != NULL) {
@@ -205,23 +205,35 @@ do_ui_update(bool timed_out)
   return (retval);
 }
 
+static int
+ui_cond_timedwait(pthread_cond_t* cnd, pthread_mutex_t* mtx, int timeInMs)
+{
+  struct timeval tv;
+  struct timespec ts;
+
+  gettimeofday(&tv, NULL);
+  ts.tv_sec   = time(NULL) + timeInMs/1000;
+  ts.tv_nsec  = tv.tv_usec * 1000 + 1000 * 1000 * (timeInMs % 1000);
+  ts.tv_sec  += ts.tv_nsec / (1000 * 1000 * 1000);
+  ts.tv_nsec %= (1000 * 1000 * 1000);
+
+  return pthread_cond_timedwait(cnd, mtx, &ts);
+}
+
 static void *
 ui_thrd(void *arg)
 {
   int cnd_ret;
-  struct timespec now;
 
-  do_ui_update(true);
   pthread_mutex_lock(&mtx_update);
-  clock_gettime(CLOCK_REALTIME, &now);
-  now.tv_sec += UILOOP_TIMEOUT;
+  do_ui_update(false);
+
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
-    cnd_ret = pthread_cond_timedwait(&cnd_update, &mtx_update, &now);
-    if ( do_ui_update( (cnd_ret == ETIMEDOUT ? true : false) ) != UICB_OK )
-      break;
-    if (cnd_ret == ETIMEDOUT) {
-      clock_gettime(CLOCK_REALTIME, &now);
-      now.tv_sec += UILOOP_TIMEOUT;
+    cnd_ret = ui_cond_timedwait(&cnd_update, &mtx_update, UILOOP_TIMEOUT);
+    if (cnd_ret == 0) {
+      do_ui_update(false);
+    } else if (cnd_ret == ETIMEDOUT) {
+      do_ui_update(true);
     }
   }
   pthread_mutex_unlock(&mtx_update);
@@ -339,8 +351,9 @@ do_ui(void)
     pthread_mutex_unlock(&mtx_update);
     return ret;
   }
-  pthread_mutex_unlock(&mtx_update);
   timeout(0);
+  pthread_mutex_unlock(&mtx_update);
+
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
     if ( (key = ui_wgetch(3000)) == ERR )
       continue;
