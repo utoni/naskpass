@@ -1,18 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <unistd.h>
 #include <errno.h>
 #include <pthread.h>
-#include <semaphore.h>
 #include <string.h>
 #include <ncurses.h>
-#include <signal.h>
 #include <sys/time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <mqueue.h>
 
 #include "ui.h"
 #include "ui_ipc.h"
@@ -362,7 +354,7 @@ do_ui(void)
       continue;
 
     if ( process_key(key) != true ) {
-      raise(SIGTERM);
+      ui_ipc_semtrywait(SEM_UI);
     }
 
     pthread_mutex_lock(&mtx_update);

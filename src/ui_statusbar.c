@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 
 #include "ui.h"
 #include "ui_statusbar.h"
@@ -41,7 +42,7 @@ statusbar_cb(WINDOW *win, void *data, bool timed_out)
   if (len < a->width) {
     diff_pos = (unsigned int) (a->width - len)/2;
   }
-  tmp = (char *) malloc(a->width + 1);
+  tmp = (char *) alloca(a->width + 1);
   memset(tmp, ' ', a->width);
   tmp[a->width] = '\0';
   strncpy((tmp + diff_pos), a->text, len);
@@ -53,7 +54,6 @@ statusbar_cb(WINDOW *win, void *data, bool timed_out)
   } else {
     mvprintw(a->y, 0, tmp);
   }
-  free(tmp);
   attroff(a->attrs);
   return (UICB_OK);
 }

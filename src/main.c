@@ -1,17 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <stdbool.h>
 #include <string.h>
-#include <unistd.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
-#include <semaphore.h>
-#include <time.h>
-#include <mqueue.h>
 
 #include "config.h"
 #include "opt.h"
@@ -97,16 +90,13 @@ main(int argc, char **argv)
   int ret = EXIT_FAILURE, ffd = -1, c_status;
   pid_t child;
   char pbuf[IPC_MQSIZ+1];
-  struct timespec ts_sem_input;
   bool csetup_ok = false;
 
   signal(SIGINT, SIG_IGN);
   signal(SIGTERM, sigfunc);
 
-  if ( clock_gettime(CLOCK_REALTIME, &ts_sem_input) == -1 ) {
-    fprintf(stderr, "%s: clock get time error: %d (%s)\n", argv[0], errno, strerror(errno));
-    goto error;
-  }
+  if ( parse_cmd(argc, argv) != 0 )
+    exit(EXIT_FAILURE);
 
   if (ui_ipc_init(1) != 0) {
     fprintf(stderr, "%s: can not create semaphore/message queue: %d (%s)\n", argv[0], errno, strerror(errno));
@@ -114,8 +104,6 @@ main(int argc, char **argv)
   }
 
   memset(pbuf, '\0', IPC_MQSIZ+1);
-  if ( parse_cmd(argc, argv) != 0 )
-    goto error;
   log_init( GETOPT(LOG_FILE).str );
   logs("%s\n", "log init");
   logs_dbg("%s\n", "debug mode active");

@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 
 #include "ui.h"
 #include "ui_input.h"
@@ -106,16 +107,16 @@ print_input(WINDOW *win, struct input *a)
   } else {
     mvprintw(a->y, a->x, a->prompt);
   }
-  tmp = calloc(a->width+1, sizeof(char));
+  tmp = alloca(a->width+1 * sizeof(char));
   for (i = 0; i < a->width; i++) {
     *(tmp + i) = '_';
   }
+  tmp[i] = '\0';
   if (win) {
     mvwprintw(win, a->y, a->x + p_len, tmp);
   } else {
     mvprintw(a->y, a->x + p_len, tmp);
   }
-  free(tmp);
   print_input_text(win, a);
   attroff(a->attrs);
 }
