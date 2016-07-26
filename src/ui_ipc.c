@@ -46,8 +46,6 @@ ui_ipc_init(int is_master)
     JMP_IF( msqs[MQ_IF] = mq_open(MSQ_INF, mq_oflags | O_RDONLY, crt_flags, &m_attr), (mqd_t)-1, error );
   }
   JMP_IF( sems[SEM_UI] = sem_open(SEM_GUI, sp_oflags, crt_flags, 0), SEM_FAILED, error );
-  JMP_IF( sems[SEM_IN] = sem_open(SEM_INP, sp_oflags, crt_flags, 0), SEM_FAILED, error );
-  JMP_IF( sems[SEM_BS] = sem_open(SEM_BSY, sp_oflags, crt_flags, 0), SEM_FAILED, error );
   return 0;
 error:
   return errno;
@@ -65,9 +63,7 @@ ui_ipc_free(int is_master)
     if (msqs[i]) mq_close(msqs[i]);
   }
   if (is_master > 0) {
-    sem_unlink(SEM_BSY);
     sem_unlink(SEM_GUI);
-    sem_unlink(SEM_INP);
     mq_unlink(MSQ_PWD);
     mq_unlink(MSQ_INF);
   }

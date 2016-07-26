@@ -62,14 +62,13 @@ void
 show_info_wnd(struct txtwindow *wnd, char *_title, char *text, chtype fore, chtype back, bool activate, bool blink)
 {
   ui_thrd_suspend();
-  deactivate_input(pw_input);
   set_txtwindow_active(wnd, activate);
   set_txtwindow_blink(wnd, blink);
   set_txtwindow_color(wnd, fore, back);
   set_txtwindow_title(wnd, _title);
   set_txtwindow_text(wnd, text);
   ui_thrd_resume();
-  ui_thrd_force_update(false, false);
+  ui_thrd_force_update(false,false);
 }
 
 static int
@@ -81,17 +80,14 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
   memset(ipc_buf, '\0', IPC_MQSIZ+1);
   switch (key) {
     case UIKEY_ENTER:
-      ui_ipc_msgsend(MQ_PW, a->input);
-
       ui_thrd_suspend();
+      ui_ipc_msgsend(MQ_PW, a->input);
       clear_input(wnd, a);
       deactivate_input(pw_input);
       ui_thrd_resume();
-      ui_thrd_force_update(false, false);
 
       ui_ipc_msgrecv(MQ_IF, ipc_buf);
       show_info_wnd(infownd, "BUSY", ipc_buf, COLOR_PAIR(5), COLOR_PAIR(5), true, false);
-
       sleep(2);
 
       if (ui_ipc_msgcount(MQ_IF) > 0) {
@@ -100,19 +96,18 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
         while (ui_wgetchtest(1500, '\n') != DOUI_KEY) { };
       }
 
-      ui_thrd_suspend();
       set_txtwindow_active(infownd, false);
       activate_input(pw_input);
-      ui_thrd_resume();
-      ui_thrd_force_update(true, false);
-
-      ui_ipc_sempost(SEM_IN);
       break;
     case UIKEY_BACKSPACE:
       del_input(wnd, a);
       break;
     case UIKEY_ESC:
-      show_info_wnd(infownd, "BUSY", "bye bye", COLOR_PAIR(5), COLOR_PAIR(5), true, true);
+      ui_thrd_suspend();
+      clear_input(wnd, a);
+      deactivate_input(pw_input);
+      ui_thrd_resume();
+      show_info_wnd(infownd, "QUIT", "bye bye", COLOR_PAIR(5), COLOR_PAIR(5), true, true);
       sleep(2);
       return DOUI_ERR;
     case UIKEY_DOWN:
@@ -123,7 +118,9 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
     case UIKEY_ACTIVATE:
       break;
     default:
+      ui_thrd_suspend();
       add_input(wnd, a, key);
+      ui_thrd_resume();
   }
   return DOUI_OK;
 }

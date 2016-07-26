@@ -77,9 +77,7 @@ void sigfunc(int signal)
 {
   switch (signal) {
     case SIGTERM:
-    case SIGINT:
       ui_ipc_semtrywait(SEM_UI);
-      ui_ipc_semtrywait(SEM_IN);
       break;
   }
 }
@@ -97,6 +95,16 @@ main(int argc, char **argv)
 
   if ( parse_cmd(argc, argv) != 0 )
     exit(EXIT_FAILURE);
+  if (OPT(CRYPT_CMD).found == 0) {
+    fprintf(stderr, "%s: crypt cmd is mandatory\n", argv[0]);
+    goto error;
+  }
+  if (check_fifo(GETOPT(FIFO_PATH).str) == false)
+    goto error;
+  if ((ffd = open(GETOPT(FIFO_PATH).str, O_NONBLOCK | O_RDWR)) < 0) {
+    fprintf(stderr, "%s: fifo '%s' error: %d (%s)\n", argv[0], GETOPT(FIFO_PATH).str, errno, strerror(errno));
+    goto error;
+  }
 
   if (ui_ipc_init(1) != 0) {
     fprintf(stderr, "%s: can not create semaphore/message queue: %d (%s)\n", argv[0], errno, strerror(errno));
@@ -107,17 +115,6 @@ main(int argc, char **argv)
   log_init( GETOPT(LOG_FILE).str );
   logs("%s\n", "log init");
   logs_dbg("%s\n", "debug mode active");
-  if (OPT(CRYPT_CMD).found == 0) {
-    fprintf(stderr, "%s: crypt cmd is mandatory\n", argv[0]);
-    goto error;
-  }
-  if (check_fifo(GETOPT(FIFO_PATH).str) == false) {
-    goto error;
-  }
-  if ((ffd = open(GETOPT(FIFO_PATH).str, O_NONBLOCK | O_RDWR)) < 0) {
-    fprintf(stderr, "%s: fifo '%s' error: %d (%s)\n", argv[0], GETOPT(FIFO_PATH).str, errno, strerror(errno));
-    goto error;
-  }
 
   ui_ipc_sempost(SEM_UI);
   if ((child = fork()) == 0) {
@@ -127,7 +124,6 @@ main(int argc, char **argv)
     fclose(stderr);
     /* Slave process: TUI */
     if (ui_ipc_init(0) == 0) {
-      ui_ipc_semwait(SEM_BS);
       do_ui();
     }
     ui_ipc_free(0);
@@ -138,10 +134,7 @@ main(int argc, char **argv)
     fclose(stdin);
     fclose(stdout);
     /* Master process: mainloop (read passwd from message queue or fifo and exec cryptcreate */
-    ui_ipc_sempost(SEM_BS);
     while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
-      logs_dbg("loop start (SEM_BS=%d, SEM_IN=%d, SEM_UI=%d).\n", ui_ipc_getvalue(SEM_BS), ui_ipc_getvalue(SEM_IN), ui_ipc_getvalue(SEM_UI));
-      ui_ipc_sempost(SEM_BS);
       if (read(ffd, pbuf, IPC_MQSIZ) >= 0) {
         ui_ipc_msgsend(MQ_IF, MSG(MSG_BUSY_FD));
         if (run_cryptcreate(pbuf, GETOPT(CRYPT_CMD).str) != 0) {
@@ -159,18 +152,13 @@ main(int argc, char **argv)
           logs_dbg("%s\n", "cryptcreate success, trywait SEM_UI");
           ui_ipc_semtrywait(SEM_UI);
         }
-        logs_dbg("%s\n", "wait SEM_IN");
-        ui_ipc_semwait(SEM_IN);
       }
-      logs_dbg("%s (SEM_BS=%d)\n", "wait SEM_BS", ui_ipc_getvalue(SEM_BS));
-      ui_ipc_semwait(SEM_BS);
       usleep(100000);
       waitpid(child, &c_status, WNOHANG);
       if ( WIFEXITED(&c_status) != 0 ) {
         logs("%s\n", "child exited");
-        break;
+        ui_ipc_semtrywait(SEM_UI);
       }
-      logs_dbg("loop end (SEM_BS=%d, SEM_IN=%d, SEM_UI=%d).\n", ui_ipc_getvalue(SEM_BS), ui_ipc_getvalue(SEM_IN), ui_ipc_getvalue(SEM_UI));
     }
     logs("%s\n", "waiting for child");
     wait(&c_status);

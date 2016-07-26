@@ -6,8 +6,6 @@
 #define SHTDWN_CMD "echo 'o' >/proc/sysrq-trigger"
 
 #define SEM_GUI "/naskpass-gui"
-#define SEM_INP "/naskpass-input"
-#define SEM_BSY "/naskpass-busy"
 #define MSQ_PWD "/naskpass-passwd"
 #define MSQ_INF "/naskpass-info"
 
