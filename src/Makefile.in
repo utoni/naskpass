@@ -96,9 +96,9 @@ PROGRAMS = $(bin_PROGRAMS)
 am_naskpass_OBJECTS = naskpass-main.$(OBJEXT) naskpass-log.$(OBJEXT) \
 	naskpass-opt.$(OBJEXT) naskpass-status.$(OBJEXT) \
 	naskpass-ui_ani.$(OBJEXT) naskpass-ui.$(OBJEXT) \
-	naskpass-ui_elements.$(OBJEXT) naskpass-ui_input.$(OBJEXT) \
-	naskpass-ui_ipc.$(OBJEXT) naskpass-ui_txtwindow.$(OBJEXT) \
-	naskpass-ui_statusbar.$(OBJEXT)
+	naskpass-ui_input.$(OBJEXT) naskpass-ui_ipc.$(OBJEXT) \
+	naskpass-ui_txtwindow.$(OBJEXT) \
+	naskpass-ui_statusbar.$(OBJEXT) naskpass-ui_nask.$(OBJEXT)
 naskpass_OBJECTS = $(am_naskpass_OBJECTS)
 naskpass_LDADD = $(LDADD)
 naskpass_LINK = $(CCLD) $(naskpass_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -273,7 +273,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-naskpass_SOURCES = main.c log.c opt.c status.c ui_ani.c ui.c ui_elements.c ui_input.c ui_ipc.c ui_txtwindow.c ui_statusbar.c
+naskpass_SOURCES = main.c log.c opt.c status.c ui_ani.c ui.c ui_input.c ui_ipc.c ui_txtwindow.c ui_statusbar.c ui_nask.c
 naskpass_check_SOURCES = check/check.c
 naskshell_SOURCES = shell/shell.c
 @DEBUG_FALSE@naskpass_CFLAGS = -fPIC -fomit-frame-pointer -Os
@@ -413,9 +413,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-status.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-ui.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-ui_ani.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-ui_elements.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-ui_input.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-ui_ipc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-ui_nask.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-ui_statusbar.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-ui_txtwindow.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@check/$(DEPDIR)/check.Po@am__quote@
@@ -521,20 +521,6 @@ naskpass-ui.obj: ui.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -c -o naskpass-ui.obj `if test -f 'ui.c'; then $(CYGPATH_W) 'ui.c'; else $(CYGPATH_W) '$(srcdir)/ui.c'; fi`
 
-naskpass-ui_elements.o: ui_elements.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -MT naskpass-ui_elements.o -MD -MP -MF $(DEPDIR)/naskpass-ui_elements.Tpo -c -o naskpass-ui_elements.o `test -f 'ui_elements.c' || echo '$(srcdir)/'`ui_elements.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/naskpass-ui_elements.Tpo $(DEPDIR)/naskpass-ui_elements.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ui_elements.c' object='naskpass-ui_elements.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -c -o naskpass-ui_elements.o `test -f 'ui_elements.c' || echo '$(srcdir)/'`ui_elements.c
-
-naskpass-ui_elements.obj: ui_elements.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -MT naskpass-ui_elements.obj -MD -MP -MF $(DEPDIR)/naskpass-ui_elements.Tpo -c -o naskpass-ui_elements.obj `if test -f 'ui_elements.c'; then $(CYGPATH_W) 'ui_elements.c'; else $(CYGPATH_W) '$(srcdir)/ui_elements.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/naskpass-ui_elements.Tpo $(DEPDIR)/naskpass-ui_elements.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ui_elements.c' object='naskpass-ui_elements.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -c -o naskpass-ui_elements.obj `if test -f 'ui_elements.c'; then $(CYGPATH_W) 'ui_elements.c'; else $(CYGPATH_W) '$(srcdir)/ui_elements.c'; fi`
-
 naskpass-ui_input.o: ui_input.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -MT naskpass-ui_input.o -MD -MP -MF $(DEPDIR)/naskpass-ui_input.Tpo -c -o naskpass-ui_input.o `test -f 'ui_input.c' || echo '$(srcdir)/'`ui_input.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/naskpass-ui_input.Tpo $(DEPDIR)/naskpass-ui_input.Po
@@ -590,6 +576,20 @@ naskpass-ui_statusbar.obj: ui_statusbar.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ui_statusbar.c' object='naskpass-ui_statusbar.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -c -o naskpass-ui_statusbar.obj `if test -f 'ui_statusbar.c'; then $(CYGPATH_W) 'ui_statusbar.c'; else $(CYGPATH_W) '$(srcdir)/ui_statusbar.c'; fi`
+
+naskpass-ui_nask.o: ui_nask.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -MT naskpass-ui_nask.o -MD -MP -MF $(DEPDIR)/naskpass-ui_nask.Tpo -c -o naskpass-ui_nask.o `test -f 'ui_nask.c' || echo '$(srcdir)/'`ui_nask.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/naskpass-ui_nask.Tpo $(DEPDIR)/naskpass-ui_nask.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ui_nask.c' object='naskpass-ui_nask.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -c -o naskpass-ui_nask.o `test -f 'ui_nask.c' || echo '$(srcdir)/'`ui_nask.c
+
+naskpass-ui_nask.obj: ui_nask.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -MT naskpass-ui_nask.obj -MD -MP -MF $(DEPDIR)/naskpass-ui_nask.Tpo -c -o naskpass-ui_nask.obj `if test -f 'ui_nask.c'; then $(CYGPATH_W) 'ui_nask.c'; else $(CYGPATH_W) '$(srcdir)/ui_nask.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/naskpass-ui_nask.Tpo $(DEPDIR)/naskpass-ui_nask.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='ui_nask.c' object='naskpass-ui_nask.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -c -o naskpass-ui_nask.obj `if test -f 'ui_nask.c'; then $(CYGPATH_W) 'ui_nask.c'; else $(CYGPATH_W) '$(srcdir)/ui_nask.c'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

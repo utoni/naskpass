@@ -8,11 +8,11 @@
 
 #include "ui.h"
 #include "ui_ipc.h"
-#include "ui_elements.h"
 #include "ui_ani.h"
 #include "ui_input.h"
 #include "ui_statusbar.h"
 #include "ui_txtwindow.h"
+#include "ui_nask.h"
 
 #include "status.h"
 #include "config.h"

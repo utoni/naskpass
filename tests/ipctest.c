@@ -19,26 +19,26 @@ int main(int argc, char **argv) {
 
   ret = ui_ipc_init(1);
 
-  ret |= ui_ipc_sempost(SEM_BS);
-  ret |= ui_ipc_sempost(SEM_BS);
+  ret |= ui_ipc_sempost(SEM_UI);
+  ret |= ui_ipc_sempost(SEM_UI);
   if ( (child = fork()) == 0 ) {
-    printf("child: wait (%d)\n", ui_ipc_getvalue(SEM_BS));
-    ret |= ui_ipc_semtrywait(SEM_BS);
-    ret |= ui_ipc_semtrywait(SEM_BS);
-    ret |= ui_ipc_semwait(SEM_BS);
-    printf("child: done (%d)\n", ui_ipc_getvalue(SEM_BS));
-    ret |= ui_ipc_sempost(SEM_BS);
+    printf("child: wait (%d)\n", ui_ipc_getvalue(SEM_UI));
+    ret |= ui_ipc_semtrywait(SEM_UI);
+    ret |= ui_ipc_semtrywait(SEM_UI);
+    ret |= ui_ipc_semwait(SEM_UI);
+    printf("child: done (%d)\n", ui_ipc_getvalue(SEM_UI));
+    ret |= ui_ipc_sempost(SEM_UI);
     exit( (ret == 0 ? 0 : ret) );
   } else if (child > 0) {
     usleep(100000);
-    printf("parent: post (%d)\n", ui_ipc_getvalue(SEM_BS));
-    ui_ipc_sempost(SEM_BS);
+    printf("parent: post (%d)\n", ui_ipc_getvalue(SEM_UI));
+    ui_ipc_sempost(SEM_UI);
   } else {
     ret |= 1;
   }
 
   wait(&c_status);
-  ret |= ui_ipc_semtrywait(SEM_BS);
+  ret |= ui_ipc_semtrywait(SEM_UI);
   ui_ipc_free(1);
   exit( c_status | ret );
 }
