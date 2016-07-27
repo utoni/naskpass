@@ -70,6 +70,12 @@ activate_ui_input(void *data);
 int
 deactivate_ui_input(void *data);
 
+bool
+process_key(char key);
+
+int
+do_ui_update(bool timed_out);
+
 void
 ui_thrd_force_update(bool force_all, bool timedout);
 
@@ -79,17 +85,20 @@ ui_thrd_suspend(void);
 void
 ui_thrd_resume(void);
 
-WINDOW *
-init_ui(void);
+int
+run_ui_thrd(void);
 
-void
-free_ui(void);
+int
+stop_ui_thrd(void);
 
 char ui_wgetch(int timeout);
 
 int ui_wgetchtest(int timeout, char testchar);
 
-int
-do_ui(void);
+WINDOW *
+init_ui(void);
+
+void
+free_ui(void);
 
 #endif

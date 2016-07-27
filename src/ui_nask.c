@@ -21,6 +21,7 @@
 #define INFOWND_HEIGHT 1
 #define BSTR_LEN 3
 
+
 static struct input *pw_input;
 static struct anic *heartbeat;
 static struct statusbar *higher, *lower;
@@ -58,7 +59,7 @@ infownd_update(WINDOW *win, struct txtwindow *tw, bool ui_timeout)
   return DOUI_OK;
 }
 
-void
+static void
 show_info_wnd(struct txtwindow *wnd, char *_title, char *text, chtype fore, chtype back, bool activate, bool blink)
 {
   ui_thrd_suspend();
@@ -125,8 +126,8 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
   return DOUI_OK;
 }
 
-void
-init_ui_elements(WINDOW *wnd_main, unsigned int max_x, unsigned int max_y)
+static void
+init_ui_elements(unsigned int max_x, unsigned int max_y)
 {
   asprintf(&title, "/* %s-%s */", PKGNAME, VERSION);
   pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS,
@@ -150,7 +151,7 @@ init_ui_elements(WINDOW *wnd_main, unsigned int max_x, unsigned int max_y)
   set_statusbar_text(higher, title);
 }
 
-void
+static void
 free_ui_elements(void)
 {
   unregister_ui_elt(lower);
@@ -167,4 +168,50 @@ free_ui_elements(void)
     free(title);
     title = NULL;
   }
+}
+
+int
+do_ui(void)
+{
+  char key = '\0';
+  int ret = DOUI_ERR;
+
+  /* init TUI and UI Elements (input field, status bar, etc) */
+  if (init_ui())
+    init_ui_elements(ui_get_maxx(), ui_get_maxy());
+  else
+    return DOUI_ERR;
+
+  /* some color definitions */
+  init_pair(1, COLOR_RED, COLOR_WHITE);
+  init_pair(2, COLOR_WHITE, COLOR_BLACK);
+  init_pair(3, COLOR_BLACK, COLOR_WHITE);
+  /* TXTwindow */
+  init_pair(4, COLOR_YELLOW, COLOR_RED);
+  init_pair(5, COLOR_WHITE, COLOR_CYAN);
+
+  ui_thrd_suspend();
+  if (run_ui_thrd() != 0) {
+    ui_thrd_resume();
+    return ret;
+  }
+  timeout(0);
+  ui_thrd_resume();
+
+  while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
+    if ( (key = ui_wgetch(10000)) == ERR )
+      continue;
+
+    if ( process_key(key) != true ) {
+      ui_ipc_semtrywait(SEM_UI);
+    }
+
+    ui_thrd_suspend();
+    do_ui_update(false);
+    ui_thrd_resume();
+  }
+  stop_ui_thrd();
+  free_ui_elements();
+
+  return DOUI_OK;
 }

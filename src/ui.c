@@ -33,7 +33,7 @@
 
 static unsigned int max_x, max_y;
 static unsigned int cur_x, cur_y;
-static WINDOW *wnd_main;
+static WINDOW *wnd_main = NULL;
 static struct nask_ui /* simple linked list to all UI objects */ *nui = NULL,
                       /* current active input */ *active = NULL;
 static pthread_t thrd;
@@ -150,7 +150,7 @@ deactivate_ui_input(void *data)
   return ret;
 }
 
-static bool
+bool
 process_key(char key)
 {
   bool ret = false;
@@ -161,7 +161,7 @@ process_key(char key)
   return ret;
 }
 
-static int
+int
 do_ui_update(bool timed_out)
 {
   int retval = UICB_OK;
@@ -192,8 +192,8 @@ do_ui_update(bool timed_out)
   mvprintw(0, max_x - STRLEN(APP_TIMEOUT_FMT), "[" APP_TIMEOUT_FMT "]", atmout);
   attroff(COLOR_PAIR(1));
   /* EoT (End of Todo) */
-  wmove(wnd_main, cur_y, cur_x);
-  wrefresh(wnd_main);
+  move(cur_y, cur_x);
+  refresh();
   return (retval);
 }
 
@@ -257,45 +257,12 @@ ui_thrd_resume(void)
   pthread_mutex_unlock(&mtx_update);
 }
 
-WINDOW *
-init_ui(void)
-{
-  wnd_main = initscr();
-  max_x = getmaxx(wnd_main);
-  max_y = getmaxy(wnd_main);
-  cur_x = getcurx(wnd_main);
-  cur_y = getcury(wnd_main);
-  start_color();
-  init_pair(1, COLOR_RED, COLOR_WHITE);
-  init_pair(2, COLOR_WHITE, COLOR_BLACK);
-  init_pair(3, COLOR_BLACK, COLOR_WHITE);
-  /* TXTwindow */
-  init_pair(4, COLOR_YELLOW, COLOR_RED);
-  init_pair(5, COLOR_WHITE, COLOR_CYAN);
-  /* EoF TXTwindow */
-  raw();
-  keypad(stdscr, TRUE);
-  noecho();
-  nodelay(stdscr, TRUE);
-  cbreak();
-  return (wnd_main);
-}
-
-void
-free_ui(void)
-{
-  delwin(wnd_main);
-  endwin();
-  clear();
-  printf(" \033[2J\n");
-}
-
-static int
+int
 run_ui_thrd(void) {
   return (pthread_create(&thrd, NULL, &ui_thrd, NULL));
 }
 
-static int
+int
 stop_ui_thrd(void)
 {
   return (pthread_join(thrd, NULL));
@@ -308,7 +275,7 @@ int ui_wgetchtest(int timeout, char testchar)
   pthread_mutex_lock(&mtx_update);
   if ( ui_ipc_getvalue(SEM_UI) <= 0 ) {
     retval = DOUI_KEY;
-  } else if ( wgetch(wnd_main) == testchar ) {
+  } else if ( wgetch(stdscr) == testchar ) {
     retval = DOUI_KEY;
   }
   pthread_mutex_unlock(&mtx_update);
@@ -324,46 +291,36 @@ char ui_wgetch(int timeout)
   if ( ui_ipc_getvalue(SEM_UI) <= 0 ) {
     key = ERR;
   } else {
-    key = wgetch(wnd_main);
+    key = wgetch(stdscr);
   }
   pthread_mutex_unlock(&mtx_update);
   usleep(timeout/2);
   return key;
 }
 
-int
-do_ui(void)
+WINDOW *
+init_ui(void)
 {
-  char key = '\0';
-  int ret = DOUI_ERR;
-
-  /* init TUI and UI Elements (input field, status bar, etc) */
-  init_ui();
-  init_ui_elements(wnd_main, max_x, max_y);
-
-  pthread_mutex_lock(&mtx_update);
-  if (run_ui_thrd() != 0) {
-    pthread_mutex_unlock(&mtx_update);
-    return ret;
-  }
-  timeout(0);
-  pthread_mutex_unlock(&mtx_update);
-
-  while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
-    if ( (key = ui_wgetch(10000)) == ERR )
-      continue;
-
-    if ( process_key(key) != true ) {
-      ui_ipc_semtrywait(SEM_UI);
-    }
-
-    pthread_mutex_lock(&mtx_update);
-    do_ui_update(false);
-    pthread_mutex_unlock(&mtx_update);
-  }
-  stop_ui_thrd();
-  free_ui_elements();
-
-  return DOUI_OK;
+  wnd_main = initscr();
+  max_x = getmaxx(wnd_main);
+  max_y = getmaxy(wnd_main);
+  cur_x = getcurx(wnd_main);
+  cur_y = getcury(wnd_main);
+  start_color();
+  raw();
+  keypad(stdscr, TRUE);
+  noecho();
+  nodelay(stdscr, TRUE);
+  cbreak();
+  set_escdelay(25);
+  return wnd_main;
 }
 
+void
+free_ui(void)
+{
+  delwin(wnd_main);
+  endwin();
+  clear();
+  printf(" \033[2J\n");
+}
