@@ -23,6 +23,8 @@ int main(int argc, char **argv) {
       usleep(250);
       LOG("child: sempost");
       sem_post(mysem);
+      int tmp = 0;
+      assert ( sem_getvalue(mysem, &tmp) == 0 && tmp == 1 );
       LOG("child: done");
       usleep(250);
       exit(0);
@@ -40,8 +42,8 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  int sval;
-  assert ( sem_getvalue(mysem, &sval) == 0 );
+  int sval = 1;
+  assert ( sem_getvalue(mysem, &sval) == 0 && sval == 0 );
   assert (sval == 0);
 
   sem_unlink(TESTSEM);

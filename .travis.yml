@@ -4,4 +4,4 @@ before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y debhelper libncurses5-dev libncursesw5-dev
   
-script: ./configure && make && dpkg-buildpackage -b -us -uc
+script: ./configure && make && make -C tests && make -C tests run && dpkg-buildpackage -b -us -uc
