@@ -6568,6 +6568,28 @@ _ACEOF
 
 fi
 
+ac_fn_c_check_type "$LINENO" "time_t" "ac_cv_type_time_t" "$ac_includes_default"
+if test "x$ac_cv_type_time_t" = xyes; then :
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define time_t unsigned int
+_ACEOF
+
+fi
+
+ac_fn_c_check_type "$LINENO" "pid_t" "ac_cv_type_pid_t" "$ac_includes_default"
+if test "x$ac_cv_type_pid_t" = xyes; then :
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define pid_t int
+_ACEOF
+
+fi
+
 
 # Checks for library functions.
 for ac_header in vfork.h
@@ -7560,6 +7582,80 @@ else
 fi
 done
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct timespec" >&5
+$as_echo_n "checking for struct timespec... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <time.h>
+int
+main ()
+{
+struct timespec tm;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+                      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_TIMESPEC 1
+_ACEOF
+
+
+else
+
+                      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_TIMESPEC 0
+_ACEOF
+
+
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct stat" >&5
+$as_echo_n "checking for struct stat... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/stat.h>
+int
+main ()
+{
+struct stat st;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+                      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_TIMESPEC 1
+_ACEOF
+
+
+else
+
+                      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_TIMESPEC 0
+_ACEOF
+
+
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing initscr" >&5
 $as_echo_n "checking for library containing initscr... " >&6; }

@@ -9,6 +9,7 @@
 
 enum UI_IPC_SEM {
   SEM_UI = 0,  /* TUI active? */
+  SEM_IN,      /* FD input available? */
   SEM_NUM
 };
 
@@ -37,16 +38,14 @@ ui_ipc_semtrywait(enum UI_IPC_SEM e_sp);
 int
 ui_ipc_getvalue(enum UI_IPC_SEM e_sp);
 
-#ifdef SEM_TIMEDWAIT
 int
-ui_ipc_semtimedwait(enum UI_IPC_MSQ e_sp, int timeout);
-#endif
+ui_ipc_semtimedwait(enum UI_IPC_SEM e_sp, time_t tmout);
 
 int
 ui_ipc_msgsend(enum UI_IPC_MSQ e_mq, const char *msg_ptr);
 
 ssize_t
-ui_ipc_msgrecv(enum UI_IPC_MSQ e_mq, char *msg_ptr);
+ui_ipc_msgrecv(enum UI_IPC_MSQ e_mq, char *msg_ptr, time_t tmout);
 
 long
 ui_ipc_msgcount(enum UI_IPC_MSQ e_mq);

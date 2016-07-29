@@ -46,6 +46,8 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT8_T
 AC_CHECK_TYPE(size_t, unsigned int)
 AC_CHECK_TYPE(ssize_t, unsigned int)
+AC_CHECK_TYPE(time_t, unsigned int)
+AC_CHECK_TYPE(pid_t, int)
 
 # Checks for library functions.
 AC_FUNC_FORK
@@ -57,6 +59,34 @@ AC_FUNC_STAT
 AC_FUNC_MKTIME
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([asprintf system printf fprintf mkfifo stat open close fork memmove memcpy memset strdup strndup strerror strstr strlen strnlen strtol openlog vsyslog closelog],,[AC_MSG_ERROR([*** Missing essential functions.])])
+
+AC_MSG_CHECKING([for struct timespec])
+AC_COMPILE_IFELSE( [AC_LANG_PROGRAM([[#include <time.h>]],
+                                    [[struct timespec tm;]],
+                                    [[clock_gettime(CLOCK_REALTIME, &tm);]],
+                                    [[tm.tv_sec += 10;]])],
+                   [
+                      AC_MSG_RESULT([yes])
+                      AC_DEFINE_UNQUOTED([HAVE_TIMESPEC], 1, [Define to 1 if you have struct timespec.])
+                    ],
+                    [
+                      AC_MSG_RESULT([no])
+                      AC_DEFINE_UNQUOTED([HAVE_TIMESPEC], 0, [Define to 1 if you have struct timespec.])
+                    ]
+                 )
+
+AC_MSG_CHECKING([for struct stat])
+AC_COMPILE_IFELSE( [AC_LANG_PROGRAM([[#include <sys/stat.h>]],
+                                    [[struct stat st;]])],
+                   [
+                      AC_MSG_RESULT([yes])
+                      AC_DEFINE_UNQUOTED([HAVE_TIMESPEC], 1, [Define to 1 if you have struct stat.])
+                    ],
+                    [
+                      AC_MSG_RESULT([no])
+                      AC_DEFINE_UNQUOTED([HAVE_TIMESPEC], 0, [Define to 1 if you have struct stat.])
+                    ]
+                 )
 
 AC_SEARCH_LIBS([initscr], [ncurses],,[AC_MSG_ERROR([*** Missing ncurses library. -lncurses])])
 AC_SEARCH_LIBS([wattr_on], [ncurses],,[AC_MSG_ERROR([*** Missing ncurses library. -lncurses])])

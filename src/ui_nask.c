@@ -87,14 +87,14 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       deactivate_input(pw_input);
       ui_thrd_resume();
 
-      ui_ipc_msgrecv(MQ_IF, ipc_buf);
+      ui_ipc_msgrecv(MQ_IF, ipc_buf, 3);
       show_info_wnd(infownd, "BUSY", ipc_buf, COLOR_PAIR(5), COLOR_PAIR(5), true, false);
       sleep(2);
 
       if (ui_ipc_msgcount(MQ_IF) > 0) {
-        ui_ipc_msgrecv(MQ_IF, ipc_buf);
-        show_info_wnd(infownd, "ERROR", ipc_buf, COLOR_PAIR(4), COLOR_PAIR(4), true, true);
-        while (ui_wgetchtest(1500, '\n') != DOUI_KEY) { };
+          ui_ipc_msgrecv(MQ_IF, ipc_buf, 3);
+          show_info_wnd(infownd, "ERROR", ipc_buf, COLOR_PAIR(4), COLOR_PAIR(4), true, true);
+          while (ui_wgetchtest(1500, '\n') != DOUI_KEY) { };
       }
 
       set_txtwindow_active(infownd, false);
@@ -130,15 +130,15 @@ static void
 init_ui_elements(unsigned int max_x, unsigned int max_y)
 {
   asprintf(&title, "/* %s-%s */", PKGNAME, VERSION);
-  pw_input = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS,
-                        (unsigned int)(max_y / 2)-PASSWD_YRELPOS,
-                        PASSWD_WIDTH, "PASSWORD: ",
-                        IPC_MQSIZ, COLOR_PAIR(3), COLOR_PAIR(2));
+  pw_input  = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS,
+                         (unsigned int)(max_y / 2)-PASSWD_YRELPOS,
+                         PASSWD_WIDTH, "PASSWORD: ",
+                         IPC_MQSIZ, COLOR_PAIR(3), COLOR_PAIR(2));
   heartbeat = init_anic_default(0, 0, A_BOLD | COLOR_PAIR(1), "[%c]");
-  higher = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3),
-                          higher_statusbar_update);
-  lower = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3),
-                         lower_statusbar_update);
+  higher    = init_statusbar(0, max_x, A_BOLD | COLOR_PAIR(3),
+                             higher_statusbar_update);
+  lower     = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3),
+                             lower_statusbar_update);
   infownd = init_txtwindow_centered(INFOWND_WIDTH, INFOWND_HEIGHT,
                                     infownd_update);
 
@@ -170,6 +170,20 @@ free_ui_elements(void)
   }
 }
 
+static int
+on_update_cb(bool timeout)
+{
+  if ( ui_ipc_getvalue(SEM_IN) <= 0 ) {
+    attron(COLOR_PAIR(4));
+    const char msg[] = "Got a piped password ..";
+    mvprintw((unsigned int)(ui_get_maxy() / 2)-PASSWD_YRELPOS-4,
+             (unsigned int)(ui_get_maxx() / 2)-PASSWD_XRELPOS+(strlen(msg)/2),
+             msg);
+    attroff(COLOR_PAIR(4));
+  }
+  return UICB_OK;
+}
+
 int
 do_ui(void)
 {
@@ -177,7 +191,7 @@ do_ui(void)
   int ret = DOUI_ERR;
 
   /* init TUI and UI Elements (input field, status bar, etc) */
-  if (init_ui())
+  if (init_ui(on_update_cb))
     init_ui_elements(ui_get_maxx(), ui_get_maxy());
   else
     return DOUI_ERR;
@@ -206,9 +220,7 @@ do_ui(void)
       ui_ipc_semtrywait(SEM_UI);
     }
 
-    ui_thrd_suspend();
-    do_ui_update(false);
-    ui_thrd_resume();
+    ui_thrd_force_update(true,false);
   }
   stop_ui_thrd();
   free_ui_elements();

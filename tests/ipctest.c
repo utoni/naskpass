@@ -21,10 +21,13 @@ int main(int argc, char **argv) {
 
   ret |= ui_ipc_sempost(SEM_UI);
   ret |= ui_ipc_sempost(SEM_UI);
+  assert(ui_ipc_getvalue(SEM_UI) == 2);
   if ( (child = fork()) == 0 ) {
     printf("child: wait (%d)\n", ui_ipc_getvalue(SEM_UI));
     ret |= ui_ipc_semtrywait(SEM_UI);
+    assert(ui_ipc_getvalue(SEM_UI) == 1);
     ret |= ui_ipc_semtrywait(SEM_UI);
+    assert(ui_ipc_getvalue(SEM_UI) == 0);
     ret |= ui_ipc_semwait(SEM_UI);
     printf("child: done (%d)\n", ui_ipc_getvalue(SEM_UI));
     ret |= ui_ipc_sempost(SEM_UI);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
@@ -117,6 +118,7 @@ main(int argc, char **argv)
   logs_dbg("%s\n", "debug mode active");
 
   ui_ipc_sempost(SEM_UI);
+  ui_ipc_sempost(SEM_IN);
   if ((child = fork()) == 0) {
     /* child */
     logs("%s\n", "child");
@@ -136,12 +138,20 @@ main(int argc, char **argv)
     /* Master process: mainloop (read passwd from message queue or fifo and exec cryptcreate */
     while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
       if (read(ffd, pbuf, IPC_MQSIZ) >= 0) {
-        ui_ipc_msgsend(MQ_IF, MSG(MSG_BUSY_FD));
+        ui_ipc_semwait(SEM_IN);
+        logs_dbg("%s\n", "fifo password");
         if (run_cryptcreate(pbuf, GETOPT(CRYPT_CMD).str) != 0) {
-          ui_ipc_msgsend(MQ_IF, MSG(MSG_CRYPTCMD_ERR));
+          logs_dbg("%s\n", "cryptcreate error");
+          sleep(3);
+        } else {
+          csetup_ok = true;
+          logs_dbg("%s\n", "cryptcreate success");
+          ui_ipc_semtrywait(SEM_UI);
         }
+        ui_ipc_sempost(SEM_IN);
       } else if ( ui_ipc_msgcount(MQ_PW) > 0 ) {
-        ui_ipc_msgrecv(MQ_PW, pbuf);
+        //ui_ipc_semwait(SEM_IN);
+        ui_ipc_msgrecv(MQ_PW, pbuf, 0);
         logs_dbg("%s\n", "password");
         ui_ipc_msgsend(MQ_IF, MSG(MSG_BUSY));
         if (run_cryptcreate(pbuf, GETOPT(CRYPT_CMD).str) != 0) {
@@ -149,9 +159,10 @@ main(int argc, char **argv)
           ui_ipc_msgsend(MQ_IF, MSG(MSG_CRYPTCMD_ERR));
         } else {
           csetup_ok = true;
-          logs_dbg("%s\n", "cryptcreate success, trywait SEM_UI");
+          logs_dbg("%s\n", "cryptcreate success");
           ui_ipc_semtrywait(SEM_UI);
         }
+        //ui_ipc_sempost(SEM_IN);
       }
       usleep(100000);
       waitpid(child, &c_status, WNOHANG);

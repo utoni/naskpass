@@ -29,6 +29,7 @@
 
 typedef int (*uicb_base)(WINDOW *, void *, bool);
 typedef int (*uicb_input)(WINDOW *, void *, int);
+typedef int (*uicb_update)(bool);
 
 
 struct ui_callbacks {
@@ -73,9 +74,6 @@ deactivate_ui_input(void *data);
 bool
 process_key(char key);
 
-int
-do_ui_update(bool timed_out);
-
 void
 ui_thrd_force_update(bool force_all, bool timedout);
 
@@ -96,7 +94,7 @@ char ui_wgetch(int timeout);
 int ui_wgetchtest(int timeout, char testchar);
 
 WINDOW *
-init_ui(void);
+init_ui(uicb_update on_update_callback);
 
 void
 free_ui(void);

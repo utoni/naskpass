@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef SEM_TIMEDWAIT
 #include <time.h>
-#endif
 #include <semaphore.h>
 #include <mqueue.h>
 #include <sys/stat.h>
@@ -46,6 +44,7 @@ ui_ipc_init(int is_master)
     JMP_IF( msqs[MQ_IF] = mq_open(MSQ_INF, mq_oflags | O_RDONLY, crt_flags, &m_attr), (mqd_t)-1, error );
   }
   JMP_IF( sems[SEM_UI] = sem_open(SEM_GUI, sp_oflags, crt_flags, 0), SEM_FAILED, error );
+  JMP_IF( sems[SEM_IN] = sem_open(SEM_INP, sp_oflags, crt_flags, 0), SEM_FAILED, error );
   return 0;
 error:
   return errno;
@@ -64,6 +63,7 @@ ui_ipc_free(int is_master)
   }
   if (is_master > 0) {
     sem_unlink(SEM_GUI);
+    sem_unlink(SEM_INP);
     mq_unlink(MSQ_PWD);
     mq_unlink(MSQ_INF);
   }
@@ -98,18 +98,16 @@ ui_ipc_getvalue(enum UI_IPC_SEM e_sp)
   return sp_val;
 }
 
-#ifdef SEM_TIMEDWAIT
 int
-ui_ipc_semtimedwait(enum UI_IPC_SEM e_sp, int timeout)
+ui_ipc_semtimedwait(enum UI_IPC_SEM e_sp, time_t tmout)
 {
   struct timespec ts;
   if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
     return -1;
   }
-  ts.tc_sec += timeout;
-  return ( sem_timedwait(sems[q_mq], &ts) );
+  ts.tv_sec += tmout;
+  return ( sem_timedwait(sems[e_sp], &ts) );
 }
-#endif
 
 int
 ui_ipc_msgsend(enum UI_IPC_MSQ e_mq, const char *msg_ptr)
@@ -121,9 +119,15 @@ ui_ipc_msgsend(enum UI_IPC_MSQ e_mq, const char *msg_ptr)
 }
 
 ssize_t
-ui_ipc_msgrecv(enum UI_IPC_MSQ e_mq, char *msg_ptr)
+ui_ipc_msgrecv(enum UI_IPC_MSQ e_mq, char *msg_ptr, time_t tmout)
 {
-  return mq_receive(msqs[e_mq], msg_ptr, IPC_MQSIZ, NULL);
+  if (tmout > 0) {
+    struct timespec tm;
+    clock_gettime(CLOCK_REALTIME, &tm);
+    tm.tv_sec += tmout;
+    return mq_timedreceive(msqs[e_mq], msg_ptr, IPC_MQSIZ, NULL, &tm);
+  } else
+    return mq_receive(msqs[e_mq], msg_ptr, IPC_MQSIZ, NULL);
 }
 
 long

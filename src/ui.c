@@ -36,6 +36,7 @@ static unsigned int cur_x, cur_y;
 static WINDOW *wnd_main = NULL;
 static struct nask_ui /* simple linked list to all UI objects */ *nui = NULL,
                       /* current active input */ *active = NULL;
+static uicb_update update_callback = NULL;
 static pthread_t thrd;
 static int atmout = APP_TIMEOUT;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
@@ -161,7 +162,7 @@ process_key(char key)
   return ret;
 }
 
-int
+static int
 do_ui_update(bool timed_out)
 {
   int retval = UICB_OK;
@@ -176,6 +177,10 @@ do_ui_update(bool timed_out)
   } else if (atmout == 0) {
     ui_ipc_semtrywait(SEM_UI);
   }
+
+  if (update_callback)
+    update_callback(timed_out);
+
   while (cur != NULL) {
     if (cur->cbs.ui_element != NULL) {
       if ( cur->cbs.ui_element(cur->wnd, cur->data, timed_out) != UICB_OK)
@@ -299,8 +304,10 @@ char ui_wgetch(int timeout)
 }
 
 WINDOW *
-init_ui(void)
+init_ui(uicb_update on_update_callback)
 {
+  if (on_update_callback)
+    update_callback = on_update_callback;
   wnd_main = initscr();
   max_x = getmaxx(wnd_main);
   max_y = getmaxy(wnd_main);
