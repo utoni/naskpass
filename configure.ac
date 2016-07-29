@@ -80,11 +80,26 @@ AC_COMPILE_IFELSE( [AC_LANG_PROGRAM([[#include <sys/stat.h>]],
                                     [[struct stat st;]])],
                    [
                       AC_MSG_RESULT([yes])
-                      AC_DEFINE_UNQUOTED([HAVE_TIMESPEC], 1, [Define to 1 if you have struct stat.])
+                      AC_DEFINE_UNQUOTED([HAVE_STRUCTSTAT], 1, [Define to 1 if you have struct stat.])
                     ],
                     [
                       AC_MSG_RESULT([no])
-                      AC_DEFINE_UNQUOTED([HAVE_TIMESPEC], 0, [Define to 1 if you have struct stat.])
+                      AC_DEFINE_UNQUOTED([HAVE_STRUCTSTAT], 0, [Define to 1 if you have struct stat.])
+                    ]
+                 )
+
+AC_MSG_CHECKING([for pthread/mutex/cond])
+AC_COMPILE_IFELSE( [AC_LANG_PROGRAM([[#include <pthread.h>]],
+                                    [[pthread_t thrd;]],
+                                    [[pthread_cond_t cnd = PTHREAD_COND_INITIALIZER;]],
+                                    [[pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;]])],
+                   [
+                      AC_MSG_RESULT([yes])
+                      AC_DEFINE_UNQUOTED([HAVE_PTHREADS], 1, [Define to 1 if you have posix threads.])
+                    ],
+                    [
+                      AC_MSG_RESULT([no])
+                      AC_DEFINE_UNQUOTED([HAVE_PTHREADS], 0, [Define to 1 if you have posix threads.])
                     ]
                  )
 

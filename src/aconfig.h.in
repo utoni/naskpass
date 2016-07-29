@@ -80,6 +80,9 @@
 /* Define to 1 if you have the `printf' function. */
 #undef HAVE_PRINTF
 
+/* Define to 1 if you have posix threads. */
+#undef HAVE_PTHREADS
+
 /* Define to 1 if your system has a GNU libc compatible `realloc' function,
    and to 0 otherwise. */
 #undef HAVE_REALLOC
@@ -133,6 +136,9 @@
 /* Define to 1 if you have the `strtol' function. */
 #undef HAVE_STRTOL
 
+/* Define to 1 if you have struct stat. */
+#undef HAVE_STRUCTSTAT
+
 /* Define to 1 if you have the <syslog.h> header file. */
 #undef HAVE_SYSLOG_H
 
@@ -162,7 +168,7 @@
 /* Define to 1 if you have the <sys/wait.h> header file. */
 #undef HAVE_SYS_WAIT_H
 
-/* Define to 1 if you have struct stat. */
+/* Define to 1 if you have struct timespec. */
 #undef HAVE_TIMESPEC
 
 /* Define to 1 if you have the <time.h> header file. */
