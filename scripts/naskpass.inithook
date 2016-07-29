@@ -23,6 +23,7 @@ copy_exec /lib/cryptsetup/naskshell             /bin
 copy_exec /lib/cryptsetup/naskpass_check        /lib/cryptsetup
 copy_exec /usr/share/naskpass/naskpass.pre      /lib/cryptsetup
 copy_exec /usr/share/naskpass/naskpass.post     /lib/cryptsetup
+dash -n /usr/share/naskpass/naskpass.initconf
 copy_exec /usr/share/naskpass/naskpass.initconf /etc/naskpass.conf
 
 copy_exec /usr/sbin/sshd /sbin/sshd
