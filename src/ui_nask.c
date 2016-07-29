@@ -97,8 +97,10 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
           while (ui_wgetchtest(1500, '\n') != DOUI_KEY) { };
       }
 
+      ui_thrd_suspend();
       set_txtwindow_active(infownd, false);
       activate_input(pw_input);
+      ui_thrd_resume();
       break;
     case UIKEY_BACKSPACE:
       del_input(wnd, a);

@@ -312,8 +312,9 @@ setup_mapping()
 					continue
 				fi
 			else
-				/lib/cryptsetup/naskpass.pre
+				[ -z ${NASK_FAIL} ] && /lib/cryptsetup/naskpass.pre
 				if ! $cryptkeyscript -c "/sbin/cryptsetup -T 1 open $cryptsource $crypttarget"; then
+					NASK_FAIL=1
 					message "naskpass: failed"
 					continue
 				else

@@ -22,6 +22,8 @@ note
 ========
 Plymouth may not like naskpass (never verified). <br />
 Do not use debian and dropbear during boot (broken initscript). <br />
+<br />
+It's possible to disable naskpass temporary by adding a kernel command line paramter (`cryptfallback`). <br />
 
 screenshots
 ========

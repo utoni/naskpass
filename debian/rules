@@ -39,7 +39,7 @@ install: build
 	dh_installchangelogs
 	dh_installdebconf
 	$(MAKE) install-strip prefix=$(CURDIR)/debian/naskpass
-	mkdir -p $(CURDIR)/debian/naskpass/usr/share/naskpass
+	install -d -m755 $(CURDIR)/debian/naskpass/usr/share/naskpass
 	install -D -m755 ./scripts/naskconf            $(CURDIR)/debian/naskpass/usr/share/naskpass/
 	install -D -m755 ./scripts/naskpass.inithook   $(CURDIR)/debian/naskpass/usr/share/naskpass/
 	install -D -m755 ./scripts/naskpass.initscript $(CURDIR)/debian/naskpass/usr/share/naskpass/
