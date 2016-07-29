@@ -10,6 +10,15 @@ fi
 FILE=$1
 NAME=$(basename ${FILE})
 
+if [ -w ${FILE} ]; then
+	set +x
+	read -p "$0: \`${FILE}\` exists: overwrite? (y/N):" answ
+	if [ "x${answ}" != "xy" ]; then
+		echo "$0: abort."
+		exit 1
+	fi
+	set -x
+fi
 if [ ! -w ${FILE} ] || [ `file ${FILE} | grep -qoE 'LUKS encrypted file' && echo 0 || echo 1` -ne 0 ]; then
 	dd if=/dev/zero of=${FILE} bs=1M count=10
 	/sbin/cryptsetup luksFormat ${FILE}
