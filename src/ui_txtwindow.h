@@ -45,6 +45,12 @@ register_txtwindow(struct txtwindow *a);
 void
 set_txtwindow_text(struct txtwindow *a, char *text);
 
+size_t
+get_txtwindow_rows(struct txtwindow *a);
+
+size_t
+get_txtwindow_textlen(size_t row_index, struct txtwindow *a);
+
 void
 set_txtwindow_title(struct txtwindow *a, const char *title);
 

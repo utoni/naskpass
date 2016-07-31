@@ -15,20 +15,6 @@
 #include "ui_nask.h"
 
 #include "status.h"
-#include "config.h"
-
-#define APP_TIMEOUT 60
-#define APP_TIMEOUT_FMT "%02d"
-#define PASSWD_WIDTH 35
-#define PASSWD_HEIGHT 5
-#define PASSWD_XRELPOS (unsigned int)(PASSWD_WIDTH / 2) - (PASSWD_WIDTH / 6)
-#define PASSWD_YRELPOS (unsigned int)(PASSWD_HEIGHT / 2) + 1
-#define INFOWND_WIDTH 25
-#define INFOWND_HEIGHT 3
-#define INFOWND_XRELPOS (unsigned int)(INFOWND_WIDTH / 2) - (INFOWND_WIDTH / 6)
-#define INFOWND_YRELPOS (unsigned int)(INFOWND_HEIGHT / 2) + 1
-
-#define STRLEN(s) (sizeof(s)/sizeof(s[0]))
 
 
 static unsigned int max_x, max_y;
@@ -37,8 +23,8 @@ static WINDOW *wnd_main = NULL;
 static struct nask_ui /* simple linked list to all UI objects */ *nui = NULL,
                       /* current active input */ *active = NULL;
 static uicb_update update_callback = NULL;
+static uicb_update postupdate_callback = NULL;
 static pthread_t thrd;
-static int atmout = APP_TIMEOUT;
 static pthread_cond_t cnd_update = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t mtx_update = PTHREAD_MUTEX_INITIALIZER;
 
@@ -170,16 +156,10 @@ do_ui_update(bool timed_out)
 
   /* call all draw callback's */
   erase();
-  if (!timed_out) {
-    atmout = APP_TIMEOUT;
-  } else if (atmout > 0) {
-    atmout--;
-  } else if (atmout == 0) {
-    ui_ipc_semtrywait(SEM_UI);
-  }
 
   if (update_callback)
-    update_callback(timed_out);
+    if (update_callback(timed_out) != UICB_OK)
+      return UICB_ERR_CB;
 
   while (cur != NULL) {
     if (cur->cbs.ui_element != NULL) {
@@ -192,11 +172,11 @@ do_ui_update(bool timed_out)
     }
     cur = cur->next;
   }
-  /* TODO: Maybe export to an extra module? */
-  attron(COLOR_PAIR(1));
-  mvprintw(0, max_x - STRLEN(APP_TIMEOUT_FMT), "[" APP_TIMEOUT_FMT "]", atmout);
-  attroff(COLOR_PAIR(1));
-  /* EoT (End of Todo) */
+
+  if (postupdate_callback)
+    if (postupdate_callback(timed_out) != UICB_OK)
+      return UICB_ERR_CB;
+
   move(cur_y, cur_x);
   refresh();
   return (retval);
@@ -228,7 +208,7 @@ ui_thrd(void *arg)
   while ( ui_ipc_getvalue(SEM_UI) > 0 ) {
     cnd_ret = ui_cond_timedwait(&cnd_update, &mtx_update, UILOOP_TIMEOUT);
     if (cnd_ret == 0) {
-      do_ui_update(true);
+      do_ui_update(false);
     } else if (cnd_ret == ETIMEDOUT) {
       do_ui_update(true);
     }
@@ -304,10 +284,12 @@ char ui_wgetch(int timeout)
 }
 
 WINDOW *
-init_ui(uicb_update on_update_callback)
+init_ui(uicb_update on_update_callback, uicb_update on_postupdate_callback)
 {
   if (on_update_callback)
     update_callback = on_update_callback;
+  if (on_postupdate_callback)
+    postupdate_callback = on_postupdate_callback;
   wnd_main = initscr();
   max_x = getmaxx(wnd_main);
   max_y = getmaxy(wnd_main);

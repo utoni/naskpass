@@ -170,6 +170,23 @@ set_txtwindow_text(struct txtwindow *a, char *text)
   }
 }
 
+size_t
+get_txtwindow_rows(struct txtwindow *a)
+{
+  size_t ret = 0;
+
+  while ( a->text[ret] != NULL )
+    ret++;
+
+  return ret++;
+}
+
+size_t
+get_txtwindow_textlen(size_t row_index, struct txtwindow *a)
+{
+  return strlen(a->text[row_index]);
+}
+
 void
 set_txtwindow_title(struct txtwindow *a, const char *title)
 {

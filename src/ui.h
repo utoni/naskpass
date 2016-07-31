@@ -94,7 +94,7 @@ char ui_wgetch(int timeout);
 int ui_wgetchtest(int timeout, char testchar);
 
 WINDOW *
-init_ui(uicb_update on_update_callback);
+init_ui(uicb_update on_update_callback, uicb_update on_postupdate_callback);
 
 void
 free_ui(void);

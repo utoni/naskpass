@@ -13,19 +13,26 @@
 
 #include "status.h"
 
+#define APP_TIMEOUT 60
+#define APP_TIMEOUT_FMT "%02d"
+#define BSTR_LEN 3
 #define PASSWD_WIDTH 35
 #define PASSWD_HEIGHT 5
 #define PASSWD_XRELPOS (unsigned int)(PASSWD_WIDTH / 2) - (PASSWD_WIDTH / 6)
 #define PASSWD_YRELPOS (unsigned int)(PASSWD_HEIGHT / 2) + 1
 #define INFOWND_WIDTH 25
 #define INFOWND_HEIGHT 1
-#define BSTR_LEN 3
+#define INFOWND_XRELPOS (unsigned int)(INFOWND_WIDTH / 2) - (INFOWND_WIDTH / 6)
+#define INFOWND_YRELPOS (unsigned int)(INFOWND_HEIGHT / 2) + 1
+
+#define STRLEN(s) (sizeof(s)/sizeof(s[0]))
 
 
 static struct input *pw_input;
 static struct anic *heartbeat;
 static struct statusbar *higher, *lower;
 static struct txtwindow *infownd;
+static int atmout = APP_TIMEOUT;
 static char *title = NULL;
 static char busy_str[BSTR_LEN+1] = ".\0\0\0";
 
@@ -51,10 +58,12 @@ infownd_update(WINDOW *win, struct txtwindow *tw, bool ui_timeout)
 {
   if (ui_timeout == TRUE && tw->active == TRUE) {
     size_t len = strlen(busy_str);
-    if (len > BSTR_LEN) {
+    if (len == 0) {
+      strcat(busy_str, ".");
+    } else if (len >= BSTR_LEN) {
       memset(busy_str, '\0', BSTR_LEN+1);
-      busy_str[0] = '.';
     } else strcat(busy_str, ".");
+    mvprintw(tw->y, tw->x + get_txtwindow_textlen(0, tw) + 1, busy_str);
   }
   return DOUI_OK;
 }
@@ -175,6 +184,14 @@ free_ui_elements(void)
 static int
 on_update_cb(bool timeout)
 {
+  if (!timeout) {
+    atmout = APP_TIMEOUT;
+  } else if (atmout > 0) {
+    atmout--;
+  } else if (atmout == 0) {
+    ui_ipc_semtrywait(SEM_UI);
+  }
+
   if ( ui_ipc_getvalue(SEM_IN) <= 0 ) {
     attron(COLOR_PAIR(4));
     const char msg[] = "Got a piped password ..";
@@ -186,6 +203,15 @@ on_update_cb(bool timeout)
   return UICB_OK;
 }
 
+static int
+on_postupdate_cb(bool timeout)
+{
+  attron(COLOR_PAIR(1));
+  mvprintw(0, (unsigned int)(ui_get_maxx() - STRLEN(APP_TIMEOUT_FMT)), "[" APP_TIMEOUT_FMT "]", atmout);
+  attroff(COLOR_PAIR(1));
+  return UICB_OK;
+}
+
 int
 do_ui(void)
 {
@@ -193,7 +219,7 @@ do_ui(void)
   int ret = DOUI_ERR;
 
   /* init TUI and UI Elements (input field, status bar, etc) */
-  if (init_ui(on_update_cb))
+  if (init_ui(on_update_cb, on_postupdate_cb))
     init_ui_elements(ui_get_maxx(), ui_get_maxy());
   else
     return DOUI_ERR;
