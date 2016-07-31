@@ -19,12 +19,18 @@ if [ -w ${FILE} ]; then
 	fi
 	set -x
 fi
+
 if [ ! -w ${FILE} ] || [ `file ${FILE} | grep -qoE 'LUKS encrypted file' && echo 0 || echo 1` -ne 0 ]; then
 	dd if=/dev/zero of=${FILE} bs=1M count=10
 	/sbin/cryptsetup luksFormat ${FILE}
 fi
 
-sudo src/naskpass -l -f ./${NAME}.fifo -c "/sbin/cryptsetup open ${FILE} ${NAME}"
+if [ "x${DEBUG}" != "x" ]; then
+	sudo valgrind --log-file=valgrind.log src/naskpass -f ./${NAME}.fifo -c "/sbin/cryptsetup open ${FILE} ${NAME}" || true
+	sudo valgrind --tool=helgrind --log-file=helgrind.log src/naskpass -f ./${NAME}.fifo -c "/sbin/cryptsetup open ${FILE} ${NAME}" || true
+else
+	sudo src/naskpass -f ./${NAME}.fifo -c "/sbin/cryptsetup open ${FILE} ${NAME}"
+fi
 
 set +e
 sudo /sbin/cryptsetup status ${NAME}
