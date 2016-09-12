@@ -31,7 +31,7 @@
 static struct input *pw_input;
 static struct anic *heartbeat;
 static struct statusbar *higher, *lower;
-static struct txtwindow *infownd;
+static struct txtwindow *busywnd, *errwnd;
 static int atmout = APP_TIMEOUT;
 static char *title = NULL;
 static char busy_str[BSTR_LEN+1] = ".\0\0\0";
@@ -54,7 +54,7 @@ higher_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
 }
 
 static int
-infownd_update(WINDOW *win, struct txtwindow *tw, bool ui_timeout)
+busywnd_update(WINDOW *win, struct txtwindow *tw, bool ui_timeout)
 {
   if (ui_timeout == TRUE && tw->active == TRUE) {
     size_t len = strlen(busy_str);
@@ -91,24 +91,27 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
   switch (key) {
     case UIKEY_ENTER:
       ui_thrd_suspend();
+      memset(busy_str, '\0', BSTR_LEN+1);
       ui_ipc_msgsend(MQ_PW, a->input);
       clear_input(wnd, a);
       deactivate_input(pw_input);
       ui_thrd_resume();
 
       ui_ipc_msgrecv(MQ_IF, ipc_buf, 3);
-      show_info_wnd(infownd, "BUSY", ipc_buf, COLOR_PAIR(5), COLOR_PAIR(5), true, false);
+      show_info_wnd(busywnd, "BUSY", ipc_buf, COLOR_PAIR(5), COLOR_PAIR(5), true, false);
       sleep(2);
 
       if (ui_ipc_msgcount(MQ_IF) > 0) {
           ui_ipc_msgrecv(MQ_IF, ipc_buf, 3);
-          show_info_wnd(infownd, "ERROR", ipc_buf, COLOR_PAIR(4), COLOR_PAIR(4), true, true);
+          show_info_wnd(errwnd, "ERROR", ipc_buf, COLOR_PAIR(4), COLOR_PAIR(4), true, true);
           while (ui_wgetchtest(1500, '\n') != DOUI_KEY) { };
       }
 
       ui_thrd_suspend();
-      set_txtwindow_active(infownd, false);
+      set_txtwindow_active(busywnd, false);
+      set_txtwindow_active(errwnd, false);
       activate_input(pw_input);
+      ui_ipc_msgclear(MQ_IF);
       ui_thrd_resume();
       break;
     case UIKEY_BACKSPACE:
@@ -119,7 +122,7 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
       clear_input(wnd, a);
       deactivate_input(pw_input);
       ui_thrd_resume();
-      show_info_wnd(infownd, "QUIT", "bye bye", COLOR_PAIR(5), COLOR_PAIR(5), true, true);
+      show_info_wnd(errwnd, "QUIT", "bye bye", COLOR_PAIR(5), COLOR_PAIR(5), true, true);
       sleep(2);
       return DOUI_ERR;
     case UIKEY_DOWN:
@@ -150,14 +153,17 @@ init_ui_elements(unsigned int max_x, unsigned int max_y)
                              higher_statusbar_update);
   lower     = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3),
                              lower_statusbar_update);
-  infownd = init_txtwindow_centered(INFOWND_WIDTH, INFOWND_HEIGHT,
-                                    infownd_update);
+  busywnd   = init_txtwindow_centered(INFOWND_WIDTH, INFOWND_HEIGHT,
+                             busywnd_update);
+  errwnd    = init_txtwindow_centered(INFOWND_WIDTH, INFOWND_HEIGHT,
+                             NULL);
 
   register_input(NULL, pw_input, passwd_input_cb);
   register_statusbar(higher);
   register_statusbar(lower);
   register_anic_default(heartbeat);
-  register_txtwindow(infownd);
+  register_txtwindow(busywnd);
+  register_txtwindow(errwnd);
   activate_input(pw_input);
   set_statusbar_text(higher, title);
 }
@@ -173,7 +179,8 @@ free_ui_elements(void)
   free_anic_default(heartbeat);
   free_statusbar(higher);
   free_statusbar(lower);
-  free_txtwindow(infownd);
+  free_txtwindow(busywnd);
+  free_txtwindow(errwnd);
   free_ui();
   if (title) {
     free(title);

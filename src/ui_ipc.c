@@ -138,3 +138,12 @@ ui_ipc_msgcount(enum UI_IPC_MSQ e_mq)
   if (mq_getattr(msqs[e_mq], &m_attr) != 0) return -1;
   return m_attr.mq_curmsgs;
 }
+
+void
+ui_ipc_msgclear(enum UI_IPC_MSQ e_mq)
+{
+  char ipc_buf[IPC_MQSIZ+1];
+  while (ui_ipc_msgcount(e_mq) > 0) {
+    ui_ipc_msgrecv(e_mq, ipc_buf, 0);
+  }
+}

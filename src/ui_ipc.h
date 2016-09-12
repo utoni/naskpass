@@ -50,4 +50,7 @@ ui_ipc_msgrecv(enum UI_IPC_MSQ e_mq, char *msg_ptr, time_t tmout);
 long
 ui_ipc_msgcount(enum UI_IPC_MSQ e_mq);
 
+void
+ui_ipc_msgclear(enum UI_IPC_MSQ e_mq);
+
 #endif
