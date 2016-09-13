@@ -74,3 +74,15 @@ set_statusbar_text(struct statusbar *a, const char *text)
 
   strncpy(a->text, text, (len > a->width ? a->width : len));
 }
+
+inline int
+set_statusbar_textf(struct statusbar *a, const char *format, ...)
+{
+  char *str;
+  va_list ap;
+  va_start(ap, format);
+  int ret = vasprintf(&str, format, ap);
+  if (ret != -1)
+    set_statusbar_text(a, str);
+  return ret;
+}
