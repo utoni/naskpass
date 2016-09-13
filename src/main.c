@@ -77,6 +77,7 @@ run_cryptcreate(char *pass, char *crypt_cmd)
 void sigfunc(int signal)
 {
   switch (signal) {
+    case SIGSEGV:
     case SIGTERM:
       ui_ipc_semtrywait(SEM_UI);
       break;

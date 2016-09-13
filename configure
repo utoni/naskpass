@@ -633,6 +633,8 @@ AM_CFLAGS
 DEBUG_FALSE
 DEBUG_TRUE
 LIBOBJS
+RESOLVE_FALSE
+RESOLVE_TRUE
 RANLIB
 ac_ct_AR
 AR
@@ -6440,6 +6442,120 @@ fi
 
 done
 
+for ac_header in resolv.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "resolv.h" "ac_cv_header_resolv_h" "$ac_includes_default"
+if test "x$ac_cv_header_resolv_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_RESOLV_H 1
+_ACEOF
+
+                   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing __res_init" >&5
+$as_echo_n "checking for library containing __res_init... " >&6; }
+if ${ac_cv_search___res_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char __res_init ();
+int
+main ()
+{
+return __res_init ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' resolv; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search___res_init=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search___res_init+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search___res_init+:} false; then :
+
+else
+  ac_cv_search___res_init=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search___res_init" >&5
+$as_echo "$ac_cv_search___res_init" >&6; }
+ac_res=$ac_cv_search___res_init
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+                     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for working resolve" >&5
+$as_echo_n "checking for working resolve... " >&6; }
+                     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <resolv.h>
+int
+main ()
+{
+res_init();
+                                                        printf("%s\n", _res.defdname);
+                                                        res_close();
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_RESOLVE 1
+_ACEOF
+
+                          if true; then
+  RESOLVE_TRUE=
+  RESOLVE_FALSE='#'
+else
+  RESOLVE_TRUE='#'
+  RESOLVE_FALSE=
+fi
+
+
+else
+
+                         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+
+fi
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: *** DNS information disabled" >&5
+$as_echo "$as_me: WARNING: *** DNS information disabled" >&2;}
+fi
+
+done
+
 
 # Checks for typedefs, structures, and compiler characteristics.
 if ac_fn_c_compute_int "$LINENO" "" ""        ""; then :
@@ -9369,6 +9485,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${RESOLVE_TRUE}" && test -z "${RESOLVE_FALSE}"; then
+  as_fn_error $? "conditional \"RESOLVE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${DEBUG_TRUE}" && test -z "${DEBUG_FALSE}"; then

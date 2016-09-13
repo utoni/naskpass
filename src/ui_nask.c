@@ -11,10 +11,13 @@
 #include "ui_txtwindow.h"
 #include "ui_nask.h"
 
+#include "utils.h"
 #include "status.h"
 
 #define APP_TIMEOUT 60
 #define APP_TIMEOUT_FMT "%02d"
+#define NETUPD_INTERVAL 5
+#define NETUPD_STRLEN 128
 #define BSTR_LEN 3
 #define PASSWD_WIDTH 35
 #define PASSWD_HEIGHT 5
@@ -30,9 +33,10 @@
 
 static struct input *pw_input;
 static struct anic *heartbeat;
-static struct statusbar *higher, *lower;
+static struct statusbar *higher, *lower, *netinfo;
 static struct txtwindow *busywnd, *errwnd;
-static int atmout = APP_TIMEOUT;
+static unsigned int atmout = APP_TIMEOUT;
+static unsigned int netupd = 0;
 static char *title = NULL;
 static char busy_str[BSTR_LEN+1] = ".\0\0\0";
 
@@ -50,6 +54,41 @@ lower_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
 static int
 higher_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
 {
+  return DOUI_OK;
+}
+
+static int
+netinfo_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
+{
+  if (ui_timeout == TRUE) {
+    if (netupd == 0) {
+      netupd = NETUPD_INTERVAL;
+      size_t len = 0;
+      char buf[NETUPD_STRLEN+1];
+      char *dev, *gwIp, *myIp;
+      memset(buf, '\0', NETUPD_STRLEN+1);
+      if (utGetDefaultGwInfo(&dev, &gwIp) == 0) {
+        if (utGetIpFromNetDev(dev, &myIp) == 0) {
+#ifdef HAVE_RESOLVE
+          char *dom, *srv;
+          if (utGetDomainInfo(&dom, &srv) == 0) {
+            snprintf(buf, NETUPD_STRLEN, "netdev: %s // address: %s // gateway: %s // dns: %s // domain: %s", dev, myIp, gwIp, srv, dom);
+          }
+          free(dom);
+          free(srv);
+#else
+          snprintf(buf, NETUPD_STRLEN, "netdev: %s // address: %s // gateway: %s", dev, myIp, gwIp);
+#endif
+          free(myIp);
+        }
+        free(dev);
+        free(gwIp);
+      }
+      set_statusbar_text(bar, buf);
+    } else {
+      netupd--;
+    }
+  }
   return DOUI_OK;
 }
 
@@ -153,6 +192,8 @@ init_ui_elements(unsigned int max_x, unsigned int max_y)
                              higher_statusbar_update);
   lower     = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3),
                              lower_statusbar_update);
+  netinfo   = init_statusbar(1, max_x, COLOR_PAIR(2),
+                             netinfo_statusbar_update);
   busywnd   = init_txtwindow_centered(INFOWND_WIDTH, INFOWND_HEIGHT,
                              busywnd_update);
   errwnd    = init_txtwindow_centered(INFOWND_WIDTH, INFOWND_HEIGHT,
@@ -161,6 +202,7 @@ init_ui_elements(unsigned int max_x, unsigned int max_y)
   register_input(NULL, pw_input, passwd_input_cb);
   register_statusbar(higher);
   register_statusbar(lower);
+  register_statusbar(netinfo);
   register_anic_default(heartbeat);
   register_txtwindow(busywnd);
   register_txtwindow(errwnd);
@@ -173,12 +215,14 @@ free_ui_elements(void)
 {
   unregister_ui_elt(lower);
   unregister_ui_elt(higher);
+  unregister_ui_elt(netinfo);
   unregister_ui_elt(heartbeat);
   unregister_ui_elt(pw_input);
   free_input(pw_input);
   free_anic_default(heartbeat);
   free_statusbar(higher);
   free_statusbar(lower);
+  free_statusbar(netinfo);
   free_txtwindow(busywnd);
   free_txtwindow(errwnd);
   free_ui();

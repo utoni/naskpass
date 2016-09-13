@@ -80,6 +80,8 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = naskpass$(EXEEXT) naskshell$(EXEEXT) \
 	naskpass_check$(EXEEXT)
+@RESOLVE_TRUE@am__append_1 = -DHAVE_RESOLVE
+@RESOLVE_TRUE@am__append_2 = -lresolv
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/aconfig.h.in $(top_srcdir)/build/depcomp
@@ -94,15 +96,15 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_naskpass_OBJECTS = naskpass-main.$(OBJEXT) naskpass-log.$(OBJEXT) \
-	naskpass-opt.$(OBJEXT) naskpass-status.$(OBJEXT) \
-	naskpass-ui_ani.$(OBJEXT) naskpass-ui.$(OBJEXT) \
-	naskpass-ui_input.$(OBJEXT) naskpass-ui_ipc.$(OBJEXT) \
-	naskpass-ui_txtwindow.$(OBJEXT) \
+	naskpass-opt.$(OBJEXT) naskpass-utils.$(OBJEXT) \
+	naskpass-status.$(OBJEXT) naskpass-ui_ani.$(OBJEXT) \
+	naskpass-ui.$(OBJEXT) naskpass-ui_input.$(OBJEXT) \
+	naskpass-ui_ipc.$(OBJEXT) naskpass-ui_txtwindow.$(OBJEXT) \
 	naskpass-ui_statusbar.$(OBJEXT) naskpass-ui_nask.$(OBJEXT)
 naskpass_OBJECTS = $(am_naskpass_OBJECTS)
 naskpass_LDADD = $(LDADD)
-naskpass_LINK = $(CCLD) $(naskpass_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+naskpass_LINK = $(CCLD) $(naskpass_CFLAGS) $(CFLAGS) \
+	$(naskpass_LDFLAGS) $(LDFLAGS) -o $@
 am__dirstamp = $(am__leading_dot)dirstamp
 am_naskpass_check_OBJECTS = check/check.$(OBJEXT)
 naskpass_check_OBJECTS = $(am_naskpass_check_OBJECTS)
@@ -273,11 +275,13 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-naskpass_SOURCES = main.c log.c opt.c status.c ui_ani.c ui.c ui_input.c ui_ipc.c ui_txtwindow.c ui_statusbar.c ui_nask.c
+naskpass_SOURCES = main.c log.c opt.c utils.c status.c ui_ani.c ui.c ui_input.c ui_ipc.c ui_txtwindow.c ui_statusbar.c ui_nask.c
+naskpass_LDFLAGS = $(am__append_2)
 naskpass_check_SOURCES = check/check.c
 naskshell_SOURCES = shell/shell.c
-@DEBUG_FALSE@naskpass_CFLAGS = -fPIC -fomit-frame-pointer -fexpensive-optimizations -Os
-@DEBUG_TRUE@naskpass_CFLAGS = -O0 -g3 -DDEBUG
+@DEBUG_FALSE@naskpass_CFLAGS = -fPIC -fomit-frame-pointer \
+@DEBUG_FALSE@	-fexpensive-optimizations -Os $(am__append_1)
+@DEBUG_TRUE@naskpass_CFLAGS = -O0 -g3 -DDEBUG $(am__append_1)
 all: aconfig.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -418,6 +422,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-ui_nask.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-ui_statusbar.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-ui_txtwindow.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/naskpass-utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@check/$(DEPDIR)/check.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@shell/$(DEPDIR)/shell.Po@am__quote@
 
@@ -478,6 +483,20 @@ naskpass-opt.obj: opt.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='opt.c' object='naskpass-opt.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -c -o naskpass-opt.obj `if test -f 'opt.c'; then $(CYGPATH_W) 'opt.c'; else $(CYGPATH_W) '$(srcdir)/opt.c'; fi`
+
+naskpass-utils.o: utils.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -MT naskpass-utils.o -MD -MP -MF $(DEPDIR)/naskpass-utils.Tpo -c -o naskpass-utils.o `test -f 'utils.c' || echo '$(srcdir)/'`utils.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/naskpass-utils.Tpo $(DEPDIR)/naskpass-utils.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils.c' object='naskpass-utils.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -c -o naskpass-utils.o `test -f 'utils.c' || echo '$(srcdir)/'`utils.c
+
+naskpass-utils.obj: utils.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -MT naskpass-utils.obj -MD -MP -MF $(DEPDIR)/naskpass-utils.Tpo -c -o naskpass-utils.obj `if test -f 'utils.c'; then $(CYGPATH_W) 'utils.c'; else $(CYGPATH_W) '$(srcdir)/utils.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/naskpass-utils.Tpo $(DEPDIR)/naskpass-utils.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils.c' object='naskpass-utils.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -c -o naskpass-utils.obj `if test -f 'utils.c'; then $(CYGPATH_W) 'utils.c'; else $(CYGPATH_W) '$(srcdir)/utils.c'; fi`
 
 naskpass-status.o: status.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(naskpass_CFLAGS) $(CFLAGS) -MT naskpass-status.o -MD -MP -MF $(DEPDIR)/naskpass-status.Tpo -c -o naskpass-status.o `test -f 'status.c' || echo '$(srcdir)/'`status.c
