@@ -10,5 +10,4 @@ naskpass_CFLAGS=-fPIC -fomit-frame-pointer -fexpensive-optimizations -Os
 endif
 if RESOLVE
 naskpass_CFLAGS+=-DHAVE_RESOLVE
-naskpass_LDFLAGS+=-lresolv
 endif

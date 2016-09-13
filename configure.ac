@@ -34,23 +34,23 @@ AC_HEADER_STAT
 AC_HEADER_DIRENT
 AC_HEADER_ASSERT
 AC_CHECK_HEADERS([glob.h stdio.h stdlib.h stdbool.h string.h unistd.h errno.h sys/stat.h sys/types.h sys/wait.h fcntl.h semaphore.h time.h mqueue.h syslog.h],[],[AC_MSG_ERROR([*** missing essential header files])])
-AC_CHECK_HEADERS([resolv.h],[
-                   AC_SEARCH_LIBS([__res_init], [resolv],[
+AC_CHECK_HEADERS([resolv.h],
+                 [
+                     AC_CHECK_LIB([resolv], [__res_init], [], [AC_MSG_ERROR([__res_init not found int resolv])])
                      AC_MSG_CHECKING([for working resolve])
                      AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <resolv.h>]],
                                                         [[res_init();]]
                                                         [[printf("%s\n", _res.defdname);]]
                                                         [[res_close();]]
                                                        )],
-                       [
-                         AC_MSG_RESULT([yes])
-                         AC_DEFINE_UNQUOTED([HAVE_RESOLVE], 1, [Define to 1 if you have libc resolv.])
-                         AM_CONDITIONAL(RESOLVE, true)
-                       ],
-                       [
-                         AC_MSG_RESULT([no])
-                       ]
-                     ]),[AC_MSG_ERROR([*** Missing resolv library. -lresolv])])
+                                       [
+                                            AC_MSG_RESULT([yes])
+                                            AC_DEFINE_UNQUOTED([HAVE_RESOLVE], 1, [Define to 1 if you have libc resolv.])
+                                            AM_CONDITIONAL(RESOLVE, true)
+                                       ],
+                                       [
+                                            AC_MSG_RESULT([no])
+                                       ])
                  ],[AC_MSG_WARN([*** DNS information disabled])])
 
 # Checks for typedefs, structures, and compiler characteristics.

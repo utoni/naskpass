@@ -81,7 +81,6 @@ host_triplet = @host@
 bin_PROGRAMS = naskpass$(EXEEXT) naskshell$(EXEEXT) \
 	naskpass_check$(EXEEXT)
 @RESOLVE_TRUE@am__append_1 = -DHAVE_RESOLVE
-@RESOLVE_TRUE@am__append_2 = -lresolv
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/aconfig.h.in $(top_srcdir)/build/depcomp
@@ -276,7 +275,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 naskpass_SOURCES = main.c log.c opt.c utils.c status.c ui_ani.c ui.c ui_input.c ui_ipc.c ui_txtwindow.c ui_statusbar.c ui_nask.c
-naskpass_LDFLAGS = $(am__append_2)
+naskpass_LDFLAGS = 
 naskpass_check_SOURCES = check/check.c
 naskshell_SOURCES = shell/shell.c
 @DEBUG_FALSE@naskpass_CFLAGS = -fPIC -fomit-frame-pointer \
