@@ -82,6 +82,8 @@ utGetDomainInfo(char **szDefDomain, char **szDefServer)
     return 1;
   *szDefDomain = calloc(257, sizeof(char));
   memcpy(*szDefDomain, _res.defdname, 256);
+  if (strnlen(*szDefDomain, 256) == 0)
+    *szDefDomain[0] = '-';
   *szDefServer = calloc(IFNAMSIZ, sizeof(char));
   memcpy(*szDefServer, inet_ntoa(_res.nsaddr_list[0].sin_addr), IFNAMSIZ-1);
   res_close();
