@@ -12,4 +12,9 @@ int
 utGetDomainInfo(char **szDefDomain, char **szDefServer);
 #endif
 
+#ifdef HAVE_UNAME
+int
+utGetUnameInfo(char **sysop, char **sysrelease, char **sysmachine);
+#endif
+
 #endif

@@ -11,3 +11,6 @@ endif
 if RESOLVE
 naskpass_CFLAGS+=-DHAVE_RESOLVE
 endif
+if UNAME
+naskpass_CFLAGS+=-DHAVE_UNAME
+endif

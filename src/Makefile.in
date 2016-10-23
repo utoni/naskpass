@@ -81,6 +81,7 @@ host_triplet = @host@
 bin_PROGRAMS = naskpass$(EXEEXT) naskshell$(EXEEXT) \
 	naskpass_check$(EXEEXT)
 @RESOLVE_TRUE@am__append_1 = -DHAVE_RESOLVE
+@UNAME_TRUE@am__append_2 = -DHAVE_UNAME
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/aconfig.h.in $(top_srcdir)/build/depcomp
@@ -279,8 +280,10 @@ naskpass_LDFLAGS =
 naskpass_check_SOURCES = check/check.c
 naskshell_SOURCES = shell/shell.c
 @DEBUG_FALSE@naskpass_CFLAGS = -fPIC -fomit-frame-pointer \
-@DEBUG_FALSE@	-fexpensive-optimizations -Os $(am__append_1)
-@DEBUG_TRUE@naskpass_CFLAGS = -O0 -g3 -DDEBUG $(am__append_1)
+@DEBUG_FALSE@	-fexpensive-optimizations -Os $(am__append_1) \
+@DEBUG_FALSE@	$(am__append_2)
+@DEBUG_TRUE@naskpass_CFLAGS = -O0 -g3 -DDEBUG $(am__append_1) \
+@DEBUG_TRUE@	$(am__append_2)
 all: aconfig.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 

@@ -633,6 +633,8 @@ AM_CFLAGS
 DEBUG_FALSE
 DEBUG_TRUE
 LIBOBJS
+UNAME_FALSE
+UNAME_TRUE
 RESOLVE_FALSE
 RESOLVE_TRUE
 RANLIB
@@ -6442,6 +6444,8 @@ fi
 
 done
 
+
+have_resolv="false"
 for ac_header in resolv.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "resolv.h" "ac_cv_header_resolv_h" "$ac_includes_default"
@@ -6517,12 +6521,25 @@ if ac_fn_c_try_compile "$LINENO"; then :
 
                                             { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+                                            have_resolv="true"
+
+else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+
+done
+
+if test x"$have_resolv" = x"true" ; then
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_RESOLVE 1
 _ACEOF
 
-                                             if true; then
+   if true; then
   RESOLVE_TRUE=
   RESOLVE_FALSE='#'
 else
@@ -6530,22 +6547,85 @@ else
   RESOLVE_FALSE=
 fi
 
-
 else
-
-                                            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
+   if false; then
+  RESOLVE_TRUE=
+  RESOLVE_FALSE='#'
+else
+  RESOLVE_TRUE='#'
+  RESOLVE_FALSE=
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-else
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: *** DNS information disabled" >&5
 $as_echo "$as_me: WARNING: *** DNS information disabled" >&2;}
 fi
 
+have_uname="false"
+for ac_header in sys/utsname.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "sys/utsname.h" "ac_cv_header_sys_utsname_h" "$ac_includes_default"
+if test "x$ac_cv_header_sys_utsname_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_UTSNAME_H 1
+_ACEOF
+
+                     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for working uname" >&5
+$as_echo_n "checking for working uname... " >&6; }
+                     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <sys/utsname.h>
+int
+main ()
+{
+struct utsname nm;
+                                                        uname(&nm);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+                                            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+                                            have_uname="true"
+
+else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+
 done
 
+if test x"$have_uname" = x"true" ; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_UNAME 1
+_ACEOF
+
+   if true; then
+  UNAME_TRUE=
+  UNAME_FALSE='#'
+else
+  UNAME_TRUE='#'
+  UNAME_FALSE=
+fi
+
+else
+   if false; then
+  RESOLVE_TRUE=
+  RESOLVE_FALSE='#'
+else
+  RESOLVE_TRUE='#'
+  RESOLVE_FALSE=
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: *** uname information disabled" >&5
+$as_echo "$as_me: WARNING: *** uname information disabled" >&2;}
+fi
 
 # Checks for typedefs, structures, and compiler characteristics.
 if ac_fn_c_compute_int "$LINENO" "" ""        ""; then :
@@ -9475,6 +9555,18 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${RESOLVE_TRUE}" && test -z "${RESOLVE_FALSE}"; then
+  as_fn_error $? "conditional \"RESOLVE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${RESOLVE_TRUE}" && test -z "${RESOLVE_FALSE}"; then
+  as_fn_error $? "conditional \"RESOLVE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${UNAME_TRUE}" && test -z "${UNAME_FALSE}"; then
+  as_fn_error $? "conditional \"UNAME\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${RESOLVE_TRUE}" && test -z "${RESOLVE_FALSE}"; then

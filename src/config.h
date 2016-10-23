@@ -11,6 +11,7 @@
 #define MSQ_INF "/naskpass-info"
 
 #ifdef HAVE_CONFIG_H
+#include "aconfig.h"
 #include "version.h"
 #endif
 

@@ -15,6 +15,9 @@
 #ifdef HAVE_RESOLVE
 #include <resolv.h>
 #endif
+#ifdef HAVE_UNAME
+#include <sys/utsname.h>
+#endif
 
 
 int
@@ -85,6 +88,25 @@ utGetDomainInfo(char **szDefDomain, char **szDefServer)
   *szDefServer = calloc(IFNAMSIZ, sizeof(char));
   memcpy(*szDefServer, inet_ntoa(_res.nsaddr_list[0].sin_addr), IFNAMSIZ-1);
   res_close();
+  return 0;
+}
+#endif
+
+#ifdef HAVE_UNAME
+int
+utGetUnameInfo(char **sysop, char **sysrelease, char **sysmachine) {
+  struct utsname un;
+
+  memset(&un, '\0', sizeof(struct utsname));
+  if (uname(&un) != 0)
+    return 1;
+
+  *sysop = calloc(_UTSNAME_SYSNAME_LENGTH, sizeof(char));
+  memcpy(*sysop, un.sysname, _UTSNAME_SYSNAME_LENGTH);
+  *sysrelease = calloc(_UTSNAME_RELEASE_LENGTH, sizeof(char));
+  memcpy(*sysrelease, un.release, _UTSNAME_RELEASE_LENGTH);
+  *sysmachine = calloc(_UTSNAME_MACHINE_LENGTH, sizeof(char));
+  memcpy(*sysmachine, un.machine, _UTSNAME_MACHINE_LENGTH);
   return 0;
 }
 #endif

@@ -34,6 +34,8 @@ AC_HEADER_STAT
 AC_HEADER_DIRENT
 AC_HEADER_ASSERT
 AC_CHECK_HEADERS([glob.h stdio.h stdlib.h stdbool.h string.h unistd.h errno.h sys/stat.h sys/types.h sys/wait.h fcntl.h semaphore.h time.h mqueue.h syslog.h],[],[AC_MSG_ERROR([*** missing essential header files])])
+
+have_resolv="false"
 AC_CHECK_HEADERS([resolv.h],
                  [
                      AC_CHECK_LIB([resolv], [__res_init], [], [AC_MSG_ERROR([__res_init not found int resolv])])
@@ -45,13 +47,39 @@ AC_CHECK_HEADERS([resolv.h],
                                                        )],
                                        [
                                             AC_MSG_RESULT([yes])
-                                            AC_DEFINE_UNQUOTED([HAVE_RESOLVE], 1, [Define to 1 if you have libc resolv.])
-                                            AM_CONDITIONAL(RESOLVE, true)
+                                            have_resolv="true"
                                        ],
-                                       [
-                                            AC_MSG_RESULT([no])
-                                       ])
-                 ],[AC_MSG_WARN([*** DNS information disabled])])
+                                       [    AC_MSG_RESULT([no])])
+                 ],[])
+if test x"$have_resolv" = x"true" ; then
+  AC_DEFINE_UNQUOTED([HAVE_RESOLVE], 1, [Define to 1 if you have libc resolv.])
+  AM_CONDITIONAL([RESOLVE], true)
+else
+  AM_CONDITIONAL([RESOLVE], false)
+  AC_MSG_WARN([*** DNS information disabled])
+fi
+
+have_uname="false"
+AC_CHECK_HEADERS([sys/utsname.h],
+                 [
+                     AC_MSG_CHECKING([for working uname])
+                     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/utsname.h>]],
+                                                        [[struct utsname nm;]]
+                                                        [[uname(&nm);]]
+                                                       )],
+                                       [     
+                                            AC_MSG_RESULT([yes])
+                                            have_uname="true"
+                                       ],
+                                       [    AC_MSG_RESULT([no])])
+                 ],[])
+if test x"$have_uname" = x"true" ; then
+  AC_DEFINE_UNQUOTED([HAVE_UNAME], 1, [Define to 1 if you have uname (sys/utsname.h) support.])
+  AM_CONDITIONAL([UNAME], true)
+else
+  AM_CONDITIONAL([RESOLVE], false)
+  AC_MSG_WARN([*** uname information disabled])
+fi
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_COMPUTE_INT

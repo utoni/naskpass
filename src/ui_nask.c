@@ -14,6 +14,8 @@
 #include "utils.h"
 #include "status.h"
 
+#include "config.h"
+
 #define APP_TIMEOUT 60
 #define APP_TIMEOUT_FMT "%02d"
 #define NETUPD_INTERVAL 5
@@ -33,11 +35,12 @@
 
 static struct input *pw_input;
 static struct anic *heartbeat;
-static struct statusbar *higher, *lower, *netinfo;
+static struct statusbar *higher, *lower, *netinfo, *uninfo;
 static struct txtwindow *busywnd, *errwnd;
 static unsigned int atmout = APP_TIMEOUT;
 static unsigned int netupd = 0;
 static char *title = NULL;
+static char *untext = NULL;
 static char busy_str[BSTR_LEN+1] = ".\0\0\0";
 
 
@@ -88,6 +91,29 @@ netinfo_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
     } else {
       netupd--;
     }
+  }
+  return DOUI_OK;
+}
+
+static int
+uninfo_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
+{
+  if (untext == NULL) {
+#ifdef HAVE_UNAME
+    char *sysop;
+    char *sysrelease;
+    char *sysmachine;
+
+    if (utGetUnameInfo(&sysop, &sysrelease, &sysmachine) == 0) {
+      asprintf(&untext, "%s v%s (%s)", sysop, sysrelease, sysmachine);
+      free(sysop);
+      free(sysrelease);
+      free(sysmachine);
+    } else
+#endif
+    asprintf(&untext, "%s", "[unknown kernel]");
+
+    set_statusbar_text(bar, untext);
   }
   return DOUI_OK;
 }
@@ -192,8 +218,10 @@ init_ui_elements(unsigned int max_x, unsigned int max_y)
                              higher_statusbar_update);
   lower     = init_statusbar(max_y - 1, max_x, COLOR_PAIR(3),
                              lower_statusbar_update);
-  netinfo   = init_statusbar(1, max_x, COLOR_PAIR(2),
+  netinfo   = init_statusbar(2, max_x, COLOR_PAIR(2),
                              netinfo_statusbar_update);
+  uninfo    = init_statusbar(1, max_x, COLOR_PAIR(2),
+                             uninfo_statusbar_update);
   busywnd   = init_txtwindow_centered(INFOWND_WIDTH, INFOWND_HEIGHT,
                              busywnd_update);
   errwnd    = init_txtwindow_centered(INFOWND_WIDTH, INFOWND_HEIGHT,
@@ -203,6 +231,7 @@ init_ui_elements(unsigned int max_x, unsigned int max_y)
   register_statusbar(higher);
   register_statusbar(lower);
   register_statusbar(netinfo);
+  register_statusbar(uninfo);
   register_anic_default(heartbeat);
   register_txtwindow(busywnd);
   register_txtwindow(errwnd);
@@ -216,6 +245,7 @@ free_ui_elements(void)
   unregister_ui_elt(lower);
   unregister_ui_elt(higher);
   unregister_ui_elt(netinfo);
+  unregister_ui_elt(uninfo);
   unregister_ui_elt(heartbeat);
   unregister_ui_elt(pw_input);
   free_input(pw_input);
@@ -223,6 +253,7 @@ free_ui_elements(void)
   free_statusbar(higher);
   free_statusbar(lower);
   free_statusbar(netinfo);
+  free_statusbar(uninfo);
   free_txtwindow(busywnd);
   free_txtwindow(errwnd);
   free_ui();
