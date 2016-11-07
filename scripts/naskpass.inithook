@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 PREREQ="cryptroot"
 
 prereqs () {
@@ -29,18 +27,16 @@ copy_exec /usr/share/naskpass/naskpass.initconf /etc/naskpass.conf
 copy_exec /usr/sbin/sshd /sbin/sshd
 cp -R /etc/initramfs-tools/etc/ssh "${DESTDIR}/etc/"
 
-copy_exec /usr/lib/i386-linux-gnu/libnss_compat.so /usr/lib/i386-linux-gnu/
+copy_exec /usr/lib/$(dpkg-architecture -q DEB_HOST_MULTIARCH)/libnss_compat.so /usr/lib/$(dpkg-architecture -q DEB_HOST_MULTIARCH)/
 if [ -r "${DESTDIR}/etc/nsswitch.conf" ]; then
-echo << EOF >"${DESTDIR}/etc/nsswitch.conf"
-passwd:         compat
-group:          compat
-shadow:         compat
-EOF
+echo "passwd:         compat" > "${DESTDIR}/etc/nsswitch.conf"
+echo "group:          compat" >>"${DESTDIR}/etc/nsswitch.conf"
+echo "shadow:         compat" >>"${DESTDIR}/etc/nsswitch.conf"
 fi
 
 [ -r "${DESTDIR}/etc/passwd" ] || echo 'root:x:0:0:root:/root:/bin/naskshell' >"${DESTDIR}/etc/passwd"
 [ -r "${DESTDIR}/etc/group" ] || echo 'root:x:0:' >"${DESTDIR}/etc/group"
-[ -r "${DESTDIR}/etc/shadow" ] || echo 'root:*:16777:0:99999:7:::' >"${DESTDIR}/etc/shadow"
+[ -r "${DESTDIR}/etc/shadow" ] || echo 'root:*:15446:0:99999:7:::' >"${DESTDIR}/etc/shadow"
 
 mkdir -p ${DESTDIR}/lib/terminfo/l
 cp /lib/terminfo/l/linux ${DESTDIR}/lib/terminfo/l/

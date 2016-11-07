@@ -374,6 +374,9 @@ setup_mapping()
 
 	if [ $crypttries -gt 0 ] && [ $count -gt $crypttries ]; then
 		message "cryptsetup: maximum number of tries exceeded for $crypttarget"
+		message "shutdown in 3 seconds"
+		sleep 3
+		echo "o" > /proc/sys/kernel/sysrq
 		return 1
 	fi
 
