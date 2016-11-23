@@ -27,6 +27,12 @@ copy_exec /usr/share/naskpass/naskpass.initconf /etc/naskpass.conf
 copy_exec /usr/sbin/sshd /sbin/sshd
 cp -R /etc/initramfs-tools/etc/ssh "${DESTDIR}/etc/"
 
+if [ ! -r "${DESTDIR}/root" ]; then
+	mkdir -p "${DESTDIR}/root"
+	chown root:root "${DESTDIR}/root"
+	chmod 0700 "${DESTDIR}/root"
+fi
+
 copy_exec /usr/lib/$(dpkg-architecture -q DEB_HOST_MULTIARCH)/libnss_compat.so /usr/lib/$(dpkg-architecture -q DEB_HOST_MULTIARCH)/
 if [ -r "${DESTDIR}/etc/nsswitch.conf" ]; then
 echo "passwd:         compat" > "${DESTDIR}/etc/nsswitch.conf"
