@@ -326,7 +326,7 @@ setup_mapping()
 
 		if [ ! -e "$NEWROOT" ]; then
 			message "cryptsetup: unknown error setting up device mapping"
-			return 1
+			continue
 		fi
 
 		#FSTYPE=''
