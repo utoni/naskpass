@@ -315,7 +315,15 @@ setup_mapping()
 				[ -z ${NASK_FAIL} ] && /lib/cryptsetup/naskpass.pre
 				if ! $cryptkeyscript -c "/sbin/cryptsetup -T 1 open $cryptsource $crypttarget"; then
 					NASK_FAIL=1
-					message "naskpass: failed"
+					message "naskpass: failed ${count}/${crypttries}"
+					if [ $crypttries -gt 0 ] && [ $count -ge $crypttries ]; then
+						message "cryptsetup: maximum number of tries exceeded for $crypttarget"
+						message "shutdown in 3 seconds"
+						sleep 3
+						/bin/echo 'o' > /proc/sysrq-trigger
+						sleep 10
+						break
+					fi
 					continue
 				else
 					message "naskpass: success"
@@ -371,14 +379,6 @@ setup_mapping()
 		message "cryptsetup: $crypttarget set up successfully"
 		break
 	done
-
-	if [ $crypttries -gt 0 ] && [ $count -gt $crypttries ]; then
-		message "cryptsetup: maximum number of tries exceeded for $crypttarget"
-		message "shutdown in 3 seconds"
-		sleep 3
-		echo "o" > /proc/sys/kernel/sysrq
-		return 1
-	fi
 
 	udev_settle
 	return 0
