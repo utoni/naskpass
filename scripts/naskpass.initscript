@@ -320,9 +320,11 @@ setup_mapping()
 						message "cryptsetup: maximum number of tries exceeded for $crypttarget"
 						message "shutdown in 3 seconds"
 						sleep 3
-						/bin/echo 'o' > /proc/sysrq-trigger
+						[ -w /proc/sysrq-trigger ] && /bin/echo 'o' > /proc/sysrq-trigger
+						[ -w /proc/sysrq ] && /bin/echo 'o' > /proc/sysrq
+						[ -x /sbin/poweroff ] && /sbin/poweroff -n -f
 						sleep 10
-						break
+						return 1
 					fi
 					continue
 				else
@@ -334,7 +336,7 @@ setup_mapping()
 
 		if [ ! -e "$NEWROOT" ]; then
 			message "cryptsetup: unknown error setting up device mapping"
-			continue
+			return 1
 		fi
 
 		#FSTYPE=''
@@ -379,6 +381,11 @@ setup_mapping()
 		message "cryptsetup: $crypttarget set up successfully"
 		break
 	done
+
+	if [ $crypttries -gt 0 ] && [ $count -gt $crypttries ]; then
+		message "cryptsetup: maximum number of tries exceeded for $crypttarget"
+		return 1
+	fi
 
 	udev_settle
 	return 0
