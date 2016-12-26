@@ -6,6 +6,8 @@
 #include <termios.h>
 
 
+static const size_t maxTries = 5;
+
 int main(int argc, char **argv) {
   struct termios old, new;
 
@@ -23,13 +25,17 @@ int main(int argc, char **argv) {
   if ( tcsetattr(0, TCSANOW, &new) != 0 )
     return -1;
 
-  printf("Enter a passphrase: ");
-  char *line = calloc(128, sizeof(char));
-  size_t len = 128;
-  ssize_t read = getline(&line, &len, stdin);
-  if (write(passfifo_fd, line, len) == -1)
-    perror("write");
-  printf("\n");
+  size_t tries = 0;
+  while (tries++ < maxTries) {
+    printf("[%u/%u] Enter a passphrase: ", (unsigned int)tries, (unsigned int)maxTries);
+    char *line = calloc(128, sizeof(char));
+    size_t len = 128;
+    ssize_t read = getline(&line, &len, stdin);
+    if (write(passfifo_fd, line, len) == -1)
+      perror("write");
+    printf("\n");
+    sleep(3);
+  }
 
   if ( tcsetattr(0, TCSANOW, &old) != 0 )
     return -1;
