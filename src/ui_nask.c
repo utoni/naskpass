@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,8 +15,6 @@
 
 #include "utils.h"
 #include "status.h"
-
-#include "config.h"
 
 #define APP_TIMEOUT 60
 #define APP_TIMEOUT_FMT "%02d"
