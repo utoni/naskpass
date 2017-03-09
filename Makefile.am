@@ -12,9 +12,10 @@ install-exec-local:
 
 clean-local:
 	rm -f naskpass naskshell naskpass_check
+	$(MAKE) -C ./tests clean
 
 distclean-local: clean-local
-	rm -f aclocal.m4 config.log config.status configure
-	rm -f Makefile.in src/Makefile.in src/aconfig.h.in~ src/*.d src/version.h
-	rm -rf build autom4te.cache
+	rm -f config.log config.status
+	rm -f src/aconfig.h.in~ src/*.d src/version.h
+	rm -rf autom4te.cache
 
