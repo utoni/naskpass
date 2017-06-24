@@ -1,4 +1,7 @@
+#include "config.h"
+
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -7,7 +10,6 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 
-#include "config.h"
 #include "opt.h"
 #include "log.h"
 
@@ -16,6 +18,7 @@
 #include "ui_ani.h"
 #include "ui_input.h"
 #include "ui_statusbar.h"
+#include "ui_nask.h"
 
 #define MSG(msg_idx) msg_arr[msg_idx]
 
@@ -67,8 +70,9 @@ run_cryptcreate(char *pass, char *crypt_cmd)
   int retval;
   char *cmd;
 
-  if (crypt_cmd == NULL || pass == NULL) return (-1);
-  asprintf(&cmd, "echo '%s' | %s >/dev/null 2>/dev/null", pass, crypt_cmd);
+  if (crypt_cmd == NULL || pass == NULL) return -1;
+  if (asprintf(&cmd, "echo '%s' | %s >/dev/null 2>/dev/null", pass, crypt_cmd) < 0)
+    return -2;
   retval = system(cmd);
   free(cmd);
   return (retval);
@@ -167,7 +171,7 @@ main(int argc, char **argv)
       }
       usleep(100000);
       waitpid(child, &c_status, WNOHANG);
-      if ( WIFEXITED(&c_status) != 0 ) {
+      if ( WIFEXITED(c_status) != 0 ) {
         logs("%s\n", "child exited");
         ui_ipc_semtrywait(SEM_UI);
       }

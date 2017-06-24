@@ -16,10 +16,11 @@ case "$1" in
         db_go
         db_get naskpass/activate
         if [ "x$RET" = "xtrue" ]; then
-          nask_activate
+          nask_activate || true
           if [ "x${ERRMSG}" != "x" ]; then
             echo "* ${ERRMSG}" >&2
             nask_deactivate
+            false
           fi
         else
           nask_deactivate

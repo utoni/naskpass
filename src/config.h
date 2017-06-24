@@ -10,7 +10,7 @@
 #define MSQ_PWD "/naskpass-passwd"
 #define MSQ_INF "/naskpass-info"
 
-#ifdef HAVE_CONFIG_H
+#if defined(HAVE_CONFIG_H) || defined(_HAVE_CONFIG_H)
 #include "aconfig.h"
 #include "version.h"
 #endif

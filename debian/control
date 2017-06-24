@@ -2,15 +2,15 @@ Source: naskpass
 Section: admin
 Priority: extra
 Maintainer: Toni Uhlig <matzeton@googlemail.com>
-Build-Depends: debhelper (>= 8.0.0), libncurses5-dev, libtinfo-dev, autoconf, automake
-Standards-Version: 3.9.3
+Build-Depends: debhelper (>= 8.0.0), libncurses5-dev, libtinfo-dev, autoconf, automake, gawk
+Standards-Version: 3.9.8
 Homepage: https://github.com/freecoding/naskpass.git
 #Vcs-Git: git://git.debian.org/collab-maint/naskpass.git
 #Vcs-Browser: http://git.debian.org/?p=collab-maint/naskpass.git;a=summary
 
 Package: naskpass
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, cryptsetup (= 2:1.6.6-5), libncurses5, libtinfo5, coreutils
+Depends: ${shlibs:Depends}, ${misc:Depends}, cryptsetup (= 2:1.7.3-4), libncurses5, libtinfo5, coreutils
 Recommends: openssh-server
 Conflicts: dropbear
 Description: Ncurses based cryptsetup askpass replacement

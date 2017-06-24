@@ -1,7 +1,10 @@
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <assert.h>
 
 #include "ui.h"
 #include "ui_ipc.h"
@@ -13,8 +16,6 @@
 
 #include "utils.h"
 #include "status.h"
-
-#include "config.h"
 
 #define APP_TIMEOUT 60
 #define APP_TIMEOUT_FMT "%02d"
@@ -105,13 +106,18 @@ uninfo_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
     char *sysmachine;
 
     if (utGetUnameInfo(&sysop, &sysrelease, &sysmachine) == 0) {
-      asprintf(&untext, "%s v%s (%s)", sysop, sysrelease, sysmachine);
+      int ret = asprintf(&untext, "%s v%s (%s)", sysop, sysrelease, sysmachine);
       free(sysop);
       free(sysrelease);
       free(sysmachine);
+      if (ret < 0) {
+        return UICB_ERR_BUF;
+      }
     } else
 #endif
-    asprintf(&untext, "%s", "[unknown kernel]");
+    if (asprintf(&untext, "%s", "[unknown kernel]") < 0) {
+      return UICB_ERR_BUF;
+    }
 
     set_statusbar_text(bar, untext);
   }
@@ -208,7 +214,7 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
 static void
 init_ui_elements(unsigned int max_x, unsigned int max_y)
 {
-  asprintf(&title, "/* %s-%s */", PKGNAME, VERSION);
+  assert(asprintf(&title, "/* %s-%s */", PKGNAME, VERSION) > 0);
   pw_input  = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS,
                          (unsigned int)(max_y / 2)-PASSWD_YRELPOS,
                          PASSWD_WIDTH, "PASSWORD: ",

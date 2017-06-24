@@ -1,3 +1,6 @@
+#include "config.h"
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -77,7 +80,8 @@ anic_cb(WINDOW *win, void *data, bool timed_out)
       retval = UICB_ERR_BUF;
     }
   } else {
-    asprintf(&tmp, "%c", b->state);
+    if (asprintf(&tmp, "%c", b->state) < 0)
+      retval = UICB_ERR_BUF;
   }
   if (win != NULL) {
     mvwprintw(win, a->y, a->x, tmp);
