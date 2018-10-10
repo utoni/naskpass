@@ -1,5 +1,4 @@
-<img src=https://travis-ci.org/lnslbrty/naskpass.svg?branch=master>
-<img src=https://scan.coverity.com/projects/9389/badge.svg?flat=1>
+<img src="https://travis-ci.org/lnslbrty/naskpass.svg?branch=master"><a href="https://scan.coverity.com/projects/naskpass"><img src="https://scan.coverity.com/projects/9389/badge.svg?flat=1"></a>
 
 naskpass
 ========
