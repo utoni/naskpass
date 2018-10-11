@@ -128,7 +128,9 @@ main(int argc, char **argv)
     /* child */
     logs("%s\n", "child");
     if (ffd >= 0) close(ffd);
+#ifndef DEBUG
     fclose(stderr);
+#endif
     /* Slave process: TUI */
     if (ui_ipc_init(0) == 0) {
       do_ui();
@@ -170,11 +172,6 @@ main(int argc, char **argv)
         //ui_ipc_sempost(SEM_IN);
       }
       usleep(100000);
-      waitpid(child, &c_status, WNOHANG);
-      if ( WIFEXITED(c_status) != 0 ) {
-        logs("%s\n", "child exited");
-        ui_ipc_semtrywait(SEM_UI);
-      }
     }
     logs("%s\n", "waiting for child");
     wait(&c_status);
