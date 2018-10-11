@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <syslog.h>
@@ -32,7 +33,7 @@ void log_free(void)
   }
 }
 
-int logs(char* format, ...)
+int logs(const char* format, ...)
 {
   int ret;
   va_list vargs;
