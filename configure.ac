@@ -3,7 +3,7 @@
 #
 
 AC_PREREQ([2.67])
-AC_INIT([naskpass], [0], [matzeton@googlemail.com])
+AC_INIT([naskpass], [1.4], [matzeton@googlemail.com])
 AC_CONFIG_AUX_DIR([build])
 AM_INIT_AUTOMAKE([1.11 subdir-objects foreign no-define -Wall -Werror])
 AM_MAINTAINER_MODE([disable])
