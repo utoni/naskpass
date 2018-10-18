@@ -401,11 +401,15 @@ for opt in $(cat /proc/cmdline); do
 	esac
 done
 
+OLDPRINTK=$(cat /proc/sys/kernel/printk)
+echo '0 0 0 0' >/proc/sys/kernel/printk
+
 if [ -n "$cmdline_cryptopts" ]; then
 	# Call setup_mapping separately for each possible cryptopts= setting
 	for cryptopt in $cmdline_cryptopts; do
 		setup_mapping "$cryptopt"
 	done
+	echo "${OLDPRINTK}" >/proc/sys/kernel/printk
 	exit 0
 fi
 
@@ -416,4 +420,5 @@ if [ -r /conf/conf.d/cryptroot ]; then
 	done 3< /conf/conf.d/cryptroot
 fi
 
+echo "${OLDPRINTK}" >/proc/sys/kernel/printk
 exit 0
