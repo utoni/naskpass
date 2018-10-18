@@ -71,7 +71,11 @@ run_cryptcreate(char *pass, char *crypt_cmd)
   char *cmd;
 
   if (crypt_cmd == NULL || pass == NULL) return -1;
+#ifdef DEBUG
+  if (asprintf(&cmd, "echo '%s' | %s 1>&2", pass, crypt_cmd) < 0)
+#else
   if (asprintf(&cmd, "echo '%s' | %s >/dev/null 2>/dev/null", pass, crypt_cmd) < 0)
+#endif
     return -2;
   retval = system(cmd);
   free(cmd);

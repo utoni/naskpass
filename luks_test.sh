@@ -25,11 +25,12 @@ if [ ! -w ${FILE} ] || [ `file ${FILE} | grep -qoE 'LUKS encrypted file' && echo
 	/sbin/cryptsetup luksFormat ${FILE}
 fi
 
+CS_OPEN_ARGS="-q -T1 open ${FILE} ${NAME}"
 if [ "x${DEBUG}" != "x" ]; then
-	sudo valgrind --log-file=valgrind.log src/naskpass -f ./${NAME}.fifo -c "/sbin/cryptsetup open ${FILE} ${NAME}" 2>./${NAME}_err.log || true
-	sudo valgrind --tool=helgrind --log-file=helgrind.log src/naskpass -f ./${NAME}.fifo -c "/sbin/cryptsetup open ${FILE} ${NAME}" 2>./${NAME}_err_hell.log || true
+	sudo valgrind --log-file=valgrind.log src/naskpass -f ./${NAME}.fifo -c "/sbin/cryptsetup ${CS_OPEN_ARGS}" 2>./${NAME}_err.log || true
+	sudo valgrind --tool=helgrind --log-file=helgrind.log src/naskpass -f ./${NAME}.fifo -c "/sbin/cryptsetup ${CS_OPEN_ARGS}" 2>./${NAME}_err_hell.log || true
 else
-	sudo src/naskpass -f ./${NAME}.fifo -c "/sbin/cryptsetup open ${FILE} ${NAME}" 2>./${NAME}_err.log
+	sudo src/naskpass -f ./${NAME}.fifo -c "/sbin/cryptsetup ${CS_OPEN_ARGS}" 2>./${NAME}_err.log
 fi
 
 set +e

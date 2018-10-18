@@ -170,10 +170,8 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
 
       ui_ipc_msgrecv(MQ_IF, ipc_buf, 3);
       show_info_wnd(busywnd, "BUSY", ipc_buf, COLOR_PAIR(5), COLOR_PAIR(5), true, false);
-      sleep(2);
 
-      if (ui_ipc_msgcount(MQ_IF) > 0) {
-          ui_ipc_msgrecv(MQ_IF, ipc_buf, 3);
+      if (ui_ipc_msgrecv(MQ_IF, ipc_buf, 10) > 0) {
           show_info_wnd(errwnd, "ERROR", ipc_buf, COLOR_PAIR(4), COLOR_PAIR(4), true, true);
           while (ui_wgetchtest(1500, '\n') != DOUI_KEY) { };
       }
