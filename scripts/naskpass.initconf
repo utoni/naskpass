@@ -1,5 +1,0 @@
-# initramfs naskpass config file
-
-# kernel printk path
-PRINTK=/proc/sys/kernel/printk
-OLDPRINTK=/tmp/naskpass.oldprintk

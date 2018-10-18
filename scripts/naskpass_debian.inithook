@@ -16,23 +16,23 @@ esac
 
 . /usr/share/initramfs-tools/hook-functions
 
+# copy executables
 copy_exec /lib/cryptsetup/naskpass              /lib/cryptsetup
 copy_exec /lib/cryptsetup/naskshell             /bin
 copy_exec /lib/cryptsetup/naskpass_check        /lib/cryptsetup
-copy_exec /usr/share/naskpass/naskpass.pre      /lib/cryptsetup
-copy_exec /usr/share/naskpass/naskpass.post     /lib/cryptsetup
-dash -n /usr/share/naskpass/naskpass.initconf
-copy_exec /usr/share/naskpass/naskpass.initconf /etc/naskpass.conf
-
 copy_exec /usr/sbin/sshd /sbin/sshd
+
+# OpenSSH config directory
 cp -R /etc/initramfs-tools/etc/ssh "${DESTDIR}/etc/"
 
+# /root is required for a successful SSH login
 if [ ! -r "${DESTDIR}/root" ]; then
 	mkdir -p "${DESTDIR}/root"
 	chown root:root "${DESTDIR}/root"
 	chmod 0700 "${DESTDIR}/root"
 fi
 
+# libnss and nsswitch are required for a successful SSH login
 copy_exec /usr/lib/$(dpkg-architecture -q DEB_HOST_MULTIARCH)/libnss_compat.so /usr/lib/$(dpkg-architecture -q DEB_HOST_MULTIARCH)/
 if [ -r "${DESTDIR}/etc/nsswitch.conf" ]; then
 echo "passwd:         compat" > "${DESTDIR}/etc/nsswitch.conf"
@@ -40,10 +40,12 @@ echo "group:          compat" >>"${DESTDIR}/etc/nsswitch.conf"
 echo "shadow:         compat" >>"${DESTDIR}/etc/nsswitch.conf"
 fi
 
+# passwd, group, shadow entries to enable root with naskshell login
 [ -r "${DESTDIR}/etc/passwd" ] || echo 'root:x:0:0:root:/root:/bin/naskshell' >"${DESTDIR}/etc/passwd"
 [ -r "${DESTDIR}/etc/group" ] || echo 'root:x:0:' >"${DESTDIR}/etc/group"
 [ -r "${DESTDIR}/etc/shadow" ] || echo 'root:*:15446:0:99999:7:::' >"${DESTDIR}/etc/shadow"
 
+# terminfo is viable for ncurses programs
 mkdir -p ${DESTDIR}/lib/terminfo/l
 cp /lib/terminfo/l/linux ${DESTDIR}/lib/terminfo/l/
 

@@ -6,25 +6,10 @@
 set -e
 
 . /usr/share/debconf/confmodule
-. /usr/share/naskpass/naskconf
 
 case "$1" in
 
     configure)
-        nask_update
-        db_input high naskpass/activate || true
-        db_go
-        db_get naskpass/activate
-        if [ "x$RET" = "xtrue" ]; then
-          nask_activate || true
-          if [ "x${ERRMSG}" != "x" ]; then
-            echo "* ${ERRMSG}" >&2
-            nask_deactivate
-            false
-          fi
-        else
-          nask_deactivate
-        fi
 	if [ -x /usr/bin/ssh-keygen ]; then
 		[ -r /etc/initramfs-tools/etc/ssh/ssh_host_rsa_key ] || /usr/bin/ssh-keygen -t rsa -N '' -b 4096 -f /etc/initramfs-tools/etc/ssh/ssh_host_rsa_key
 		[ -r /etc/initramfs-tools/etc/ssh/ssh_host_dsa_key ] || /usr/bin/ssh-keygen -t dsa -N '' -b 1024 -f /etc/initramfs-tools/etc/ssh/ssh_host_dsa_key

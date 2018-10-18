@@ -45,15 +45,11 @@ install: build
 	dh_installchangelogs
 	dh_installdebconf
 	$(MAKE) install-strip prefix=$(CURDIR)/debian/naskpass
-	install -d -m755 $(CURDIR)/debian/naskpass/usr/share/naskpass
-	install -D -m755 ./scripts/naskconf            $(CURDIR)/debian/naskpass/usr/share/naskpass/
-	install -D -m755 ./scripts/naskpass.inithook   $(CURDIR)/debian/naskpass/usr/share/naskpass/
-	install -D -m755 ./scripts/naskpass.initscript $(CURDIR)/debian/naskpass/usr/share/naskpass/
-	install -D -m755 ./scripts/naskpass.initconf   $(CURDIR)/debian/naskpass/usr/share/naskpass/
-	install -D -m755 ./scripts/naskpass.pre        $(CURDIR)/debian/naskpass/usr/share/naskpass/
-	install -D -m755 ./scripts/naskpass.post       $(CURDIR)/debian/naskpass/usr/share/naskpass/
-	install -d -m755                               $(CURDIR)/debian/naskpass/etc/initramfs-tools/etc/ssh/
-	install -D -m644 ./scripts/sshd_config         $(CURDIR)/debian/naskpass/etc/initramfs-tools/etc/ssh/
+	install -d -m755 $(CURDIR)/debian/naskpass/usr/share/initramfs-tools/scripts/local-top
+	install -D -m755 ./scripts/naskpass_debian.inithook   $(CURDIR)/debian/naskpass/usr/share/initramfs-tools/hooks/naskpass
+	install -D -m755 ./scripts/naskpass_debian.initscript $(CURDIR)/debian/naskpass/usr/share/initramfs-tools/scripts/local-top/naskpass
+	install -d -m755                                      $(CURDIR)/debian/naskpass/etc/initramfs-tools/etc/ssh/
+	install -D -m644 ./scripts/sshd_config                $(CURDIR)/debian/naskpass/etc/initramfs-tools/etc/ssh/
 
 binary-indep: build install
 
