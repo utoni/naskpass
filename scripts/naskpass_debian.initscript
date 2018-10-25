@@ -10,6 +10,34 @@ prereqs()
 	echo "$PREREQ"
 }
 
+OLDPRINTK=
+
+pre_naskpass()
+{
+	# disable printk output
+	OLDPRINTK=$(cat /proc/sys/kernel/printk)
+	echo '0 0 0 0' >/proc/sys/kernel/printk
+	# setup networking and start sshd
+	if [ -x /sbin/sshd ]; then
+	    [ -x /bin/ipconfig ] && configure_networking >/dev/null 2>/dev/null &
+	    /sbin/sshd
+	fi
+}
+
+post_naskpass()
+{
+	# restore old printk
+	echo "${OLDPRINTK}" >/proc/sys/kernel/printk
+	# stop sshd
+	kill $(pidof sshd)
+	# shutdown/clean all up'd network interfaces
+	for interface in $(ifconfig | grep -oE '^[a-zA-Z0-9]+\s+'); do
+		echo "disable ${interface}"
+		ifconfig ${interface} 0.0.0.0
+		ifconfig ${interface} down
+	done
+}
+
 case $1 in
 prereqs)
 	prereqs
@@ -299,6 +327,10 @@ setup_mapping()
 		count=$(( $count + 1 ))
 
 		if [ ! -e "$NEWROOT" ]; then
+			if ! /lib/cryptsetup/naskpass_check; then
+				message "cryptsetup ($crypttarget): naskpass check failed"
+				break
+			fi
 			if ! crypttarget="$crypttarget" cryptsource="$cryptsource" \
 			     $cryptkeyscript -c"$cryptopen"; then
 				message "cryptsetup ($crypttarget): cryptsetup failed, bad password or options?"
@@ -401,15 +433,14 @@ for opt in $(cat /proc/cmdline); do
 	esac
 done
 
-OLDPRINTK=$(cat /proc/sys/kernel/printk)
-echo '0 0 0 0' >/proc/sys/kernel/printk
+pre_naskpass
 
 if [ -n "$cmdline_cryptopts" ]; then
 	# Call setup_mapping separately for each possible cryptopts= setting
 	for cryptopt in $cmdline_cryptopts; do
 		setup_mapping "$cryptopt"
 	done
-	echo "${OLDPRINTK}" >/proc/sys/kernel/printk
+	post_naskpass
 	exit 0
 fi
 
@@ -420,5 +451,5 @@ if [ -r /conf/conf.d/cryptroot ]; then
 	done 3< /conf/conf.d/cryptroot
 fi
 
-echo "${OLDPRINTK}" >/proc/sys/kernel/printk
+post_naskpass
 exit 0
