@@ -1,7 +1,17 @@
 language: c
-
 before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y debhelper fakeroot libncurses5-dev libncursesw5-dev
-  
-script: ./configure && make && make -C tests && make -C tests run && git clean -df && dpkg-buildpackage -b -us -uc
+- sudo apt-get -qq update
+- sudo apt-get install -y debhelper fakeroot libncurses5-dev libncursesw5-dev
+script: "./configure && make && make -C tests && make -C tests run && git clean -df
+  && dpkg-buildpackage -b -us -uc"
+env:
+  global:
+    secure: ot6SsJP648W9r35UiAuRJZfITrS6EbducvyTvIZBIxE4LoUfFz6P1d0npNhnazOQyB13DsiAJDg9L779DhO6gBH/KDkkhkaivpgMlPcc9EEYCUoE1VeybkUE1xtCJ0/NNf/J1EU4j5P0Qhwfkd9cy5cITvO8MsOBr+PWXjyzWqEAGUVPLCR1541iylO/gAEW4aN+KQm81afKhsF9GAPffQ2Mmsc8vCab28fd/2AMZg2ViOTsJsUfa32kD/Ws5NNrLnQNmDdXEffTl35Bx6eWHkLgJNo5vloQdrjOtCsOifeqc4kQuz0OcaiwU3GfH2wTfTMddfdoqDbrkblvR6xdT6tUs465hllHB7CRvegHFJdf1ZDdV/1M9w9g9oNo5+hDP8hqQsPYH+fZM9csEcIfS92ZX3Q2se3tInL2uOsKNfvStdMs08x2h26wRIpLkWjQxnaDKJvZV74s9XQUEIU1WI2+VD4Vm/AylZ85BCT+x3ZkaxomGQdkyZJNDt1ElLB1aWZDLVT7444JJ+/g8uUfZae3IPXQ69W4+GwsZIh+SiJ/BdwYgOZfKcKlcdzmG7ifKYJKW62IPMeawXtDR2ObvcXO7UyINIoJe1rEGvXgMOQG+rP64jJzQtXFGFnha1ZrZWphoKDYyXwiNjUqM8q9gm9slbw/ROcM6q+PZVDro+M=
+addons:
+  coverity_scan:
+    project:
+      name: lnslbrty/naskpass
+    notification_email: matzeton@googlemail.com
+    build_command_prepend: autoreconf -i && ./configure
+    build_command: make
+    branch_pattern: coverity_scan
