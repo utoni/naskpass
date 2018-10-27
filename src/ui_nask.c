@@ -69,7 +69,7 @@ netinfo_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
       netupd = NETUPD_INTERVAL;
       size_t len = 0;
       char buf[NETUPD_STRLEN+1];
-      char *dev, *gwIp, *myIp;
+      char *dev = NULL, *gwIp, *myIp;
       memset(buf, '\0', NETUPD_STRLEN+1);
       if (utGetDefaultGwInfo(&dev, &gwIp) == 0) {
         if (utGetIpFromNetDev(dev, &myIp) == 0) {
@@ -85,9 +85,10 @@ netinfo_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
 #endif
           free(myIp);
         }
-        free(dev);
         free(gwIp);
       }
+      if (dev)
+        free(dev);
       set_statusbar_text(bar, buf);
     } else {
       netupd--;

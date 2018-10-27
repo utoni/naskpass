@@ -73,7 +73,8 @@ utGetIpFromNetDev(char *netdev, char **szIpPtr)
     memcpy(*szIpPtr, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr), IFNAMSIZ-1);
     ret = 0;
   }
-  close(fd);
+  if (fd >= 0)
+    close(fd);
   return ret;
 }
 

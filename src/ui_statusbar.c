@@ -85,6 +85,7 @@ set_statusbar_textf(struct statusbar *a, const char *format, ...)
   va_list ap;
   va_start(ap, format);
   int ret = vasprintf(&str, format, ap);
+  va_end(ap);
   if (ret != -1)
     set_statusbar_text(a, str);
   return ret;

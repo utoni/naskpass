@@ -179,7 +179,8 @@ do_ui_update(bool timed_out)
     if (postupdate_callback(timed_out) != UICB_OK)
       return UICB_ERR_CB;
 
-  move(cur_y, cur_x);
+  if (move(cur_y, cur_x) == ERR)
+    return UICB_ERR_CB;
   refresh();
   return (retval);
 }
