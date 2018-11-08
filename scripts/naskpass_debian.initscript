@@ -430,6 +430,10 @@ for opt in $(cat /proc/cmdline); do
 		*) # lilo major/minor number (See #398957). Ignore
 		esac
 		;;
+	nonaskpass)
+		message "naskpass: disabled with nonaskpass..."
+		exit 0
+		;;
 	esac
 done
 
