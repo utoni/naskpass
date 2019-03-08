@@ -16,9 +16,8 @@ static const char *asprintf_error = "[ASPRINTF ERROR]";
 char *
 get_system_stat(size_t *siz)
 {
-  size_t retsiz = 0;
   char *retstr = NULL;
-  int ncpu;
+  int ncpu, retsiz;
   struct sysinfo inf;
 
   if (sysinfo(&inf) == EFAULT) {
