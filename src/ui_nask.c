@@ -43,14 +43,17 @@ static unsigned int netupd = 0;
 static char *title = NULL;
 static char *untext = NULL;
 static char busy_str[BSTR_LEN+1] = ".\0\0\0";
+static const char *netinfo_error = "[NETINFO FAILED]";
 
 
 static int
 lower_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
 {
+  size_t tmpsiz;
+
   if (ui_timeout == FALSE) return DOUI_OK;
-  char *tmp = get_system_stat();
-  set_statusbar_text(bar, tmp);
+  char *tmp = get_system_stat(&tmpsiz);
+  set_statusbar_text(bar, tmp, tmpsiz);
   free(tmp);
   return DOUI_OK;
 }
@@ -67,7 +70,7 @@ netinfo_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
   if (ui_timeout == TRUE) {
     if (netupd == 0) {
       netupd = NETUPD_INTERVAL;
-      size_t len = 0;
+      ssize_t len = 0;
       char buf[NETUPD_STRLEN+1];
       char *dev = NULL, *gwIp, *myIp;
       memset(buf, '\0', NETUPD_STRLEN+1);
@@ -76,12 +79,12 @@ netinfo_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
 #ifdef HAVE_RESOLVE
           char *dom, *srv;
           if (utGetDomainInfo(&dom, &srv) == 0) {
-            snprintf(buf, NETUPD_STRLEN, "netdev: %s // address: %s // gateway: %s // dns: %s // domain: %s", dev, myIp, gwIp, srv, dom);
+            len = snprintf(buf, NETUPD_STRLEN, "netdev: %s // address: %s // gateway: %s // dns: %s // domain: %s", dev, myIp, gwIp, srv, dom);
           }
           free(dom);
           free(srv);
 #else
-          snprintf(buf, NETUPD_STRLEN, "netdev: %s // address: %s // gateway: %s", dev, myIp, gwIp);
+          len = snprintf(buf, NETUPD_STRLEN, "netdev: %s // address: %s // gateway: %s", dev, myIp, gwIp);
 #endif
           free(myIp);
         }
@@ -89,7 +92,10 @@ netinfo_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
       }
       if (dev)
         free(dev);
-      set_statusbar_text(bar, buf);
+      if (len > 0)
+        set_statusbar_text(bar, buf, len);
+      else
+        set_statusbar_text(bar, netinfo_error, strlen(netinfo_error));
     } else {
       netupd--;
     }
@@ -100,6 +106,8 @@ netinfo_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
 static int
 uninfo_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
 {
+  ssize_t len = -1;
+
   if (untext == NULL) {
 #ifdef HAVE_UNAME
     char *sysop;
@@ -107,20 +115,19 @@ uninfo_statusbar_update(WINDOW *win, struct statusbar *bar, bool ui_timeout)
     char *sysmachine;
 
     if (utGetUnameInfo(&sysop, &sysrelease, &sysmachine) == 0) {
-      int ret = asprintf(&untext, "%s v%s (%s)", sysop, sysrelease, sysmachine);
+      len = asprintf(&untext, "%s v%s (%s)", sysop, sysrelease, sysmachine);
       free(sysop);
       free(sysrelease);
       free(sysmachine);
-      if (ret < 0) {
-        return UICB_ERR_BUF;
-      }
     } else
 #endif
-    if (asprintf(&untext, "%s", "[unknown kernel]") < 0) {
-      return UICB_ERR_BUF;
+    {
+      len = asprintf(&untext, "%s", "[unknown kernel]");
     }
 
-    set_statusbar_text(bar, untext);
+    if (len < 0)
+      return UICB_ERR_BUF;
+    set_statusbar_text(bar, untext, len);
   }
   return DOUI_OK;
 }
@@ -216,7 +223,10 @@ passwd_input_cb(WINDOW *wnd, void *data, int key)
 static void
 init_ui_elements(unsigned int max_x, unsigned int max_y)
 {
-  assert(asprintf(&title, "/* %s-%s */", PKGNAME, VERSION) > 0);
+  ssize_t title_len;
+
+  title_len = asprintf(&title, "/* %s-%s */", PKGNAME, VERSION);
+  assert( title_len > 0 );
   pw_input  = init_input((unsigned int)(max_x / 2)-PASSWD_XRELPOS,
                          (unsigned int)(max_y / 2)-PASSWD_YRELPOS,
                          PASSWD_WIDTH, "PASSWORD: ",
@@ -244,7 +254,7 @@ init_ui_elements(unsigned int max_x, unsigned int max_y)
   register_txtwindow(busywnd);
   register_txtwindow(errwnd);
   activate_input(pw_input);
-  set_statusbar_text(higher, title);
+  set_statusbar_text(higher, title, title_len);
 }
 
 static void

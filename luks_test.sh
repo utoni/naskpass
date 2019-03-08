@@ -21,7 +21,7 @@ if [ -w ${FILE} ]; then
 fi
 
 if [ ! -w ${FILE} ] || [ `file ${FILE} | grep -qoE 'LUKS encrypted file' && echo 0 || echo 1` -ne 0 ]; then
-	dd if=/dev/zero of=${FILE} bs=1M count=10
+	dd if=/dev/zero of=${FILE} bs=1M count=50
 	/sbin/cryptsetup luksFormat ${FILE}
 fi
 

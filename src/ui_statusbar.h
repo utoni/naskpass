@@ -27,7 +27,7 @@ void
 register_statusbar(struct statusbar *a);
 
 void
-set_statusbar_text(struct statusbar *a, const char *text);
+set_statusbar_text(struct statusbar *a, const char *text, size_t len);
 
 int
 set_statusbar_textf(struct statusbar *a, const char *format, ...);

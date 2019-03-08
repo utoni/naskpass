@@ -71,10 +71,8 @@ register_statusbar(struct statusbar *a)
 }
 
 inline void
-set_statusbar_text(struct statusbar *a, const char *text)
+set_statusbar_text(struct statusbar *a, const char *text, size_t len)
 {
-  size_t len = strlen(text);
-
   strncpy(a->text, text, (len > a->width ? a->width : len));
 }
 
@@ -86,7 +84,9 @@ set_statusbar_textf(struct statusbar *a, const char *format, ...)
   va_start(ap, format);
   int ret = vasprintf(&str, format, ap);
   va_end(ap);
-  if (ret != -1)
-    set_statusbar_text(a, str);
+  if (ret >= 0) {
+    set_statusbar_text(a, str, ret);
+    free(str);
+  }
   return ret;
 }
